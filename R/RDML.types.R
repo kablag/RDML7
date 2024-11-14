@@ -45,7 +45,71 @@ rdmlBaseType <- new_class(
 asXMLnodes <- new_generic("asXMLnodes", "x")
 method(asXMLnodes, rdmlBaseType) <- function(x, nodeName) {
   subnodes <- names(props(x))
-  subnodes
+  sprintf("<%s%s>%s</%s>",
+          node.name, #node name
+          # attribute
+          {
+            attrs <- NULL
+            for (subnode in subnodes) {
+              if (class(private[[subnode]])[1] == "idType" ||
+                  class(private[[subnode]])[1] == "reactIdType") {
+                attrs <- c(attrs, subnode)
+              }
+            }
+            if (length(attrs) == 0) {
+              ""
+            } else {
+              subnodes <-
+                setdiff(subnodes, attrs)
+              sprintf(" id = '%s'", private[[attrs[1]]]$id)
+            }
+            # "'attr'"
+          },
+          # value
+          {
+            sapply(
+              subnodes,
+              function(name) {
+                subnode.name <- gsub("^\\.(.*)$",
+                                     "\\1", name)
+                switch(
+                  typeof(private[[name]]),
+                  closure = NULL,
+                  list =
+                    sapply(private[[name]],
+                           function(sublist)
+                             sublist$.asXMLnodes(subnode.name)) %>>%
+                    # .[!sapply(., is.null)] %>>%
+                    paste0(collapse = "\n")
+                  ,
+                  environment = {
+                    private[[name]]$.asXMLnodes(subnode.name)
+                  },
+                  {
+                    if (is.null(private[[name]]) ||
+                        is.na(private[[name]])) {
+                      NULL
+                    } else {
+                      sprintf("<%s>%s</%s>\n",
+                              subnode.name,
+                              switch(
+                                typeof(private[[name]]),
+                                logical =
+                                  ifelse(private[[name]],
+                                         "true",
+                                         "false"
+                                  ),
+                                private[[name]]
+                              ),
+                              subnode.name
+                      )
+                    }
+                  })
+              }) %>>%
+              (vals ~ vals[!sapply(vals, is.null)]) %>>%
+              paste0(collapse = "")
+          },
+          node.name)
 }
 rdmlId <- new_class(
   "rdmlId",
