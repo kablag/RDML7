@@ -42,7 +42,7 @@ asXMLnodes <- new_generic("asXMLnodes", "x")
 rdmlBaseType <- new_class(
   "rdmlBaseType",
   abstract = TRUE)
-asXMLnodes <- new_generic("asXMLnodes", c("x"))
+asXMLnodes <- new_generic("asXMLnodes", "x")
 method(asXMLnodes, rdmlBaseType) <- function(x, nodeName) {
   subnodes <- names(props(x))
   subnodes
