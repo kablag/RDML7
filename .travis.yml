@@ -1,0 +1,54 @@
+# Sample .travis.yml for R projects.
+#
+# See README.md for instructions, or for more configuration options,
+# see the wiki:
+#   https://github.com/craigcitro/r-travis/wiki
+
+sudo: required
+
+language: r
+
+matrix:
+  include:
+
+  - os: linux
+    dist: trusty
+    r: release
+    cran: https://cran.rstudio.com/
+    addons:
+      apt:
+        packages:
+          - libgdal1-dev
+    before_install:
+    - tlmgr install xcolor
+    
+  - os: linux
+    dist: trusty
+    r: devel
+    addons:
+      apt:
+        packages:
+          - libgdal1-dev
+    before_install:
+    - tlmgr install xcolor
+    
+r_binary_packages:
+  - checkmate
+  - data.table
+  - readxl
+  - rlist
+  - R6
+  - stringr
+  - xml2
+  - dplyr
+  - ggplot2
+  - knitr
+  - kfigr
+  - shiny
+  - shinyjs
+  - V8
+  
+notifications:
+  email:
+    on_success: change
+    on_failure: change
