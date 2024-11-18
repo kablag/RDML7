@@ -41,21 +41,32 @@ asXMLnodes <- new_generic("asXMLnodes", "x")
 
 rdmlBaseType <- new_class(
   "rdmlBaseType",
-  abstract = FALSE)
+  abstract = TRUE)
 
 
 method(asXMLnodes, rdmlBaseType) <- function(x, nodeName, attribute = "") {
   assertString(nodeName)
   assertString(attribute)
-  subnodes <- names(props(x))
+  subnodesNames <- names(props(x))
   sprintf("<%s%s>%s</%s>",
           nodeName, #node name
           #attribute
-          attribute,
+          {
+            if (subnodesNames[1] == "id" ||
+                subnodesNames[1] == "targetId") {
+              attribute <- sprintf(" %s=%s", 
+                                   subnodesNames[1],
+                                   prop(x, subnodesNames[1]))
+              subnodesNames[-1]
+              attribute
+            } else {
+              ""
+            }
+          },
           # value
           {
             sapply(
-              subnodes,
+              subnodesNames,
               function(subnodeName) {
                 # subnodeName <- gsub("^\\.(.*)$",
                 #                      "\\1", name)
@@ -132,6 +143,10 @@ method(asXMLnodes, testCl2) <- function(x, nodeName) {
 }
 test2 <- testCl2("a123", "aa", 1)
 asXMLnodes(test2, "aaac")
+attr.testCl2 <- function(x) {
+  attr(x, "id")
+}
+attr(test2)
 # rdmlIdType ------------------------------------------------------------
 
 #' rdmlIdType R6 class.
