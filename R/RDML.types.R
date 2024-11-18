@@ -41,83 +41,97 @@ asXMLnodes <- new_generic("asXMLnodes", "x")
 
 rdmlBaseType <- new_class(
   "rdmlBaseType",
-  abstract = TRUE)
-asXMLnodes <- new_generic("asXMLnodes", "x")
-method(asXMLnodes, rdmlBaseType) <- function(x, nodeName) {
+  abstract = FALSE)
+
+
+method(asXMLnodes, rdmlBaseType) <- function(x, nodeName, attribute = "") {
+  assertString(nodeName)
+  assertString(attribute)
   subnodes <- names(props(x))
   sprintf("<%s%s>%s</%s>",
-          node.name, #node name
-          # attribute
-          {
-            attrs <- NULL
-            for (subnode in subnodes) {
-              if (class(private[[subnode]])[1] == "idType" ||
-                  class(private[[subnode]])[1] == "reactIdType") {
-                attrs <- c(attrs, subnode)
-              }
-            }
-            if (length(attrs) == 0) {
-              ""
-            } else {
-              subnodes <-
-                setdiff(subnodes, attrs)
-              sprintf(" id = '%s'", private[[attrs[1]]]$id)
-            }
-            # "'attr'"
-          },
+          nodeName, #node name
+          #attribute
+          attribute,
           # value
           {
             sapply(
               subnodes,
-              function(name) {
-                subnode.name <- gsub("^\\.(.*)$",
-                                     "\\1", name)
+              function(subnodeName) {
+                # subnodeName <- gsub("^\\.(.*)$",
+                #                      "\\1", name)
                 switch(
-                  typeof(private[[name]]),
+                  typeof(prop(x, subnodeName)),
                   closure = NULL,
                   list =
-                    sapply(private[[name]],
+                    sapply(prop(x, subnodeName),
                            function(sublist)
-                             sublist$.asXMLnodes(subnode.name)) %>>%
-                    # .[!sapply(., is.null)] %>>%
+                             asXMLnodes(sublist, subnodeName)) |> 
+                    # .[!sapply(., is.null)] |>
                     paste0(collapse = "\n")
                   ,
                   environment = {
-                    private[[name]]$.asXMLnodes(subnode.name)
+                    asXMLnodes(prop(x, subnodeName), subnodeName)
                   },
                   {
-                    if (is.null(private[[name]]) ||
-                        is.na(private[[name]])) {
+                    if (is.null(prop(x, subnodeName)) ||
+                        is.na(prop(x, subnodeName))) {
                       NULL
                     } else {
                       sprintf("<%s>%s</%s>\n",
-                              subnode.name,
+                              subnodeName,
                               switch(
-                                typeof(private[[name]]),
+                                typeof(prop(x, subnodeName)),
                                 logical =
-                                  ifelse(private[[name]],
+                                  ifelse(prop(x, subnodeName),
                                          "true",
                                          "false"
                                   ),
-                                private[[name]]
+                                prop(x, subnodeName)
                               ),
-                              subnode.name
+                              subnodeName
                       )
                     }
                   })
-              }) %>>%
-              (vals ~ vals[!sapply(vals, is.null)]) %>>%
+              }) |>
+              #### (vals ~ vals[!sapply(vals, is.null)]) |>
               paste0(collapse = "")
           },
-          node.name)
+          nodeName)
 }
 rdmlId <- new_class(
   "rdmlId",
-  parent =rdmlBaseType,
-  properties = list(a = class_character)
+  parent = rdmlBaseType,
+  properties = list(id = class_character)
 )
-nId <- rdmlId(a = "ff")
-asXMLnodes(nId)
+nId <- rdmlId(id = "ff")
+asXMLnodes(nId, "id")
+
+testCl <- new_class(
+  "testCl",
+  parent = rdmlBaseType,
+  properties = list(id = rdmlId,
+                    tata = class_character,
+                    safas = class_numeric)
+)
+testCl2 <- new_class(
+  "testCl2",
+  parent = rdmlBaseType,
+  properties = list(tata = class_character,
+                    safas = class_numeric),
+  constructor = function(id, tata, safas) {
+    obj <- new_object(rdmlBaseType(), 
+                      tata = tata, 
+                      safas = safas)
+    attr(obj, "id") <- id
+    obj
+  }
+)
+method(asXMLnodes, testCl2) <- function(x, nodeName) {
+  id <- attr(x, "id")
+  asXMLnodes(super(x, rdmlBaseType), nodeName, sprintf(" id=%s", id))
+}
+test2 <- testCl2("a123", "aa", 1)
+asXMLnodes(test2, "aaac")
 # rdmlIdType ------------------------------------------------------------
 
 #' rdmlIdType R6 class.
@@ -1524,12 +1538,12 @@ adpsType <-
               ifelse("tmp" %in% colnames(private$.fpoints),
                      return(
                        private$.fpoints[, sprintf("<adp><cyc>%s</cyc><tmp>%s</tmp><fluor>%s</fluor></adp>",
-                                                  cyc, tmp, fluor)] %>>%
+                                                  cyc, tmp, fluor)] |>
                          paste0(collapse = "")
                      ),
                      return(
                        private$.fpoints[, sprintf("<adp><cyc>%s</cyc><fluor>%s</fluor></adp>",
-                                                  cyc, fluor)] %>>%
+                                                  cyc, fluor)] |>
                          paste0(collapse = "")
                      ))
             }
@@ -1595,7 +1609,7 @@ mdpsType <-
             },
             .asXMLnodes = function(node.name) {
               private$.fpoints[, sprintf("<mdp><tmp>%s</tmp><fluor>%s</fluor></mdp>",
-                                         tmp, fluor)] %>>%
+                                         tmp, fluor)] |>
                 paste0(collapse = "")
             }
           ),
@@ -1854,7 +1868,7 @@ reactType <-
                            set(fdata, ,
                                "tar", data$tar$id)
                            fdata
-                           }) %>>%
+                           }) |>
                 rbindlist()
               ifelse(long.table,
                      return(out),
@@ -2212,7 +2226,7 @@ runType <-
                                list(react$id$id,
                                     react$sample$id))
                            fdata
-                         }) %>>%
+                         }) |>
                 rbindlist()
 
               ifelse(long.table == FALSE,
@@ -2380,7 +2394,7 @@ experimentType <-
                            set(fdata, ,
                                "run", run$id$id)
                            fdata
-                         }) %>>%
+                         }) |>
                 rbindlist()
 
               ifelse(long.table == FALSE,
