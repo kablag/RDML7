@@ -109,6 +109,9 @@ method(asXMLnodes, rdmlBaseType) <- function(x, nodeName, attribute = "") {
           },
           nodeName)
 }
+
+
+
 rdmlId <- new_class(
   "rdmlId",
   parent = rdmlBaseType,
@@ -208,6 +211,22 @@ rdmlIdType <-
             }
           ))
 
+rdmlIdType <- new_class(
+  "rdmlIdType",
+  parent = rdmlBaseType,
+  properties = list(
+    publisher = class_character,
+    serialNumber = class_character,
+    MD5Hash = new_property(
+      class_character,
+      validator = function(value) {
+        if (!identical(value, character(0)) && 
+            (length(value) != 1 || is.na(value) || value == "")
+            )
+          "must be null or a non-empty string"
+      })
+  )
+)
 # idType ------------------------------------------------------------
 
 #' idType R6 class.
