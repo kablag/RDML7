@@ -18,6 +18,24 @@ checkDateTime <- function(dateTime){
   return("Must pass lubridate ymd_hms() or ymd() conversion")
 }
 
+class_character_null_nonempty_single <- new_property(
+  class_character,
+  validator = function(value) {
+    value <- gsub(" ", "", value)
+    if (!identical(value, character(0)) && 
+        (length(value) != 1 || is.na(value) || value == "")
+    )
+      "must be a null or a single non-empty string"
+  })
+
+class_character_nonempty_single <- new_property(
+  class_character,
+  validator = function(value) {
+    value <- gsub(" ", "", value)
+    if (length(value) != 1 || is.na(value) || value == "")
+      "must be a single non-empty string"
+  })
+
 # rdmlBaseType ------------------------------------------------------------
 
 #' Base R6 class for RDML package.
@@ -215,16 +233,9 @@ rdmlIdType <- new_class(
   "rdmlIdType",
   parent = rdmlBaseType,
   properties = list(
-    publisher = class_character,
-    serialNumber = class_character,
-    MD5Hash = new_property(
-      class_character,
-      validator = function(value) {
-        if (!identical(value, character(0)) && 
-            (length(value) != 1 || is.na(value) || value == "")
-            )
-          "must be null or a non-empty string"
-      })
+    publisher = class_character_nonempty_single,
+    serialNumber = class_character_nonempty_single,
+    MD5Hash = class_character_null_nonempty_single
   )
 )
 # idType ------------------------------------------------------------
