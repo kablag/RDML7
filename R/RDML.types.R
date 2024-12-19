@@ -12,21 +12,26 @@ checkDateTime <- function(dateTime){
   if (is.null(dateTime))
     return(TRUE)
   if (!is.na(ymd_hms(dateTime, quiet = TRUE)) ||
-     !is.na(ymd(dateTime, quiet = TRUE))) {
+      !is.na(ymd(dateTime, quiet = TRUE))) {
     return(TRUE)
   }
   return("Must pass lubridate ymd_hms() or ymd() conversion")
 }
 
-class_character_null_nonempty_single <- new_property(
-  class_character,
+class_character_na_nonempty_single <- new_property(
+  class_any,
   validator = function(value) {
-    value <- gsub(" ", "", value)
-    if (!identical(value, character(0)) && 
-        (length(value) != 1 || is.na(value) || value == "")
+    # if (is.na(value)) return()
+    # value <- 
+    if (#!identical(value, character(0)) && 
+      !checkString(gsub(" ", "", value),
+                   min.chars = 1,
+                   na.ok = TRUE) #||
+        # length(value) != 1 || 
+          # == ""
     )
       "must be a null or a single non-empty string"
-  })
+  }, default = NA)
 
 class_character_nonempty_single <- new_property(
   class_character,
@@ -54,6 +59,10 @@ class_character_nonempty_single <- new_property(
 #'
 #' @docType class
 #' @format An \code{\link{R6Class}} generator object.
+options(box.path = getwd()) 
+
+box::use(R/rdmlEdit)
+getLogicalValue()
 
 asXMLnodes <- new_generic("asXMLnodes", "x")
 
@@ -129,12 +138,6 @@ method(asXMLnodes, rdmlBaseType) <- function(x, nodeName, attribute = "") {
 }
 
 
-
-rdmlId <- new_class(
-  "rdmlId",
-  parent = rdmlBaseType,
-  properties = list(id = class_character)
-)
 nId <- rdmlId(id = "ff")
 asXMLnodes(nId, "id")
 
@@ -189,6 +192,17 @@ attr(test2)
 #' @docType class
 #' @format An \code{\link{R6Class}} generator object.
 #' @export
+rdmlIdType <- new_class(
+  "rdmlIdType",
+  parent = rdmlBaseType,
+  properties = list(
+    publisher = class_character_nonempty_single,
+    serialNumber = class_character_nonempty_single,
+    MD5Hash =
+      class_character_na_nonempty_single
+    )
+)
+
 rdmlIdType <-
   R6Class("rdmlIdType",
           # class = FALSE,
@@ -253,6 +267,11 @@ rdmlIdType <- new_class(
 #' @docType class
 #' @format An \code{\link{R6Class}} generator object.
 #' @export
+rdmlId <- new_class(
+  "rdmlId",
+  parent = rdmlBaseType,
+  properties = list(id = class_character)
+)
 idType <-
   R6Class("idType",
           # class = FALSE,
