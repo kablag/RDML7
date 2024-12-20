@@ -23,14 +23,14 @@ class_character_na_nonempty_single <- new_property(
   validator = function(value) {
     # if (is.na(value)) return()
     # value <- 
-    if (#!identical(value, character(0)) && 
-      !checkString(gsub(" ", "", value),
+    if (#!identical(value, character(0)) 
+      # !checkString(value, na.ok = TRUE) && 
+      !testString(value, #gsub(" ", "", value),
                    min.chars = 1,
-                   na.ok = TRUE) #||
-        # length(value) != 1 || 
-          # == ""
+                   pattern = "[^[:space:]]",
+                   na.ok = TRUE)
     )
-      "must be a null or a single non-empty string"
+      "must be a NA or a single non-empty string"
   }, default = NA)
 
 class_character_nonempty_single <- new_property(
@@ -40,6 +40,64 @@ class_character_nonempty_single <- new_property(
     if (length(value) != 1 || is.na(value) || value == "")
       "must be a single non-empty string"
   })
+
+
+rdmlEnum <- new_class(
+  "rdmlEnum",
+  properties = list(
+    value = class_character,
+    variants = class_character
+  ),
+  validator = function(self) { 
+    if (length(self@value) != 1L) {
+      "enum value's are length 1"
+    } else if (!(self@value %in% self@variants)) {
+      sprintf("enum value must be one of possible variants: %s",
+            paste(self@variants, collapse = ", "))
+    }
+  }, 
+  abstract = TRUE
+)
+print.rdmlEnum <- function(x, ...) {
+  cat(class(x)[1], "::", x@value, sep = "")
+  invisible(x)
+}
+
+
+asXMLnodes <- new_generic("asXMLnodes", "x")
+
+method(asXMLnodes, rdmlEnum) <- function(x, nodeName) {
+  assertString(nodeName)
+  subnodesNames <- names(props(x))
+  sprintf("<%s>%s</%s>",
+          nodeName, x@value, nodeName)
+}
+
+new_enum_class <- function(enum_class, variants) {
+  new_class(
+    enum_class,
+    parent = rdmlEnum,
+    properties = list(
+      value = class_character,
+      variants = new_property(class_character, default = variants)
+    ),
+    constructor = function(value) {
+      new_object(S7_object(), value = value, variants = variants)
+    }
+  )
+}
+
+method(names, rdmlBaseType) <- function(x) {
+  prop_names(x)
+}
+`$.rdmlBaseType` <- function(x, name) {
+  if (typeof(x) %in% c("list", "environment")) {
+    NextMethod()
+  } else {
+    prop(x, name)
+  }
+}
+
 
 # rdmlBaseType ------------------------------------------------------------
 
@@ -64,7 +122,6 @@ options(box.path = getwd())
 box::use(R/rdmlEdit)
 getLogicalValue()
 
-asXMLnodes <- new_generic("asXMLnodes", "x")
 
 rdmlBaseType <- new_class(
   "rdmlBaseType",
@@ -111,8 +168,11 @@ method(asXMLnodes, rdmlBaseType) <- function(x, nodeName, attribute = "") {
                     asXMLnodes(prop(x, subnodeName), subnodeName)
                   },
                   {
-                    if (is.null(prop(x, subnodeName)) ||
-                        is.na(prop(x, subnodeName))) {
+                    if (!testClass(x, "rdmlBaseType") &&
+                        (
+                          is.null(prop(x, subnodeName)) ||
+                          is.na(prop(x, subnodeName)))
+                    ) {
                       NULL
                     } else {
                       sprintf("<%s>%s</%s>\n",
@@ -243,15 +303,7 @@ rdmlIdType <-
             }
           ))
 
-rdmlIdType <- new_class(
-  "rdmlIdType",
-  parent = rdmlBaseType,
-  properties = list(
-    publisher = class_character_nonempty_single,
-    serialNumber = class_character_nonempty_single,
-    MD5Hash = class_character_null_nonempty_single
-  )
-)
+
 # idType ------------------------------------------------------------
 
 #' idType R6 class.
@@ -330,6 +382,17 @@ as.character.idType <- function(x, ...) x$id
 #' @docType class
 #' @format An \code{\link{R6Class}} generator object.
 #' @export
+reactIdType <- new_class(
+  "reactIdType",
+  parent = rdmlBaseType,
+  properties = list(
+    publisher = class_character_nonempty_single,
+    serialNumber = class_character_nonempty_single,
+    MD5Hash =
+      class_character_na_nonempty_single
+  )
+)
+
 reactIdType <-
   R6Class("reactIdType",
           # class = FALSE,
@@ -409,6 +472,19 @@ idReferencesType <-
 #' @docType class
 #' @format An \code{\link{R6Class}} generator object.
 #' @export
+experimenterType <- new_class(
+  "experimenterType",
+  parent = rdmlBaseType,
+  properties = list(
+    id = class_character_nonempty_single,
+    firstName = class_character_nonempty_single,
+    lastName = class_character_nonempty_single,
+    email = class_character_na_nonempty_single,
+    labName = class_character_na_nonempty_single,
+    labAddress = class_character_na_nonempty_single
+  )
+)
+
 experimenterType <-
   R6Class("experimenterType",
           # class = FALSE,
@@ -492,6 +568,14 @@ experimenterType <-
 #' @docType class
 #' @format An \code{\link{R6Class}} generator object.
 #' @export
+documentationType <- new_class(
+  "documentationType",
+  parent = rdmlBaseType,
+  properties = list(
+    id = class_character_nonempty_single,
+    text = class_character_na_nonempty_single
+  )
+)
 documentationType <-
   R6Class("documentationType",
           # class = FALSE,
@@ -524,6 +608,18 @@ documentationType <-
 
 # dyeType ------------------------------------------------------------
 
+DyeChemistryType <- 
+  new_enum_class(
+    "DyeChemistryType",
+    c("non-saturating DNA binding dye", 
+      "saturating DNA binding dye",
+      "hybridization probe",
+      "hydrolysis probe", 
+      "labelled forward primer", 
+      "labelled reverse primer",
+      "DNA-zyme probe")
+  )
+
 #' dyeType R6 class.
 #'
 #' Detailed information about the dye. Inherits: \link{rdmlBaseType}.
@@ -538,6 +634,28 @@ documentationType <-
 #' @docType class
 #' @format An \code{\link{R6Class}} generator object.
 #' @export
+
+dyeType <- new_class(
+  "dyeType",
+  parent = rdmlBaseType,
+  properties = list(
+    id = class_character_nonempty_single,
+    description = class_character_na_nonempty_single,
+    dyeChemistry = 
+      new_property(
+        class_any,
+        validator = function(value) {
+          if (
+            !(testClass(value, 
+                        "DyeChemistryType") ||
+                         is.na(value))
+            )
+            "must be a NA or a single DyeChemistryType"
+        },
+        default = NA
+      )
+  )
+)
 dyeType <-
   R6Class("dyeType",
           # class = FALSE,
@@ -842,6 +960,17 @@ templateQuantityType <-
 #'
 #' @docType class
 #' @format An \code{\link{R6Class}} generator object.
+
+enumType <- new_class(
+  "enumType",
+  parent = rdmlBaseType,
+  properties = list(
+    id = class_character_nonempty_single,
+    description = class_character_na_nonempty_single,
+    dyeChemistry = class_character_na_nonempty_single
+  )
+)
+
 enumType <-
   R6Class("enumType",
           # class = FALSE,
