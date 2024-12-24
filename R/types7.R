@@ -14,7 +14,7 @@ class_character_na_nonempty_single <- new_property(
                   na.ok = TRUE)
     )
       "must be a NA or a single non-empty string"
-  }, default = NA)
+  }, default = as.character(NA))
 
 class_character_nonempty_single <- new_property(
   class_character,
@@ -208,5 +208,14 @@ dyeType <- new_class(
         },
         default = NA
       )
+  )
+)
+
+xRefType <- new_class(
+  "xRefType",
+  parent = rdmlBaseType,
+  properties = list(
+    name = class_character_na_nonempty_single,
+    id = class_character_na_nonempty_single
   )
 )
