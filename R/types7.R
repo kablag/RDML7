@@ -1,6 +1,8 @@
 library(S7)
 library(checkmate)
 
+asXMLnodes <- new_generic("asXMLnodes", "x")
+
 class_character_na_nonempty_single <- new_property(
   class_any,
   validator = function(value) {
@@ -24,6 +26,41 @@ class_character_nonempty_single <- new_property(
       "must be a single non-empty string"
   })
 
+class_flag_na <- new_property(
+  class_any,
+  validator = function(value) {
+    # if (is.na(value)) return()
+    # value <- 
+    if (#!identical(value, character(0)) 
+      # !checkString(value, na.ok = TRUE) && 
+      !testFlag(value, na.ok = TRUE)
+    )
+      "must be a NA or a flag"
+  }, default = as.logical(NA))
+
+class_flag <- new_property(
+  class_logical,
+  validator = function(value) {
+    if (length(value) != 1)
+      "must be a flag"
+  })
+
+class_number_na_single <- new_property(
+  class_any,
+  validator = function(value) {
+    # if (is.na(value)) return()
+    # value <- 
+    if (!testNumber(value,na.ok = TRUE))
+      "must be a NA or a number"
+  }, default = as.character(NA))
+
+class_number_single <- new_property(
+  class_numeric,
+  validator = function(value) {
+    if (length(value) != 1 || is.na(value))
+      "must be a number"
+  })
+
 
 rdmlEnum <- new_class(
   "rdmlEnum",
@@ -45,15 +82,12 @@ print.rdmlEnum <- function(x, ...) {
   cat(class(x)[1], "::", x@value, sep = "")
   invisible(x)
 }
+as.character.rdmlEnum <- function(x) {
+  x@value
+}
 
-
-asXMLnodes <- new_generic("asXMLnodes", "x")
-
-method(asXMLnodes, rdmlEnum) <- function(x
-                                         # , nodeName
-                                         ) {
-  # assertString(nodeName)
-  nodeName <- class(x)[1]
+method(asXMLnodes, rdmlEnum) <- function(x, nodeName) {
+  assertString(nodeName)
   subnodesNames <- names(props(x))
   sprintf("<%s>%s</%s>",
           nodeName, x@value, nodeName)
@@ -73,30 +107,59 @@ new_enum_class <- function(enum_class, variants) {
   )
 }
 
+idType <- new_class(
+  "idType",
+  properties = list(
+    id = class_character
+  ),
+  validator = function(self) { 
+    if (length(self@id) != 1L) {
+      "id value's are length 1"
+    }
+  }
+)
+print.idType <- function(x, ...) {
+  cat(x@id)
+  invisible(x)
+}
+as.character.idType <- function(x) {
+  as.character(x@id)
+}
+method(asXMLnodes, idType) <- function(x, nodeName) {
+  assertString(nodeName)
+  # nodeName <- deparse(substitute(x))
+  sprintf("<%s id=%s/>",
+          nodeName, x@id)
+}
+class_id <- new_property(
+  validator = function(value) {
+    if (!(testClass(value, "idType")))
+      "must be a idType"
+  }
+)
+
 
 rdmlBaseType <- new_class(
   "rdmlBaseType",
   abstract = TRUE)
 
 
-method(asXMLnodes, rdmlBaseType) <- function(x
-                                             # , 
-                                             # nodeName,
-                                             # attribute = ""
-                                             ) {
-  # assertString(nodeName)
+method(asXMLnodes, rdmlBaseType) <- function(x,
+                                             nodeName
+                                             #, attribute = ""
+) {
+  assertString(nodeName)
   # assertString(attribute)
-  nodeName <- class(x)[1]
+  # nodeName <- class(x)[1]
   subnodesNames <- names(props(x))
   sprintf("<%s%s>%s</%s>",
           nodeName, #node name
           #attribute
           {
-            if (subnodesNames[1] == "id" ||
-                subnodesNames[1] == "targetId") {
+            if ((subnodesNames[1] == "id")) {
               attribute <- sprintf(" %s=%s", 
                                    subnodesNames[1],
-                                   prop(x, subnodesNames[1]))
+                                   prop(x, subnodesNames[1])@id)
               subnodesNames <- subnodesNames[-1]
               attribute
             } else {
@@ -110,6 +173,7 @@ method(asXMLnodes, rdmlBaseType) <- function(x
               function(subnodeName) {
                 # subnodeName <- gsub("^\\.(.*)$",
                 #                      "\\1", name)
+               
                 switch(
                   typeof(prop(x, subnodeName)),
                   closure = NULL,
@@ -121,9 +185,10 @@ method(asXMLnodes, rdmlBaseType) <- function(x
                     paste0(collapse = "\n")
                   ,
                   S4 = {
-                    asXMLnodes(prop(x, subnodeName)
-                               # , subnodeName
-                               )
+                    asXMLnodes(
+                      prop(x, subnodeName),
+                      subnodeName
+                    )
                   },
                   {
                     if (!testClass(x, "rdmlBaseType") &&
@@ -155,11 +220,23 @@ method(asXMLnodes, rdmlBaseType) <- function(x
           nodeName)
 }
 
+method(names, rdmlBaseType) <- function(x) {
+  prop_names(x)
+}
+`$.rdmlBaseType` <- function(x, name) {
+  if (typeof(x) %in% c("list", "environment")) {
+    NextMethod()
+  } else {
+    prop(x, name)
+  }
+}
+
+
 experimenterType <- new_class(
   "experimenterType",
   parent = rdmlBaseType,
   properties = list(
-    id = class_character_nonempty_single,
+    id = class_id,
     firstName = class_character_nonempty_single,
     lastName = class_character_nonempty_single,
     email = class_character_na_nonempty_single,
@@ -172,12 +249,12 @@ documentationType <- new_class(
   "documentationType",
   parent = rdmlBaseType,
   properties = list(
-    id = class_character_nonempty_single,
+    id = class_id,
     text = class_character_na_nonempty_single
   )
 )
 
-DyeChemistryType <- 
+dyeChemistryType <- 
   new_enum_class(
     "DyeChemistryType",
     c("non-saturating DNA binding dye", 
@@ -193,7 +270,7 @@ dyeType <- new_class(
   "dyeType",
   parent = rdmlBaseType,
   properties = list(
-    id = class_character_nonempty_single,
+    id = class_id,
     description = class_character_na_nonempty_single,
     dyeChemistry = 
       new_property(
@@ -201,7 +278,7 @@ dyeType <- new_class(
         validator = function(value) {
           if (
             !(testClass(value, 
-                        "DyeChemistryType") ||
+                        "dyeChemistryType") ||
               is.na(value))
           )
             "must be a NA or a single DyeChemistryType"
@@ -217,5 +294,164 @@ xRefType <- new_class(
   properties = list(
     name = class_character_na_nonempty_single,
     id = class_character_na_nonempty_single
+  )
+)
+
+annotationType <- new_class(
+  "annotationType",
+  parent = rdmlBaseType,
+  properties = list(
+    property = class_character_na_nonempty_single,
+    value = class_character_na_nonempty_single
+  )
+)
+
+sampleTypeType <- 
+  new_enum_class(
+    "sampleTypeType",
+    c("unkn", "ntc", "nac",
+      "std", "ntp", "nrt",
+      "pos", "opt")
+  )
+
+sampleTargetType <- new_class(
+  "sampleTargetType",
+  parent = rdmlBaseType,
+  properties = list(
+    targetId = class_id,
+    sampleType = 
+      new_property(
+        sampleTypeType,
+        validator = function(value) {
+          if (length(value) != 1)
+            "must be a single sampleTypeType"
+        }
+      )
+  )
+)
+
+quantityUnitType <- 
+  new_enum_class(
+    "quantityUnitType",
+    c("cop", "fold", "dil",
+      "ng", "nMol", "other")
+  )
+
+class_quantityUnitType_nonempty_single <- 
+  new_property(
+    quantityUnitType,
+    validator = function(value) {
+      if (length(value) != 1)
+        "must be a single quantityUnitType"
+    }
+  )
+
+quantityType <- new_class(
+  "quantityType",
+  parent = rdmlBaseType,
+  properties = list(
+    targetId = class_id,
+    value = class_numeric,
+    unit = class_quantityUnitType_nonempty_single
+  )
+)
+
+
+cdnaSynthesisMethodType <- new_class(
+  "cdnaSynthesisMethodType",
+  parent = rdmlBaseType,
+  properties = list(
+    enzyme = class_character_na_nonempty_single,
+    primingMethod = class_number_na_single,
+    dnaseTreatment = class_logical,
+    thermalCyclingConditions = class_id
+  )
+)
+
+nucleotideType <- 
+  new_enum_class(
+    "nucleotideType",
+    c("DNA", "genomic DNA", "cDNA", "RNA")
+  )
+
+templateQuantityType <- new_class(
+  "templateQuantityType",
+  parent = rdmlBaseType,
+  properties = list(
+    conc = class_number_single,
+    nucleotide = new_property(
+      nucleotideType,
+      validator = function(value) {
+        if (length(value) != 1)
+          "must be a single nucleotideType"
+      }
+    )
+  )
+)
+
+
+sampleType <- new_class(
+  "sampleType",
+  parent = rdmlBaseType,
+  properties = list(
+    id = class_id,
+    documentation = new_property(
+      class_list,
+      validator = function(value) {
+        if (!all(sapply(value, \(x) testClass(x, "idType"))))
+          "must be a list of idType"
+      }
+    ),
+    xRef = new_property(
+      class_list,
+      validator = function(value) {
+        if (!all(sapply(value, \(x) testClass(x, "xRefType"))))
+          "must be a list of xRefType"
+      }
+    ),
+    type = new_property(
+      class_list,
+      validator = function(value) {
+        if (!all(sapply(value, \(x) testClass(x, "sampleTargetType"))))
+          "must be a list of sampleTargetType"
+      }
+    ),
+    interRunCalibrator = class_flag_na,
+    quantity = new_property(
+      class_list,
+      validator = function(value) {
+        if (!all(sapply(value, \(x) testClass(x, "quantityType"))))
+          "must be a list of quantityType"
+      }
+    ),
+    calibratorSample = class_flag_na,
+    cdnaSynthesisMethod = 
+      new_property(
+        class_any,
+        validator = function(value) {
+          if (
+            is.na(value) ||
+            (testClass(value, "cdnaSynthesisMethodType") &&
+            length(value) == 1))
+            NULL
+          else
+            "must be NA or a single cdnaSynthesisMethodType"
+        },
+        default = NA
+      ),
+    templateQuantity =  
+      new_property(
+        class_any,
+        validator = function(value) {
+          if (
+            is.na(value) ||
+            (testClass(value, "templateQuantityType") &&
+             length(value) == 1))
+            NULL
+          else
+            "must be NA or a single templateQuantityType"
+        },
+        default = NA
+      )
   )
 )
