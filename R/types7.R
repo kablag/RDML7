@@ -61,6 +61,36 @@ class_number_single <- new_property(
       "must be a number"
   })
 
+test_class_na <- function(className) {
+  new_property(
+    class_any,
+    validator = function(value) {
+      if (is.na(value) || 
+          (testClass(value, className) &&
+           length(value) == 1))
+        NULL
+      else
+        paste("must be a NA or", className)
+    },
+    default = NA
+  )
+}
+
+test_class_na_list <- function(className) {
+  new_property(
+    class_any,
+    validator = function(value) {
+      if (is.na(value) || (
+        is.list(value) &&
+          all(sapply(value, \(x) testClass(x, className))))
+      )
+        NULL
+      else
+        paste("must be a list of", className)
+    },
+    default = NA
+  )
+}
 
 rdmlEnum <- new_class(
   "rdmlEnum",
@@ -173,7 +203,7 @@ method(asXMLnodes, rdmlBaseType) <- function(x,
               function(subnodeName) {
                 # subnodeName <- gsub("^\\.(.*)$",
                 #                      "\\1", name)
-               
+                
                 switch(
                   typeof(prop(x, subnodeName)),
                   closure = NULL,
@@ -395,13 +425,64 @@ sampleType <- new_class(
   parent = rdmlBaseType,
   properties = list(
     id = class_id,
-    documentation = new_property(
-      class_list,
-      validator = function(value) {
-        if (!all(sapply(value, \(x) testClass(x, "idType"))))
-          "must be a list of idType"
-      }
-    ),
+    description = class_character_na_nonempty_single,
+    documentation = test_class_na_list("idType"),
+    xRef = test_class_na_list("xRefType"),
+    type = test_class_na_list("sampleTargetType"),
+    interRunCalibrator = class_flag_na,
+    quantity = test_class_na_list("quantityType"),
+    calibratorSample = class_flag_na,
+    cdnaSynthesisMethod = test_class_na("cdnaSynthesisMethodType"),
+    templateQuantity = test_class_na("templateQuantityType")
+  )
+)
+
+oligoType <- new_class(
+  "oligoType",
+  parent = rdmlBaseType,
+  properties = list(
+    threePrimeTag = class_character_na_nonempty_single,
+    fivePrimeTag = class_character_na_nonempty_single,
+    sequence = class_character_nonempty_single
+  )
+)
+
+sequencesType <- new_class(
+  "sequencesType",
+  parent = rdmlBaseType,
+  properties = list(
+    forwardPrimer = test_class_na("oligoType"), 
+    reversePrimer = test_class_na("oligoType"),
+    probe1 = test_class_na("oligoType"),
+    probe2 = test_class_na("oligoType"),
+    amplicon = test_class_na("oligoType")
+  )
+)
+
+
+commercialAssayType <- new_class(
+  "commercialAssayType",
+  parent = rdmlBaseType,
+  properties = list(
+    company = class_character_nonempty_single,
+    orderNumber = class_character_nonempty_single
+  )
+)
+targetTypeType <-  new_enum_class(
+  "targetTypeType",
+  c("ref", "toi")
+)
+
+
+
+
+targetType <- new_class(
+  "targetType",
+  parent = rdmlBaseType,
+  properties = list(
+    id = class_id,
+    description = class_character_na_nonempty_single,
+    documentation = class_id,
     xRef = new_property(
       class_list,
       validator = function(value) {
@@ -410,48 +491,15 @@ sampleType <- new_class(
       }
     ),
     type = new_property(
-      class_list,
-      validator = function(value) {
-        if (!all(sapply(value, \(x) testClass(x, "sampleTargetType"))))
-          "must be a list of sampleTargetType"
-      }
+      targetTypeType
     ),
-    interRunCalibrator = class_flag_na,
-    quantity = new_property(
-      class_list,
-      validator = function(value) {
-        if (!all(sapply(value, \(x) testClass(x, "quantityType"))))
-          "must be a list of quantityType"
-      }
-    ),
-    calibratorSample = class_flag_na,
-    cdnaSynthesisMethod = 
-      new_property(
-        class_any,
-        validator = function(value) {
-          if (
-            is.na(value) ||
-            (testClass(value, "cdnaSynthesisMethodType") &&
-            length(value) == 1))
-            NULL
-          else
-            "must be NA or a single cdnaSynthesisMethodType"
-        },
-        default = NA
-      ),
-    templateQuantity =  
-      new_property(
-        class_any,
-        validator = function(value) {
-          if (
-            is.na(value) ||
-            (testClass(value, "templateQuantityType") &&
-             length(value) == 1))
-            NULL
-          else
-            "must be NA or a single templateQuantityType"
-        },
-        default = NA
-      )
+    amplificationEfficiencyMethod = class_character_na_nonempty_single,
+    amplificationEfficiency = class_number_na_single,
+    amplificationEfficiencySE = class_number_na_single,
+    meltingTemperature = class_number_na_single,
+    detectionLimit = class_number_na_single,
+    dyeId = new_property(
+      idType
+    )
   )
 )
