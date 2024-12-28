@@ -61,6 +61,20 @@ class_number_single <- new_property(
       "must be a number"
   })
 
+test_class <- function(className) {
+  new_property(
+    class_any,
+    validator = function(value) {
+      if (testClass(value, className) &&
+          length(value) == 1)
+        NULL
+      else
+        paste("must be a", className)
+    },
+    default = NA
+  )
+}
+
 test_class_na <- function(className) {
   new_property(
     class_any,
@@ -82,7 +96,7 @@ test_class_na_list <- function(className) {
     validator = function(value) {
       if (is.na(value) || (
         is.list(value) &&
-          all(sapply(value, \(x) testClass(x, className))))
+        all(sapply(value, \(x) testClass(x, className))))
       )
         NULL
       else
@@ -168,6 +182,10 @@ class_id <- new_property(
   }
 )
 
+idReferenceType <- new_class(
+  "idReferenceType",
+  parent = idType
+)
 
 rdmlBaseType <- new_class(
   "rdmlBaseType",
@@ -198,54 +216,56 @@ method(asXMLnodes, rdmlBaseType) <- function(x,
           },
           # value
           {
-            sapply(
-              subnodesNames,
-              function(subnodeName) {
-                # subnodeName <- gsub("^\\.(.*)$",
-                #                      "\\1", name)
-                
-                switch(
-                  typeof(prop(x, subnodeName)),
-                  closure = NULL,
-                  list =
-                    sapply(prop(x, subnodeName),
-                           function(sublist)
-                             asXMLnodes(sublist, subnodeName)) |> 
-                    # .[!sapply(., is.null)] |>
-                    paste0(collapse = "\n")
-                  ,
-                  S4 = {
-                    asXMLnodes(
-                      prop(x, subnodeName),
-                      subnodeName
-                    )
-                  },
-                  {
-                    if (!testClass(x, "rdmlBaseType") &&
-                        (
-                          is.null(prop(x, subnodeName)) ||
-                          is.na(prop(x, subnodeName)))
-                    ) {
-                      NULL
-                    } else {
-                      sprintf("<%s>%s</%s>\n",
-                              subnodeName,
-                              switch(
-                                typeof(prop(x, subnodeName)),
-                                logical =
-                                  ifelse(prop(x, subnodeName),
-                                         "true",
-                                         "false"
-                                  ),
-                                prop(x, subnodeName)
-                              ),
-                              subnodeName
+            subnodes <- 
+              sapply(
+                subnodesNames,
+                function(subnodeName) {
+                  # subnodeName <- gsub("^\\.(.*)$",
+                  #                      "\\1", name)
+                  switch(
+                    typeof(prop(x, subnodeName)),
+                    closure = NULL,
+                    list =
+                      sapply(prop(x, subnodeName),
+                             function(sublist)
+                               asXMLnodes(sublist, subnodeName)) |> 
+                      # .[!sapply(., is.null)] |>
+                      paste0(collapse = "\n")
+                    ,
+                    S4 = {
+                      asXMLnodes(
+                        prop(x, subnodeName),
+                        subnodeName
                       )
-                    }
-                  })
-              }) |>
-              #### (vals ~ vals[!sapply(vals, is.null)]) |>
-              paste0(collapse = "")
+                    },
+                    {
+                      if (!testClass(prop(x, subnodeName),
+                                     "rdmlBaseType") && (
+                                       is.null(prop(x, subnodeName)) ||
+                                       is.na(prop(x, subnodeName))
+                                     ))
+                      {
+                        NULL
+                      } else {
+                        sprintf("<%s>%s</%s>\n",
+                                subnodeName,
+                                switch(
+                                  typeof(prop(x, subnodeName)),
+                                  logical =
+                                    ifelse(prop(x, subnodeName),
+                                           "true",
+                                           "false"
+                                    ),
+                                  prop(x, subnodeName)
+                                ),
+                                subnodeName
+                        )
+                      }
+                    })
+                })
+            # browser()
+            subnodes <- unlist(subnodes)
+            paste0(subnodes, collapse = "")
           },
           nodeName)
 }
@@ -386,7 +406,7 @@ quantityType <- new_class(
   )
 )
 
-
+# !!!!!!!!!!!
 cdnaSynthesisMethodType <- new_class(
   "cdnaSynthesisMethodType",
   parent = rdmlBaseType,
@@ -394,7 +414,7 @@ cdnaSynthesisMethodType <- new_class(
     enzyme = class_character_na_nonempty_single,
     primingMethod = class_number_na_single,
     dnaseTreatment = class_logical,
-    thermalCyclingConditions = class_id
+    thermalCyclingConditions = test_class_na("isReferenceType")
   )
 )
 
@@ -426,7 +446,7 @@ sampleType <- new_class(
   properties = list(
     id = class_id,
     description = class_character_na_nonempty_single,
-    documentation = test_class_na_list("idType"),
+    documentation = test_class_na_list("idReferenceType"),
     xRef = test_class_na_list("xRefType"),
     type = test_class_na_list("sampleTargetType"),
     interRunCalibrator = class_flag_na,
@@ -473,33 +493,22 @@ targetTypeType <-  new_enum_class(
   c("ref", "toi")
 )
 
-
-
-
 targetType <- new_class(
   "targetType",
   parent = rdmlBaseType,
   properties = list(
     id = class_id,
     description = class_character_na_nonempty_single,
-    documentation = class_id,
-    xRef = new_property(
-      class_list,
-      validator = function(value) {
-        if (!all(sapply(value, \(x) testClass(x, "xRefType"))))
-          "must be a list of xRefType"
-      }
-    ),
-    type = new_property(
-      targetTypeType
-    ),
+    documentation = test_class_na_list("idReferenceType"),
+    xRef = test_class_na_list("xRefType"),
+    type = test_class("targetTypeType"),
     amplificationEfficiencyMethod = class_character_na_nonempty_single,
     amplificationEfficiency = class_number_na_single,
     amplificationEfficiencySE = class_number_na_single,
     meltingTemperature = class_number_na_single,
     detectionLimit = class_number_na_single,
-    dyeId = new_property(
-      idType
-    )
+    dyeId = test_class("idReferenceType"),
+    sequences = test_class_na("sequencesType"),
+    commercialAssay = test_class_na("commercialAssayType")
   )
 )
