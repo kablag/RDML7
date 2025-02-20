@@ -512,3 +512,16 @@ targetType <- new_class(
     commercialAssay = test_class_na("commercialAssayType")
   )
 )
+
+ttType <- new_class(
+  "ttType",
+  properties = list(
+    id = class_id
+  )
+)
+ttType2 <- new_class(
+  "ttType2",
+  properties = list(
+    id = test_class("idType")
+  )
+)
