@@ -50,7 +50,7 @@ class_number_na_single <- new_property(
   validator = function(value) {
     # if (is.na(value)) return()
     # value <- 
-    if (!testNumber(value,na.ok = TRUE))
+    if (!testNumber(value, na.ok = TRUE))
       "must be a NA or a number"
   }, default = as.character(NA))
 
@@ -60,6 +60,23 @@ class_number_single <- new_property(
     if (length(value) != 1 || is.na(value))
       "must be a number"
   })
+
+class_positive_integer_single <- new_property(
+  class_integer,
+  validator = function(value) {
+    if (!testInt(value, lower = 0))
+      "must be a positive integer"
+  }
+)
+
+class_integer_na_single <- new_property(
+  class_any,
+  validator = function(value) {
+    # if (is.na(value)) return()
+    # value <- 
+    if (!testInt(value, na.ok = TRUE))
+      "must be a NA or a integer"
+  }, default = as.integer(NA))
 
 test_class <- function(className) {
   new_property(
@@ -145,7 +162,7 @@ new_enum_class <- function(enum_class, variants) {
       value = class_character,
       variants = new_property(class_character, default = variants)
     ),
-    constructor = function(value) {
+    constructor = function(value = "") {
       new_object(S7_object(), value = value, variants = variants)
     }
   )
@@ -488,6 +505,7 @@ commercialAssayType <- new_class(
     orderNumber = class_character_nonempty_single
   )
 )
+
 targetTypeType <-  new_enum_class(
   "targetTypeType",
   c("ref", "toi")
@@ -510,6 +528,44 @@ targetType <- new_class(
     dyeId = test_class("idReferenceType"),
     sequences = test_class_na("sequencesType"),
     commercialAssay = test_class_na("commercialAssayType")
+  )
+)
+
+
+# thermalCyclingConditions ------------------------------------------------
+
+measureType <-  new_enum_class(
+  "measureType",
+  c("real time", "meltcurve")
+)
+
+
+temperatureBaseType <- new_class(
+  "temperatureBaseType",
+  parent = rdmlBaseType,
+  properties = list(
+    duration = class_positive_integer_single,
+    temperatureChange = class_number_na_single,
+    durationChange = class_integer_na_single,
+    measure = test_class_na("measureType"),
+    ramp = class_number_na_single
+  )
+)
+
+temperatureType <- new_class(
+  "temperatureBaseType",
+  parent = rdmlBaseType,
+  properties = list(
+    temperature = class_number_single
+  )
+)
+
+gradientType <- new_class(
+  "gradientType",
+  parent = temperatureBaseType,
+  properties = list(
+    highTemperature = class_number_single,
+    lowTemperature = class_number_single
   )
 )
 
