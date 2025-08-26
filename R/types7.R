@@ -3,6 +3,16 @@ library(checkmate)
 
 asXMLnodes <- new_generic("asXMLnodes", "x")
 
+
+class_datetime_na <- new_property(
+  class_any,
+  validator = function(value) {
+    if (!is.na(value) && (is.na(ymd_hms(dateTime, quiet = TRUE)) ||
+                          is.na(ymd(dateTime, quiet = TRUE))))
+      "must be a NA or pass lubridate ymd_hms() / ymd() conversion"
+  }, default = as.character(NA)
+)
+
 class_character_na_nonempty_single <- new_property(
   class_any,
   validator = function(value) {
@@ -45,6 +55,20 @@ class_flag <- new_property(
       "must be a flag"
   })
 
+class_datatable <- new_property(
+  class_data.frame,
+  # validator = function(value) {
+  #   if ((value) != 1)
+  #     "must be a single data.frame or data.table"
+  # },
+  setter = function(self, value) {
+    if (!is.data.table(value)) {
+      value <- as.data.table(value)
+    }
+    self@fpoints <- value
+    self
+  })
+
 class_number_na_single <- new_property(
   class_any,
   validator = function(value) {
@@ -78,6 +102,15 @@ class_integer_na_single <- new_property(
       "must be a NA or a integer"
   }, default = as.integer(NA))
 
+class_positive_integer_na_single <- new_property(
+  class_any,
+  validator = function(value) {
+    # if (is.na(value)) return()
+    # value <- 
+    if (!testInt(value, lower = 0, na.ok = TRUE))
+      "must be a NA or a positive integer"
+  }, default = as.integer(NA))
+
 test_class <- function(className) {
   new_property(
     class_any,
@@ -107,6 +140,22 @@ test_class_na <- function(className) {
   )
 }
 
+test_class_list <- function(className) {
+  new_property(
+    class_any,
+    validator = function(value) {
+      if (
+        is.list(value) &&
+        all(sapply(value, \(x) testClass(x, className)))
+      )
+        NULL
+      else
+        paste("must be a list of", className)
+    },
+    default = NA
+  )
+}
+
 test_class_na_list <- function(className) {
   new_property(
     class_any,
@@ -117,7 +166,7 @@ test_class_na_list <- function(className) {
       )
         NULL
       else
-        paste("must be a list of", className)
+        paste("must be NA or a list of", className)
     },
     default = NA
   )
@@ -569,15 +618,282 @@ gradientType <- new_class(
   )
 )
 
-ttType <- new_class(
-  "ttType",
+loopType <- new_class(
+  "loopType",
+  parent = rdmlBaseType,
   properties = list(
-    id = class_id
+    goto = class_positive_integer_single,
+    "repeat" = class_positive_integer_single
   )
 )
-ttType2 <- new_class(
-  "ttType2",
+
+pauseType <- new_class(
+  "pauseType",
+  parent = rdmlBaseType,
   properties = list(
-    id = test_class("idType")
+    temperature = class_number_single
   )
 )
+
+lidOpenType <- new_class(
+  "lidOpenType",
+  parent = rdmlBaseType,
+  properties = list(
+  )
+)
+
+stepType <- new_class(
+  "stepType",
+  parent = rdmlBaseType,
+  properties = list(
+    nr = class_positive_integer_single,
+    description = class_character_na_nonempty_single,
+    temperature = test_class_na("temperatureType"),
+    gradient = test_class_na("gradientType"),
+    loop = test_class_na("loopType"),
+    pause = test_class_na("pauseType"),
+    lidOpen = test_class_na("lidOpenType")
+  )
+)
+
+thermalCyclingConditionsType <- new_class(
+  "thermalCyclingConditionsType",
+  parent = rdmlBaseType,
+  properties = list(
+    id = class_id,
+    description = class_character_na_nonempty_single,
+    documentation = test_class_na_list("idReferenceType"),
+    lidTemperature = class_number_na_single,
+    experimenter = test_class_na_list("idReferenceType"),
+    step = test_class_list("stepType")
+  )
+)
+
+
+# experiment --------------------------------------------------------------
+
+dpAmpCurveType <- new_class(
+  "dpAmpCurveType",
+  parent = rdmlBaseType,
+  validator = function(self) {
+    if (!testSetEqual(colnames(self@fpoints), c("cyc", "fluor")) &&
+        !testSetEqual(colnames(self@fpoints), c("cyc", "tmp", "fluor"))) {
+      "@fpoints must have columns: cyc, tmp (optional), fluor"
+    }
+  },
+  properties = list(
+    fpoints = class_datatable
+  )
+)
+
+method(asXMLnodes, dpAmpCurveType) <- function(x, nodeName) {
+  dt <- x@fpoints
+  if (ncol(dt) == 2)
+    sprintf("<adp><cyc>%f</cyc><fluor>%f</fluor></adp>", dt$cyc, dt$fluor)
+  else
+    sprintf("<adp><cyc>%f</cyc><tmp>%f</tmp><fluor>%f</fluor></adp>", 
+            dt$cyc,
+            dt$tmp,
+            dt$fluor)
+}
+
+dpMeltingCurveType <- new_class(
+  "dpMeltingCurveType",
+  parent = rdmlBaseType,
+  validator = function(self) {
+    if (colnames(self@fpoints) != c("tmp", "fluor")) {
+      "@fpoints must have columns: tmp, fluor"
+    }
+  },
+  properties = list(
+    fpoints = class_datatable
+  )
+)
+
+method(asXMLnodes, dpMeltingCurveType) <- function(x, nodeName) {
+  dt <- x@fpoints
+  sprintf("<mdp><tmp>%f</tmp><fluor>%f</fluor></mdp>", dt$tmp, dt$fluor)
+}
+
+
+# dataType ----------------------------------------------------------------
+
+
+dataType <- 
+  new_class("dataType",
+            parent = rdmlBaseType,
+            properties = list(
+              targetId = test_class("idReferenceType"),
+              cq = class_number_na_single,
+              N0 = class_number_na_single,
+              ampEffMet = class_character_na_nonempty_single,
+              ampEff = class_number_na_single,
+              ampEffSE = class_number_na_single,
+              corrF = class_number_na_single,
+              corrP = class_number_na_single,
+              meltTemp = class_number_na_single,
+              excl = class_character_na_nonempty_single,
+              note = class_character_na_nonempty_single,
+              adp = test_class_na("dpAmpCurveType"),
+              mdp = test_class_na("dpMeltingCurveType"),
+              endPt = class_number_na_single,
+              bgFluor = class_number_na_single,
+              bgFluorSlp = class_number_na_single,
+              quantFluor = class_number_na_single
+            ))
+
+
+# partitionDataType -------------------------------------------------------
+
+partitionDataType <- 
+  new_class("partitionDataType",
+            parent = rdmlBaseType,
+            properties = list(
+              targetId = test_class("idReferenceType"),
+              excluded = class_character_na_nonempty_single,
+              note = class_character_na_nonempty_single,
+              pos = class_positive_integer_single,
+              neg = class_positive_integer_single,
+              undef = class_positive_integer_na_single,
+              excl = class_positive_integer_na_single,
+              conc = class_number_na_single
+            ))
+
+
+# partitionsType ----------------------------------------------------------
+
+partitionsType <- 
+  new_class("partitionsType",
+            parent = rdmlBaseType,
+            properties = list(
+              volume = class_number_single,
+              endPtTable = class_character_na_nonempty_single,
+              data = test_class_list("partitionDataType")
+            ))
+
+
+
+# reactType ---------------------------------------------------------------
+
+
+reactType <- new_class("reactType", parent = rdmlBaseType, properties = list(
+  id = class_id,
+  sample = test_class("idReferenceType"),
+  data = test_class_na_list("dataType"),
+  patitions = test_class_na_list("partitionsType")
+))
+
+
+
+# dataCollectionSoftwareType ----------------------------------------------
+
+dataCollectionSoftwareType <- 
+  new_class("dataCollectionSoftwareType",
+            parent = rdmlBaseType,
+            properties = list(
+              name = class_character_nonempty_single,
+              version = class_character_nonempty_single
+            ))
+
+
+
+# labelFormatType ---------------------------------------------------------
+
+labelFormatType <- 
+  new_enum_class(
+    "labelFormatType",
+    c("ABC", 
+      "123",
+      "A1a1")
+  )
+
+# pcrFormatType -----------------------------------------------------------
+
+pcrFormatType <- 
+  new_class("pcrFormatType",
+            parent = rdmlBaseType,
+            properties = list(
+              rows = class_positive_integer_single,
+              version = class_positive_integer_single,
+              rowLabel = test_class("labelFormatType"),
+              columnLabel = test_class("labelFormatType")
+            ))
+
+# cqDetectionMethodType ---------------------------------------------------
+
+cqDetectionMethodType <-
+  new_enum_class("cqDetectionMethodType",
+                 c("automated threshold and baseline settings",
+                   "manual threshold and baseline settings",
+                   "second derivative maximum",
+                   "other")
+  )
+
+# runType -----------------------------------------------------------------
+
+runType <- 
+  new_class(
+    "runType",
+    parent = rdmlBaseType,
+    properties = list(
+      id = class_id,
+      description = class_character_na_nonempty_single,
+      documentation = test_class_na_list("idReferenceType"),
+      experimenter = test_class_na_list("idReferenceType"),
+      instrument = class_character_na_nonempty_single,
+      dataCollectionSoftware = test_class_na("dataCollectionSoftwareType"),
+      backgroundDetermenationMethod = class_character_na_nonempty_single,
+      cqDetectionMethod = test_class_na("cqDetectionMethodType"),
+      thermalCyclingConditions = test_class_na("idReferenceType"),
+      pcrFormat = test_class_na("pcrFormatType"),
+      runDate = class_datetime_na,
+      react = test_class_na_list("reactType")
+    ))
+
+
+# experimentType ----------------------------------------------------------
+
+experimentType <- 
+  new_class("experimentType",
+            parent = rdmlBaseType,
+            properties = list(
+              id = class_id,
+              description = class_character_na_nonempty_single,
+              documentation = test_class_na_list("idReferenceType"),
+              run = test_class_na_list("runType")
+            ))
+
+
+
+# rdmlIdType -------------------------------------------------------------
+
+rdmlIdType <- 
+  new_class("rdmlIdType",
+            parent = rdmlBaseType,
+            properties = list(
+              publisher = class_character_nonempty_single,
+              serialNumber = class_character_nonempty_single,
+              MD5Hash = class_character_na_nonempty_single,
+            ))
+
+
+
+
+# rdmlType ----------------------------------------------------------------
+
+rdmlType <- 
+  new_class("rdmlType", 
+            parent = rdmlBaseType, 
+            properties = list(
+              version = "1.3",
+              dateMade = class_datetime_na,
+              dateUpadted = class_datetime_na,
+              id = test_class_na_list("rdmlIdType"),
+              experimenter = test_class_na_list("experimenterType"),
+              documentation = test_class_na_list("documentationType"),
+              dye = test_class_na_list("dyeType"),
+              sample = test_class_na_list("sampleType"),
+              target = test_class_na_list("targetType"),
+              thermalCyclingConditions = test_class_na_list("thermalCyclingConditionsType"),
+              experiment = test_class_na_list("experimentType")
+            ))
