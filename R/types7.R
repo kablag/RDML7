@@ -346,7 +346,10 @@ method(names, rdmlBaseType) <- function(x) {
     prop(x, name)
   }
 }
-
+`$<-.rdmlBaseType` <- function(x, name, value) {
+  prop(x, name) <- value
+  x
+}
 
 experimenterType <- new_class(
   "experimenterType",
@@ -873,7 +876,7 @@ rdmlIdType <-
             properties = list(
               publisher = class_character_nonempty_single,
               serialNumber = class_character_nonempty_single,
-              MD5Hash = class_character_na_nonempty_single,
+              MD5Hash = class_character_na_nonempty_single
             ))
 
 
@@ -885,7 +888,7 @@ rdmlType <-
   new_class("rdmlType", 
             parent = rdmlBaseType, 
             properties = list(
-              version = "1.3",
+              version = class_character,
               dateMade = class_datetime_na,
               dateUpadted = class_datetime_na,
               id = test_class_na_list("rdmlIdType"),
