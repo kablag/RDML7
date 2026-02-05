@@ -817,7 +817,7 @@ pcrFormatType <-
             parent = rdmlBaseType,
             properties = list(
               rows = class_positive_integer_single,
-              version = class_positive_integer_single,
+              columns = class_positive_integer_single,
               rowLabel = test_class("labelFormatType"),
               columnLabel = test_class("labelFormatType")
             ))
@@ -900,3 +900,5 @@ rdmlType <-
               thermalCyclingConditions = test_class_na_list("thermalCyclingConditionsType"),
               experiment = test_class_na_list("experimentType")
             ))
+
+
