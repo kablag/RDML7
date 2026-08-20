@@ -412,7 +412,7 @@ method(`[<-`, rdmlKeyedList) <- function(x, i, ..., value) {
     )
   }
   
-  current_keys <- .get_keys(data)
+  current_keys <- .get_keys(data, x@key)
   
   # Удаляем несколько объектов
   if (is.null(value)) {
@@ -421,7 +421,7 @@ method(`[<-`, rdmlKeyedList) <- function(x, i, ..., value) {
     
     if (anyNA(pos)) {
       stop(
-        "Unknown id: ",
+        "Unknown key: ",
         paste(
           sprintf("'%s'", i[is.na(pos)]),
           collapse = ", "
@@ -450,7 +450,7 @@ method(`[<-`, rdmlKeyedList) <- function(x, i, ..., value) {
     )
   }
   
-  value_ids <- .get_keys(
+  value_keys <- .get_keys(
     value,
     x@key
   )
@@ -459,7 +459,7 @@ method(`[<-`, rdmlKeyedList) <- function(x, i, ..., value) {
   
   if (any(bad_id)) {
     stop(
-      "all replacement objects must have a non-empty id",
+      paste0("all replacement objects must have a non-empty ", x@key),
       call. = FALSE
     )
   }
@@ -470,8 +470,8 @@ method(`[<-`, rdmlKeyedList) <- function(x, i, ..., value) {
     k <- which(mismatch)[1L]
     
     stop(
-      "Index id ('", i[[k]],
-      "') does not match object id ('",
+      "Index key ('", i[[k]],
+      "') does not match object ", x@key, " ('",
       value_keys[[k]], "')",
       call. = FALSE
     )
@@ -481,7 +481,7 @@ method(`[<-`, rdmlKeyedList) <- function(x, i, ..., value) {
   # или добавляем новые
   for (k in seq_along(i)) {
     
-    current_keys <- .get_keys(data)
+    current_keys <- .get_keys(data, x@key)
     
     pos <- match(i[[k]], current_keys)
     
