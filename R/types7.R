@@ -184,13 +184,14 @@ test_class_na_list <- function(className) {
   )
 }
 
-test_class_na_id_list <- function(className) {
+test_class_na_keyed_list <- function(className, key = "id") {
+  
   property <- new_property(
     class_any,
     
     validator = function(value) {
-      # NA допустимо
-      if (is.na(value)[1]) {
+      
+      if (.is_single_na(value)) {
         return(NULL)
       }
       
@@ -212,31 +213,30 @@ test_class_na_id_list <- function(className) {
         )
       }
       
-      ids <- vapply(
-        value,
-        .get_id,
-        character(1)
-      )
+      keys <- .get_keys(value, key)
       
-      if (anyNA(ids) || any(ids == "")) {
+      if (anyNA(keys) || any(keys == "")) {
         return(
-          paste(
+          paste0(
             className,
-            "objects must have non-empty ids"
+            " objects must have non-empty ",
+            key
           )
         )
       }
       
-      if (anyDuplicated(ids)) {
-        duplicated_ids <- unique(
-          ids[duplicated(ids)]
+      if (anyDuplicated(keys)) {
+        duplicated_keys <- unique(
+          keys[duplicated(keys)]
         )
         
         return(
           paste0(
-            "duplicated id: ",
+            "duplicated ",
+            key,
+            ": ",
             paste(
-              duplicated_ids,
+              duplicated_keys,
               collapse = ", "
             )
           )
@@ -249,10 +249,17 @@ test_class_na_id_list <- function(className) {
     default = NA
   )
   
-  attr(property, "rdml_id_indexed") <- TRUE
+  attr(property, "rdml_key") <- key
   attr(property, "rdml_element_class") <- className
   
   property
+}
+
+test_class_na_id_list <- function(className) {
+  test_class_na_keyed_list(
+    className,
+    key = "id"
+  )
 }
 
 rdmlEnum <- new_class(
@@ -431,18 +438,24 @@ method(names, rdmlBaseType) <- function(x) {
 }
 
 `$.rdmlBaseType` <- function(x, name) {
+  
   if (typeof(x) %in% c("list", "environment")) {
     return(NextMethod())
   }
   
   value <- prop(x, name)
   
+  key <- .property_key(x, name)
+  
   if (
-    .is_id_indexed_property(x, name) &&
+    !is.null(key) &&
     is.list(value)
   ) {
     return(
-      rdmlIdList(value)
+      rdmlKeyedList(
+        value,
+        key = key
+      )
     )
   }
   
@@ -450,9 +463,10 @@ method(names, rdmlBaseType) <- function(x) {
 }
 
 `$<-.rdmlBaseType` <- function(x, name, value) {
+  
   if (
-    .is_id_indexed_property(x, name) &&
-    S7_inherits(value, rdmlIdList)
+    !is.null(.property_key(x, name)) &&
+    S7_inherits(value, rdmlKeyedList)
   ) {
     value <- S7_data(value)
   }
@@ -498,7 +512,7 @@ documentationType <- new_class(
 
 dyeChemistryType <- 
   new_enum_class(
-    "DyeChemistryType",
+    "dyeChemistryType",
     c("non-saturating DNA binding dye", 
       "saturating DNA binding dye",
       "hybridization probe",
@@ -623,7 +637,7 @@ cdnaSynthesisMethodType <- new_class(
     enzyme = class_character_na_nonempty_single,
     primingMethod = class_number_na_single,
     dnaseTreatment = class_logical,
-    thermalCyclingConditions = test_class_na("isReferenceType")
+    thermalCyclingConditions = test_class_na("idReferenceType")
   )
 )
 
@@ -745,8 +759,8 @@ temperatureBaseType <- new_class(
 )
 
 temperatureType <- new_class(
-  "temperatureBaseType",
-  parent = rdmlBaseType,
+  "temperatureType",
+  parent = temperatureBaseType,
   properties = list(
     temperature = class_number_single
   )
@@ -844,7 +858,10 @@ dpMeltingCurveType <- new_class(
   "dpMeltingCurveType",
   parent = rdmlBaseType,
   validator = function(self) {
-    if (colnames(self@fpoints) != c("tmp", "fluor")) {
+    if (!identical(
+      colnames(self@fpoints),
+      c("tmp", "fluor")
+    )) {
       "@fpoints must have columns: tmp, fluor"
     }
   },
@@ -905,26 +922,39 @@ partitionDataType <-
 
 # partitionsType ----------------------------------------------------------
 
-partitionsType <- 
-  new_class("partitionsType",
-            parent = rdmlBaseType,
-            properties = list(
-              volume = class_number_single,
-              endPtTable = class_character_na_nonempty_single,
-              data = test_class_list("partitionDataType")
-            ))
-
+partitionsType <- new_class(
+  "partitionsType",
+  parent = rdmlBaseType,
+  properties = list(
+    volume = class_number_single,
+    endPtTable = class_character_na_nonempty_single,
+    
+    data = test_class_na_keyed_list(
+      "partitionDataType",
+      key = "targetId"
+    )
+  )
+)
 
 
 # reactType ---------------------------------------------------------------
 
 
-reactType <- new_class("reactType", parent = rdmlBaseType, properties = list(
-  id = class_id,
-  sample = test_class("idReferenceType"),
-  data = test_class_na_list("dataType"),
-  patitions = test_class_na_list("partitionsType")
-))
+reactType <- new_class(
+  "reactType",
+  parent = rdmlBaseType,
+  properties = list(
+    id = class_id,
+    sample = test_class("idReferenceType"),
+    
+    data = test_class_na_keyed_list(
+      "dataType",
+      key = "targetId"
+    ),
+    
+    patitions = test_class_na_list("partitionsType")
+  )
+)
 
 
 
@@ -974,24 +1004,28 @@ cqDetectionMethodType <-
 
 # runType -----------------------------------------------------------------
 
-runType <- 
-  new_class(
-    "runType",
-    parent = rdmlBaseType,
-    properties = list(
-      id = class_id,
-      description = class_character_na_nonempty_single,
-      documentation = test_class_na_list("idReferenceType"),
-      experimenter = test_class_na_list("idReferenceType"),
-      instrument = class_character_na_nonempty_single,
-      dataCollectionSoftware = test_class_na("dataCollectionSoftwareType"),
-      backgroundDetermenationMethod = class_character_na_nonempty_single,
-      cqDetectionMethod = test_class_na("cqDetectionMethodType"),
-      thermalCyclingConditions = test_class_na("idReferenceType"),
-      pcrFormat = test_class_na("pcrFormatType"),
-      runDate = class_datetime_na,
-      react = test_class_na_list("reactType")
-    ))
+runType <- new_class(
+  "runType",
+  parent = rdmlBaseType,
+  properties = list(
+    id = class_id,
+    description = class_character_na_nonempty_single,
+    documentation = test_class_na_list("idReferenceType"),
+    experimenter = test_class_na_list("idReferenceType"),
+    instrument = class_character_na_nonempty_single,
+    dataCollectionSoftware = test_class_na("dataCollectionSoftwareType"),
+    backgroundDetermenationMethod = class_character_na_nonempty_single,
+    cqDetectionMethod = test_class_na("cqDetectionMethodType"),
+    thermalCyclingConditions = test_class_na("idReferenceType"),
+    pcrFormat = test_class_na("pcrFormatType"),
+    runDate = class_datetime_na,
+    
+    react = test_class_na_keyed_list(
+      "reactType",
+      key = "id"
+    )
+  )
+)
 
 
 # experimentType ----------------------------------------------------------
@@ -999,18 +1033,15 @@ runType <-
 experimentType <- new_class(
   "experimentType",
   parent = rdmlBaseType,
-  
   properties = list(
     id = class_id,
+    description = class_character_na_nonempty_single,
+    documentation = test_class_na_list("idReferenceType"),
     
-    description =
-      class_character_na_nonempty_single,
-    
-    documentation =
-      test_class_na_list("idReferenceType"),
-    
-    run =
-      test_class_na_id_list("runType")
+    run = test_class_na_keyed_list(
+      "runType",
+      key = "id"
+    )
   )
 )
 
@@ -1041,7 +1072,7 @@ rdmlType <- new_class(
     dateUpadted = class_datetime_na,
     
     id =
-      test_class_na_id_list("rdmlIdType"),
+      test_class_na_list("rdmlIdType"),
     
     experimenter =
       test_class_na_id_list("experimenterType"),

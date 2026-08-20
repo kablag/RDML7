@@ -1,28 +1,15 @@
-.get_id <- function(x) {
+.get_key <- function(x, key = "id") {
   
-  id <- tryCatch(
-    prop(x, "id"),
+  value <- tryCatch(
+    prop(x, key),
     error = function(e) NULL
   )
   
-  if (is.null(id)) {
+  if (is.null(value)) {
     return(NA_character_)
   }
   
-  # На случай если id уже character
-  if (
-    is.character(id) &&
-    length(id) == 1L
-  ) {
-    return(id)
-  }
-  
-  # idType -> @id
-  value <- tryCatch(
-    prop(id, "id"),
-    error = function(e) NA_character_
-  )
-  
+  # Если ключ уже character
   if (
     is.character(value) &&
     length(value) == 1L
@@ -30,15 +17,38 @@
     return(value)
   }
   
+  # idType / idReferenceType -> @id
+  id <- tryCatch(
+    prop(value, "id"),
+    error = function(e) NA_character_
+  )
+  
+  if (
+    is.character(id) &&
+    length(id) == 1L
+  ) {
+    return(id)
+  }
+  
   NA_character_
 }
 
-.get_ids <- function(x) {
+
+.get_keys <- function(x, key = "id") {
   vapply(
     x,
-    .get_id,
-    character(1)
+    .get_key,
+    character(1),
+    key = key
   )
+}
+
+.get_id <- function(x) {
+  .get_key(x, "id")
+}
+
+.get_ids <- function(x) {
+  .get_keys(x, "id")
 }
 
 .set_id_list_data <- function(x, value) {
@@ -53,7 +63,7 @@
 
 .as_replacement_list <- function(value) {
   
-  if (S7_inherits(value, rdmlIdList)) {
+  if (S7_inherits(value, rdmlKeyedList)) {
     return(S7_data(value))
   }
   
@@ -69,26 +79,28 @@
   list(value)
 }
 
-.rdml_id_list_properties <- c(
-  "experiment"
-)
 
-rdmlIdList <- new_class(
-  "rdmlIdList",
+rdmlKeyedList <- new_class(
+  "rdmlKeyedList",
   
   parent = class_list,
   
-  constructor = function(x = list()) {
+  properties = list(
+    key = class_character
+  ),
+  
+  constructor = function(x = list(), key = "id") {
     
     if (!is.list(x)) {
       stop("`x` must be a list", call. = FALSE)
     }
     
-    # ВАЖНО:
-    # никаких физических names() не храним
     names(x) <- NULL
     
-    new_object(x)
+    new_object(
+      x,
+      key = key
+    )
   },
   
   validator = function(self) {
@@ -99,31 +111,41 @@ rdmlIdList <- new_class(
       return(NULL)
     }
     
-    ids <- vapply(
+    keys <- .get_keys(
       x,
-      .get_id,
-      character(1)
+      self@key
     )
     
     errors <- character()
     
-    if (anyNA(ids) || any(ids == "")) {
+    if (anyNA(keys) || any(keys == "")) {
       errors <- c(
         errors,
-        "all objects must have a non-empty id"
+        paste0(
+          "all objects must have a non-empty ",
+          self@key
+        )
       )
     }
     
     duplicates <- unique(
-      ids[duplicated(ids) & !is.na(ids)]
+      keys[
+        duplicated(keys) &
+          !is.na(keys)
+      ]
     )
     
     if (length(duplicates)) {
       errors <- c(
         errors,
         paste0(
-          "duplicated id: ",
-          paste(duplicates, collapse = ", ")
+          "duplicated ",
+          self@key,
+          ": ",
+          paste(
+            duplicates,
+            collapse = ", "
+          )
         )
       )
     }
@@ -134,24 +156,21 @@ rdmlIdList <- new_class(
   }
 )
 
-
-method(names, rdmlIdList) <- function(x) {
-  
-  vapply(
+method(names, rdmlKeyedList) <- function(x) {
+  .get_keys(
     S7_data(x),
-    .get_id,
-    character(1)
+    x@key
   )
 }
 
-method(`names<-`, rdmlIdList) <- function(x, value) {
+method(`names<-`, rdmlKeyedList) <- function(x, value) {
   stop(
-    "`names` of rdmlIdList are derived from object ids and cannot be changed",
+    "`names` of rdmlKeyedList are derived from object keys and cannot be changed",
     call. = FALSE
   )
 }
 
-method(`[[`, rdmlIdList) <- function(x, i, ...) {
+method(`[[`, rdmlKeyedList) <- function(x, i, ...) {
   
   data <- S7_data(x)
   
@@ -177,13 +196,13 @@ method(`[[`, rdmlIdList) <- function(x, i, ...) {
   data[[i, ...]]
 }
 
-method(`[[<-`, rdmlIdList) <- function(x, i, ..., value) {
+method(`[[<-`, rdmlKeyedList) <- function(x, i, ..., value) {
   
   dots <- list(...)
   
   if (length(dots)) {
     stop(
-      "recursive indexing is not supported for rdmlIdList",
+      "recursive indexing is not supported for rdmlKeyedList",
       call. = FALSE
     )
   }
@@ -207,8 +226,11 @@ method(`[[<-`, rdmlIdList) <- function(x, i, ..., value) {
       )
     }
     
-    ids <- .get_ids(data)
-    pos <- match(i, ids)
+    keys <- .get_keys(
+      data,
+      x@key
+    )
+    pos <- match(i, keys)
     
     # Удаление
     if (is.null(value)) {
@@ -228,12 +250,15 @@ method(`[[<-`, rdmlIdList) <- function(x, i, ..., value) {
     }
     
     # Проверяем id нового объекта
-    value_id <- .get_id(value)
+    value_key <- .get_key(
+      value,
+      x@key
+    )
     
     if (
-      length(value_id) != 1L ||
-      is.na(value_id) ||
-      !nzchar(value_id)
+      length(value_key) != 1L ||
+      is.na(value_key) ||
+      !nzchar(value_key)
     ) {
       stop(
         "replacement object must have a non-empty id",
@@ -241,11 +266,12 @@ method(`[[<-`, rdmlIdList) <- function(x, i, ..., value) {
       )
     }
     
-    if (!identical(value_id, i)) {
+    if (!identical(value_key, i)) {
       stop(
-        "Index id ('", i,
-        "') does not match object id ('",
-        value_id, "')",
+        "Index key ('", i,
+        "') does not match object ",
+        x@key,
+        " ('", value_key, "')",
         call. = FALSE
       )
     }
@@ -271,16 +297,16 @@ method(`[[<-`, rdmlIdList) <- function(x, i, ..., value) {
   .set_id_list_data(x, data)
 }
 
-method(`$`, rdmlIdList) <- function(x, name) {
+method(`$`, rdmlKeyedList) <- function(x, name) {
   x[[name]]
 }
 
-method(`$<-`, rdmlIdList) <- function(x, name, value) {
+method(`$<-`, rdmlKeyedList) <- function(x, name, value) {
   x[[name]] <- value
   x
 }
 
-method(`[`, rdmlIdList) <- function(x, i, ...) {
+method(`[`, rdmlKeyedList) <- function(x, i, ...) {
   
   data <- S7_data(x)
   
@@ -296,29 +322,35 @@ method(`[`, rdmlIdList) <- function(x, i, ...) {
     
     if (any(unknown)) {
       stop(
-        "Unknown id: ",
+        "Unknown ",
+        x@key,
+        ": ",
         paste(i[unknown], collapse = ", "),
         call. = FALSE
       )
     }
     
     return(
-      rdmlIdList(data[pos])
+      rdmlKeyedList(
+        data[pos],
+        key = x@key
+      )
     )
   }
   
-  rdmlIdList(
-    data[i, ...]
+  rdmlKeyedList(
+    data[i, ...],
+    key = x@key
   )
 }
 
-method(`[<-`, rdmlIdList) <- function(x, i, ..., value) {
+method(`[<-`, rdmlKeyedList) <- function(x, i, ..., value) {
   
   dots <- list(...)
   
   if (length(dots)) {
     stop(
-      "multidimensional indexing is not supported for rdmlIdList",
+      "multidimensional indexing is not supported for rdmlKeyedList",
       call. = FALSE
     )
   }
@@ -368,24 +400,24 @@ method(`[<-`, rdmlIdList) <- function(x, i, ..., value) {
     any(i == "")
   ) {
     stop(
-      "ids must be non-empty strings",
+      "keys must be non-empty strings",
       call. = FALSE
     )
   }
   
   if (anyDuplicated(i)) {
     stop(
-      "duplicate ids in replacement index are not allowed",
+      "duplicate keys in replacement index are not allowed",
       call. = FALSE
     )
   }
   
-  current_ids <- .get_ids(data)
+  current_keys <- .get_keys(data)
   
   # Удаляем несколько объектов
   if (is.null(value)) {
     
-    pos <- match(i, current_ids)
+    pos <- match(i, current_keys)
     
     if (anyNA(pos)) {
       stop(
@@ -418,9 +450,12 @@ method(`[<-`, rdmlIdList) <- function(x, i, ..., value) {
     )
   }
   
-  value_ids <- .get_ids(value)
+  value_ids <- .get_keys(
+    value,
+    x@key
+  )
   
-  bad_id <- is.na(value_ids) | value_ids == ""
+  bad_id <- is.na(value_keys) | value_keys == ""
   
   if (any(bad_id)) {
     stop(
@@ -429,7 +464,7 @@ method(`[<-`, rdmlIdList) <- function(x, i, ..., value) {
     )
   }
   
-  mismatch <- value_ids != i
+  mismatch <- value_keys != i
   
   if (any(mismatch)) {
     k <- which(mismatch)[1L]
@@ -437,7 +472,7 @@ method(`[<-`, rdmlIdList) <- function(x, i, ..., value) {
     stop(
       "Index id ('", i[[k]],
       "') does not match object id ('",
-      value_ids[[k]], "')",
+      value_keys[[k]], "')",
       call. = FALSE
     )
   }
@@ -446,9 +481,9 @@ method(`[<-`, rdmlIdList) <- function(x, i, ..., value) {
   # или добавляем новые
   for (k in seq_along(i)) {
     
-    current_ids <- .get_ids(data)
+    current_keys <- .get_keys(data)
     
-    pos <- match(i[[k]], current_ids)
+    pos <- match(i[[k]], current_keys)
     
     if (is.na(pos)) {
       data[[length(data) + 1L]] <- value[[k]]
@@ -461,46 +496,46 @@ method(`[<-`, rdmlIdList) <- function(x, i, ..., value) {
 }
 
 
-.has_id <- function(x) {
-  id <- .get_id(x)
-  
-  length(id) == 1L &&
-    !is.na(id) &&
-    nzchar(id)
-}
-
-
-.as_id_list <- function(x) {
-  
-  if (!is.list(x) || !length(x)) {
-    return(x)
-  }
-  
-  has_id <- vapply(
-    x,
-    .has_id,
-    logical(1)
-  )
-  
-  # Превращаем в rdmlIdList только если
-  # ВСЕ элементы имеют id
-  if (all(has_id)) {
-    rdmlIdList(x)
-  } else {
-    x
-  }
-}
+# .has_id <- function(x) {
+#   id <- .get_id(x)
+#   
+#   length(id) == 1L &&
+#     !is.na(id) &&
+#     nzchar(id)
+# }
+# 
+# 
+# .as_id_list <- function(x) {
+#   
+#   if (!is.list(x) || !length(x)) {
+#     return(x)
+#   }
+#   
+#   has_id <- vapply(
+#     x,
+#     .has_id,
+#     logical(1)
+#   )
+#   
+#   # Превращаем в rdmlKeyedList только если
+#   # ВСЕ элементы имеют id
+#   if (all(has_id)) {
+#     rdmlKeyedList(x)
+#   } else {
+#     x
+#   }
+# }
 
 
 has_id <- function(x, id) {
   id %in% names(x)
 }
 
-ids <- function(x) {
-  UseMethod("ids")
+keys <- function(x) {
+  UseMethod("keys")
 }
 
-ids.rdmlIdList <- function(x) {
+keys.rdmlKeyedList <- function(x) {
   names(x)
 }
 
@@ -510,16 +545,36 @@ ids.rdmlIdList <- function(x) {
     is.na(x)
 }
 
-.is_id_indexed_property <- function(x, name) {
+.get_property_definition <- function(x, name) {
+  cls <- S7_class(x)
+  
+  repeat {
+    properties <- cls@properties
+    
+    if (name %in% names(properties)) {
+      return(properties[[name]])
+    }
+    
+    parent <- cls@parent
+    
+    if (is.null(parent)) {
+      return(NULL)
+    }
+    
+    cls <- parent
+  }
+}
+
+
+.property_key <- function(x, name) {
+  
   property <- .get_property_definition(x, name)
   
   if (is.null(property)) {
-    return(FALSE)
+    return(NULL)
   }
   
-  isTRUE(
-    attr(property, "rdml_id_indexed")
-  )
+  attr(property, "rdml_key")
 }
 
 
