@@ -189,7 +189,8 @@ test_class_na_id_list <- function(className) {
     class_any,
     
     validator = function(value) {
-      if (.is_single_na(value)) {
+      # NA допустимо
+      if (is.na(value)[1]) {
         return(NULL)
       }
       
@@ -220,15 +221,14 @@ test_class_na_id_list <- function(className) {
       if (anyNA(ids) || any(ids == "")) {
         return(
           paste(
-            "all",
             className,
-            "objects must have a non-empty id"
+            "objects must have non-empty ids"
           )
         )
       }
       
       if (anyDuplicated(ids)) {
-        duplicatedIds <- unique(
+        duplicated_ids <- unique(
           ids[duplicated(ids)]
         )
         
@@ -236,7 +236,7 @@ test_class_na_id_list <- function(className) {
           paste0(
             "duplicated id: ",
             paste(
-              duplicatedIds,
+              duplicated_ids,
               collapse = ", "
             )
           )
@@ -249,12 +249,8 @@ test_class_na_id_list <- function(className) {
     default = NA
   )
   
-  class(property) <- c(
-    "rdml_id_indexed_property",
-    class(property)
-  )
-  
-  attr(property, "elementClass") <- className
+  attr(property, "rdml_id_indexed") <- TRUE
+  attr(property, "rdml_element_class") <- className
   
   property
 }
@@ -433,18 +429,16 @@ method(asXMLnodes, rdmlBaseType) <- function(x,
 method(names, rdmlBaseType) <- function(x) {
   prop_names(x)
 }
+
 `$.rdmlBaseType` <- function(x, name) {
-  
   if (typeof(x) %in% c("list", "environment")) {
     return(NextMethod())
   }
   
   value <- prop(x, name)
   
-  # Эти свойства являются id-коллекциями
-  # даже когда сейчас пусты
   if (
-    name %in% .rdml_id_list_properties &&
+    .is_id_indexed_property(x, name) &&
     is.list(value)
   ) {
     return(
@@ -452,11 +446,14 @@ method(names, rdmlBaseType) <- function(x) {
     )
   }
   
-  .as_id_list(value)
+  value
 }
+
 `$<-.rdmlBaseType` <- function(x, name, value) {
-  
-  if (S7_inherits(value, rdmlIdList)) {
+  if (
+    .is_id_indexed_property(x, name) &&
+    S7_inherits(value, rdmlIdList)
+  ) {
     value <- S7_data(value)
   }
   
@@ -999,16 +996,23 @@ runType <-
 
 # experimentType ----------------------------------------------------------
 
-experimentType <- 
-  new_class("experimentType",
-            parent = rdmlBaseType,
-            properties = list(
-              id = class_id,
-              description = class_character_na_nonempty_single,
-              documentation = test_class_na_list("idReferenceType"),
-              run = test_class_na_list("runType")
-            ))
-
+experimentType <- new_class(
+  "experimentType",
+  parent = rdmlBaseType,
+  
+  properties = list(
+    id = class_id,
+    
+    description =
+      class_character_na_nonempty_single,
+    
+    documentation =
+      test_class_na_list("idReferenceType"),
+    
+    run =
+      test_class_na_id_list("runType")
+  )
+)
 
 
 # rdmlIdType -------------------------------------------------------------
@@ -1030,6 +1034,7 @@ rdmlIdType <-
 rdmlType <- new_class(
   "rdmlType",
   parent = rdmlBaseType,
+  
   properties = list(
     version = class_character,
     dateMade = class_datetime_na,

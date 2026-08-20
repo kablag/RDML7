@@ -509,3 +509,26 @@ ids.rdmlIdList <- function(x) {
     is.atomic(x) &&
     is.na(x)
 }
+
+.is_id_indexed_property <- function(x, name) {
+  property <- .get_property_definition(x, name)
+  
+  if (is.null(property)) {
+    return(FALSE)
+  }
+  
+  isTRUE(
+    attr(property, "rdml_id_indexed")
+  )
+}
+
+
+.property_element_class <- function(x, name) {
+  property <- .get_property_definition(x, name)
+  
+  if (is.null(property)) {
+    return(NULL)
+  }
+  
+  attr(property, "rdml_element_class")
+}
