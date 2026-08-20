@@ -1,5 +1,6 @@
 library(S7)
 library(checkmate)
+library(lubridate)
 
 asXMLnodes <- new_generic("asXMLnodes", "x")
 
@@ -7,8 +8,8 @@ asXMLnodes <- new_generic("asXMLnodes", "x")
 class_datetime_na <- new_property(
   class_any,
   validator = function(value) {
-    if (!is.na(value) && (is.na(ymd_hms(dateTime, quiet = TRUE)) ||
-                          is.na(ymd(dateTime, quiet = TRUE))))
+    if (!is.na(value) && all(c(is.na(ymd_hms(value, quiet = TRUE)),
+                              is.na(ymd(value, quiet = TRUE)))))
       "must be a NA or pass lubridate ymd_hms() / ymd() conversion"
   }, default = as.character(NA)
 )
@@ -159,17 +160,103 @@ test_class_list <- function(className) {
 test_class_na_list <- function(className) {
   new_property(
     class_any,
+    
     validator = function(value) {
-      if (is.na(value) || (
+      if (.is_single_na(value)) {
+        return(NULL)
+      }
+      
+      if (
         is.list(value) &&
-        all(sapply(value, \(x) testClass(x, className))))
-      )
-        NULL
-      else
-        paste("must be NA or a list of", className)
+        all(vapply(
+          value,
+          \(x) testClass(x, className),
+          logical(1)
+        ))
+      ) {
+        return(NULL)
+      }
+      
+      paste("must be NA or a list of", className)
     },
+    
     default = NA
   )
+}
+
+test_class_na_id_list <- function(className) {
+  property <- new_property(
+    class_any,
+    
+    validator = function(value) {
+      if (.is_single_na(value)) {
+        return(NULL)
+      }
+      
+      if (!is.list(value)) {
+        return(
+          paste("must be NA or a list of", className)
+        )
+      }
+      
+      correct_class <- vapply(
+        value,
+        \(x) testClass(x, className),
+        logical(1)
+      )
+      
+      if (!all(correct_class)) {
+        return(
+          paste("must be NA or a list of", className)
+        )
+      }
+      
+      ids <- vapply(
+        value,
+        .get_id,
+        character(1)
+      )
+      
+      if (anyNA(ids) || any(ids == "")) {
+        return(
+          paste(
+            "all",
+            className,
+            "objects must have a non-empty id"
+          )
+        )
+      }
+      
+      if (anyDuplicated(ids)) {
+        duplicatedIds <- unique(
+          ids[duplicated(ids)]
+        )
+        
+        return(
+          paste0(
+            "duplicated id: ",
+            paste(
+              duplicatedIds,
+              collapse = ", "
+            )
+          )
+        )
+      }
+      
+      NULL
+    },
+    
+    default = NA
+  )
+  
+  class(property) <- c(
+    "rdml_id_indexed_property",
+    class(property)
+  )
+  
+  attr(property, "elementClass") <- className
+  
+  property
 }
 
 rdmlEnum <- new_class(
@@ -217,6 +304,10 @@ new_enum_class <- function(enum_class, variants) {
   )
 }
 
+
+
+# idType ------------------------------------------------------------------
+
 idType <- new_class(
   "idType",
   properties = list(
@@ -247,6 +338,9 @@ class_id <- new_property(
       "must be a idType"
   }
 )
+
+
+# idReferenceType ---------------------------------------------------------
 
 idReferenceType <- new_class(
   "idReferenceType",
@@ -340,16 +434,39 @@ method(names, rdmlBaseType) <- function(x) {
   prop_names(x)
 }
 `$.rdmlBaseType` <- function(x, name) {
+  
   if (typeof(x) %in% c("list", "environment")) {
-    NextMethod()
-  } else {
-    prop(x, name)
+    return(NextMethod())
   }
+  
+  value <- prop(x, name)
+  
+  # Эти свойства являются id-коллекциями
+  # даже когда сейчас пусты
+  if (
+    name %in% .rdml_id_list_properties &&
+    is.list(value)
+  ) {
+    return(
+      rdmlIdList(value)
+    )
+  }
+  
+  .as_id_list(value)
 }
 `$<-.rdmlBaseType` <- function(x, name, value) {
+  
+  if (S7_inherits(value, rdmlIdList)) {
+    value <- S7_data(value)
+  }
+  
   prop(x, name) <- value
+  
   x
 }
+
+# experimenterType --------------------------------------------------------
+
 
 experimenterType <- new_class(
   "experimenterType",
@@ -364,6 +481,9 @@ experimenterType <- new_class(
   )
 )
 
+
+# documentationType -------------------------------------------------------
+
 documentationType <- new_class(
   "documentationType",
   parent = rdmlBaseType,
@@ -372,6 +492,12 @@ documentationType <- new_class(
     text = class_character_na_nonempty_single
   )
 )
+
+
+
+
+# dyeChemistryType --------------------------------------------------------
+
 
 dyeChemistryType <- 
   new_enum_class(
@@ -384,6 +510,10 @@ dyeChemistryType <-
       "labelled reverse primer",
       "DNA-zyme probe")
   )
+
+
+# dyeType -----------------------------------------------------------------
+
 
 dyeType <- new_class(
   "dyeType",
@@ -407,6 +537,12 @@ dyeType <- new_class(
   )
 )
 
+
+
+
+# xRefType ----------------------------------------------------------------
+
+
 xRefType <- new_class(
   "xRefType",
   parent = rdmlBaseType,
@@ -416,6 +552,10 @@ xRefType <- new_class(
   )
 )
 
+
+# annotationType ----------------------------------------------------------
+
+
 annotationType <- new_class(
   "annotationType",
   parent = rdmlBaseType,
@@ -424,6 +564,9 @@ annotationType <- new_class(
     value = class_character_na_nonempty_single
   )
 )
+
+# sampleTypeType ----------------------------------------------------------
+
 
 sampleTypeType <- 
   new_enum_class(
@@ -884,21 +1027,38 @@ rdmlIdType <-
 
 # rdmlType ----------------------------------------------------------------
 
-rdmlType <- 
-  new_class("rdmlType", 
-            parent = rdmlBaseType, 
-            properties = list(
-              version = class_character,
-              dateMade = class_datetime_na,
-              dateUpadted = class_datetime_na,
-              id = test_class_na_list("rdmlIdType"),
-              experimenter = test_class_na_list("experimenterType"),
-              documentation = test_class_na_list("documentationType"),
-              dye = test_class_na_list("dyeType"),
-              sample = test_class_na_list("sampleType"),
-              target = test_class_na_list("targetType"),
-              thermalCyclingConditions = test_class_na_list("thermalCyclingConditionsType"),
-              experiment = test_class_na_list("experimentType")
-            ))
-
-
+rdmlType <- new_class(
+  "rdmlType",
+  parent = rdmlBaseType,
+  properties = list(
+    version = class_character,
+    dateMade = class_datetime_na,
+    dateUpadted = class_datetime_na,
+    
+    id =
+      test_class_na_id_list("rdmlIdType"),
+    
+    experimenter =
+      test_class_na_id_list("experimenterType"),
+    
+    documentation =
+      test_class_na_id_list("documentationType"),
+    
+    dye =
+      test_class_na_id_list("dyeType"),
+    
+    sample =
+      test_class_na_id_list("sampleType"),
+    
+    target =
+      test_class_na_id_list("targetType"),
+    
+    thermalCyclingConditions =
+      test_class_na_id_list(
+        "thermalCyclingConditionsType"
+      ),
+    
+    experiment =
+      test_class_na_id_list("experimentType")
+  )
+)
