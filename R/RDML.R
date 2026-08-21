@@ -7,20 +7,10 @@
     return("")
   }
   
-  # Сначала S7.
-  # Это важно: S7-объект должен идти в .rdml_xml_node(),
-  # а не обрабатываться как произвольный list/atomic.
-  if (S7::S7_inherits(value)) {
-    return(
-      paste0(
-        .rdml_xml_node(value, node_name),
-        collapse = ""
-      )
-    )
-  }
-  
-  # Обычные списки объектов
-  if (is.list(value)) {
+  # rdmlKeyedList is an S7 object AND a list-like wrapper.
+  # It must be unwrapped before the generic S7 branch.
+  if (S7::S7_inherits(value, rdmlKeyedList)) {
+    value <- S7::S7_data(value)
     
     if (!length(value)) {
       return("")
@@ -31,9 +21,9 @@
         vapply(
           value,
           function(item) {
-            .rdml_xml_value(
-              item,
-              node_name
+            paste0(
+              .rdml_xml_node(item, node_name),
+              collapse = ""
             )
           },
           character(1)
@@ -43,12 +33,42 @@
     )
   }
   
-  # Атомарное значение
+  # Ordinary list-valued RDML properties.
+  if (is.list(value)) {
+    if (!length(value)) {
+      return("")
+    }
+    
+    return(
+      paste0(
+        vapply(
+          value,
+          function(item) {
+            paste0(
+              .rdml_xml_node(item, node_name),
+              collapse = ""
+            )
+          },
+          character(1)
+        ),
+        collapse = ""
+      )
+    )
+  }
+  
+  # Any remaining S7 object is serialized recursively.
+  if (S7::S7_inherits(value)) {
+    return(
+      paste0(
+        .rdml_xml_node(value, node_name),
+        collapse = ""
+      )
+    )
+  }
+  
+  # Atomic value.
   paste0(
-    .rdml_xml_atomic(
-      node_name,
-      value
-    ),
+    .rdml_xml_atomic(node_name, value),
     collapse = ""
   )
 }
@@ -81,8 +101,19 @@
 }
 
 .rdml_is_missing <- function(x) {
-  is.null(x) ||
-    (length(x) == 1L && is.atomic(x) && is.na(x))
+  if (is.null(x)) {
+    return(TRUE)
+  }
+  
+  # S7 objects (including idType, dataType, rdmlKeyedList, etc.)
+  # are values, never scalar NA sentinels.
+  if (S7::S7_inherits(x)) {
+    return(FALSE)
+  }
+  
+  length(x) == 1L &&
+    is.atomic(x) &&
+    isTRUE(is.na(x))
 }
 
 .rdml_present <- function(x) {
@@ -150,18 +181,18 @@
   if (is.na(id)) {
     return(NA_character_)
   }
-
+  
   n <- suppressWarnings(base::as.integer(id))
   if (is.na(n) || .rdml_is_missing(pcrFormat)) {
     # Imported hand-labelled ids are already human-readable.
     return(id)
   }
-
+  
   rows <- pcrFormat$rows
   columns <- pcrFormat$columns
   row_label <- .rdml_enum_chr(pcrFormat$rowLabel)
   col_label <- .rdml_enum_chr(pcrFormat$columnLabel)
-
+  
   if (row_label == "ABC" && col_label == "123") {
     if (rows > length(LETTERS)) {
       stop("Too many rows for 'ABC' PCR format", call. = FALSE)
@@ -172,7 +203,7 @@
       (n - 1L) %% columns + 1L
     ))
   }
-
+  
   if (row_label == "123" && col_label == "ABC") {
     if (columns > length(LETTERS)) {
       stop("Too many columns for 'ABC' PCR format", call. = FALSE)
@@ -183,7 +214,7 @@
       LETTERS[(n - 1L) %% columns + 1L]
     ))
   }
-
+  
   if (row_label == "123" && col_label == "123") {
     return(sprintf(
       "r%02ic%02i",
@@ -191,7 +222,7 @@
       (n - 1L) %% columns + 1L
     ))
   }
-
+  
   # A1a1 and other formats are not reconstructed yet; keep the RDML id.
   id
 }
@@ -202,18 +233,18 @@
   if (is.null(sample) || .rdml_is_missing(sample)) {
     return(NA_character_)
   }
-
+  
   types <- .rdml_prop_list(sample, "type")
   if (!length(types)) {
     return(NA_character_)
   }
-
+  
   type_keys <- .get_keys(types, "targetId")
   pos <- match(target_id, type_keys)
   if (is.na(pos)) {
     return(NA_character_)
   }
-
+  
   .rdml_enum_chr(types[[pos]]$sampleType)
 }
 
@@ -259,15 +290,28 @@
 }
 
 .rdml_xml_name <- function(object, property) {
-  cls <- class(object)[1L]
-  if (identical(property, "dateUpadted")) return("dateUpdated")
+  if (identical(property, "dateUpadted")) {
+    return("dateUpdated")
+  }
+  
   if (identical(property, "backgroundDetermenationMethod")) {
     return("backgroundDeterminationMethod")
   }
-  if (identical(property, "patitions")) return("partitions")
-  if (property == "targetId" && cls %in% c("dataType", "partitionDataType")) {
+  
+  if (identical(property, "patitions")) {
+    return("partitions")
+  }
+  
+  if (
+    identical(property, "targetId") &&
+    (
+      S7::S7_inherits(object, dataType) ||
+      S7::S7_inherits(object, partitionDataType)
+    )
+  ) {
     return("tar")
   }
+  
   property
 }
 
@@ -283,21 +327,21 @@
 
 .rdml_xml_node <- function(x, node_name) {
   if (.rdml_is_missing(x)) return(character())
-
+  
   # Enum values are element text.
   if (S7::S7_inherits(x, rdmlEnum)) {
     return(sprintf(
       "<%s>%s</%s>", node_name, .rdml_xml_escape(as.character(x)), node_name
     ))
   }
-
+  
   # References and ids are represented by an id attribute.
   if (S7::S7_inherits(x, idType)) {
     return(sprintf(
       '<%s id="%s"/>', node_name, .rdml_xml_escape(as.character(x), TRUE)
     ))
   }
-
+  
   if (S7::S7_inherits(x, dpAmpCurveType)) {
     
     dt <- S7::prop(
@@ -376,7 +420,7 @@
       )
     )
   }
-
+  
   if (S7::S7_inherits(x, dpMeltingCurveType)) {
     
     dt <- S7::prop(
@@ -432,7 +476,21 @@
       )
     )
   }
-
+  
+  # sampleType$type is represented as:
+  # <type targetId="...">unkn</type>
+  if (S7::S7_inherits(x, sampleTargetType)) {
+    return(
+      sprintf(
+        '<%s targetId="%s">%s</%s>',
+        node_name,
+        .rdml_xml_escape(.rdml_id_chr(x$targetId), TRUE),
+        .rdml_xml_escape(.rdml_enum_chr(x$sampleType)),
+        node_name
+      )
+    )
+  }
+  
   # quantity has a targetId attribute plus value/unit children.
   if (S7::S7_inherits(x, quantityType)) {
     body <- c(
@@ -447,14 +505,14 @@
       node_name
     ))
   }
-
+  
   if (!S7::S7_inherits(x, rdmlBaseType)) {
     return(.rdml_xml_atomic(node_name, x))
   }
-
+  
   properties <- S7::prop_names(x)
-  attributes <- character()
-
+  attributes <- ""
+  
   # All RDML entities whose first schema property is id use it as XML attr.
   if ("id" %in% properties && S7::S7_inherits(S7::prop(x, "id"), idType)) {
     attributes <- sprintf(
@@ -463,7 +521,7 @@
     )
     properties <- setdiff(properties, "id")
   }
-
+  
   children <- character()
   
   for (property in properties) {
@@ -495,14 +553,14 @@
       xml_name
     )
     
-    if (nzchar(child)) {
+    if (length(child) && nzchar(child)) {
       children <- c(
         children,
         child
       )
     }
   }
-
+  
   if (S7::S7_inherits(x, rdmlType)) {
     version <- x$version
     if (.rdml_is_missing(version)) version <- "1.2"
@@ -512,12 +570,50 @@
       '"'
     )
   }
-
+  
   sprintf(
     "<%s%s>%s</%s>",
     node_name, attributes, paste0(children, collapse = ""), node_name
   )
 }
+
+.rdml_output_path <- function(file.name) {
+  checkmate::assertString(file.name)
+  
+  # A bare file name is explicitly placed in the current working directory.
+  if (identical(dirname(file.name), ".")) {
+    file.name <- file.path(getwd(), basename(file.name))
+  } else {
+    is_absolute <- grepl(
+      "^(?:[A-Za-z]:[/\\\\]|[/\\\\]{2}|/)",
+      file.name
+    )
+    
+    if (!is_absolute) {
+      file.name <- file.path(getwd(), file.name)
+    }
+  }
+  
+  out_dir <- dirname(file.name)
+  
+  if (!dir.exists(out_dir)) {
+    stop(
+      "Output directory does not exist: ",
+      out_dir,
+      call. = FALSE
+    )
+  }
+  
+  file.path(
+    normalizePath(
+      out_dir,
+      winslash = "/",
+      mustWork = TRUE
+    ),
+    basename(file.name)
+  )
+}
+
 
 #' Serialize rdmlType as XML or a .rdml zip archive
 #' @param x rdmlType object.
@@ -531,98 +627,58 @@ S7::method(AsXML, rdmlType) <- function(x, file.name) {
     return(tree)
   }
   
-  checkmate::assertString(file.name)
-  
-  # ВАЖНО: превращаем путь в абсолютный ДО любого setwd().
-  #
-  # "test.rdml"
-  # -> "C:/текущая/рабочая/директория/test.rdml"
-  #
-  # "subdir/test.rdml"
-  # -> "C:/текущая/рабочая/директория/subdir/test.rdml"
-  file.name <- normalizePath(
-    file.name,
-    winslash = "/",
-    mustWork = FALSE
-  )
-  
+  file.name <- .rdml_output_path(file.name)
   ext <- tolower(tools::file_ext(file.name))
   
-  
-  # -------------------------------------------------------------------
-  # Обычный XML
-  # -------------------------------------------------------------------
-  
+  # Plain XML ----------------------------------------------------------
   if (identical(ext, "xml")) {
-    
     writeLines(
       enc2utf8(tree),
-      file.name,
+      con = file.name,
       useBytes = TRUE
     )
     
     return(invisible(tree))
   }
   
-  
-  # -------------------------------------------------------------------
-  # RDML archive
-  # -------------------------------------------------------------------
-  
+  # RDML ZIP archive --------------------------------------------------
   tmpdir <- tempfile("rdml_")
-  dir.create(tmpdir)
+  if (!dir.create(tmpdir)) {
+    stop("Failed to create temporary RDML directory", call. = FALSE)
+  }
+  on.exit(unlink(tmpdir, recursive = TRUE, force = TRUE), add = TRUE)
   
-  on.exit(
-    unlink(tmpdir, recursive = TRUE),
-    add = TRUE
-  )
-  
-  xml_file <- file.path(
-    tmpdir,
-    "rdml_data.xml"
-  )
-  
+  xml_file <- file.path(tmpdir, "rdml_data.xml")
   writeLines(
     enc2utf8(tree),
-    xml_file,
+    con = xml_file,
     useBytes = TRUE
   )
   
-  
-  # Создаём сначала временный ZIP.
-  # Это лучше, чем обновлять уже существующий .rdml.
   zip_file <- tempfile(fileext = ".zip")
-  
-  on.exit(
-    unlink(zip_file),
-    add = TRUE
-  )
+  on.exit(unlink(zip_file, force = TRUE), add = TRUE)
   
   old_wd <- getwd()
-  
-  on.exit(
-    setwd(old_wd),
-    add = TRUE
-  )
+  on.exit(setwd(old_wd), add = TRUE)
   
   setwd(tmpdir)
-  
-  utils::zip(
+  zip_status <- utils::zip(
     zipfile = zip_file,
     files = "rdml_data.xml"
   )
-  
   setwd(old_wd)
   
+  # utils::zip() commonly returns 0 on success; tolerate NULL for
+  # implementations where no explicit status is returned.
+  if (
+    !file.exists(zip_file) ||
+    (!is.null(zip_status) && length(zip_status) == 1L &&
+     is.numeric(zip_status) && zip_status != 0)
+  ) {
+    stop("Failed to create RDML ZIP archive", call. = FALSE)
+  }
   
-  # Только после успешного создания архива заменяем конечный файл.
-  ok <- file.copy(
-    zip_file,
-    file.name,
-    overwrite = TRUE
-  )
-  
-  if (!ok) {
+  if (!file.copy(zip_file, file.name, overwrite = TRUE)) {
     stop(
       "Failed to write RDML file: ",
       file.name,
