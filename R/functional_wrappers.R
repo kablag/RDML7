@@ -1,63 +1,36 @@
-#' \code{RDML$AsTable()} wrapper
-#' 
-#' Read more at \link{RDML.AsTable}
-#'   
-#' @param obj \code{RDML} object.
-#' @param ... \code{AsTable} params.
-#' 
-#' @name AsTable
-#' @rdname astable-function
-#' @include RDML.R
-#' @export
-AsTable <- function(obj, ...) {
-  assertClass(obj, "RDML")
-  obj$AsTable(...)
-}
+# Functional S7 API --------------------------------------------------------
+#
+# The original package exposed these operations as mutable R6 methods
+# (obj$AsTable(), obj$GetFData(), ...).  rdml7 uses S7 value objects, so the
+# public API is expressed as S7 generics.
 
-#' \code{RDML$SetFData()} wrapper
-#' 
-#' Read more at \link{RDML.SetFData}
-#'   
-#' @param obj \code{RDML} object.
-#' @param ... \code{SetFData} params.
-#' 
-#' @name SetFData
-#' @rdname setfdata-function
-#' @include RDML.R
+#' Convert an RDML object to a description table
+#' @param x An RDML object.
+#' @param ... Method-specific arguments.
 #' @export
-SetFData <- function(obj, ...) {
-  assertClass(obj, "RDML")
-  obj$SetFData(...)
-}
+AsTable <- S7::new_generic("AsTable", "x")
 
-#' \code{RDML$GetFData()} wrapper
-#' 
-#' Read more at \link{RDML.GetFData}
-#'   
-#' @param obj \code{RDML} object.
-#' @param ... \code{GetFData} params.
-#' 
-#' @name GetFData
-#' @rdname GetFData-function
-#' @include RDML.R
+#' Get fluorescence data
+#' @param x An RDML or dataType object.
+#' @param ... Method-specific arguments.
 #' @export
-GetFData <- function(obj, ...) {
-  assertClass(obj, "RDML")
-  obj$GetFData(...)
-}
+GetFData <- S7::new_generic("GetFData", "x")
 
-#' \code{RDML$AsDendrogram()} wrapper
-#' 
-#' Read more at \link{RDML.AsDendrogram}
-#'   
-#' @param obj \code{RDML} object.
-#' @param ... \code{AsDendrogram} params.
-#' 
-#' @name AsDendrogram
-#' @rdname AsDendrogram-function
-#' @include RDML.R
+#' Set fluorescence data
+#' @param x An RDML object.
+#' @param ... Method-specific arguments.
+#' @return A modified RDML object. Assign the result back to keep changes.
 #' @export
-AsDendrogram <- function(obj, ...) {
-  assertClass(obj, "RDML")
-  obj$AsDendrogram(...)
-}
+SetFData <- S7::new_generic("SetFData", "x")
+
+#' Represent RDML structure as a dendrogram
+#' @param x An RDML object.
+#' @param ... Method-specific arguments.
+#' @export
+AsDendrogram <- S7::new_generic("AsDendrogram", "x")
+
+#' Serialize RDML to XML / RDML archive
+#' @param x An RDML object.
+#' @param ... Method-specific arguments.
+#' @export
+AsXML <- S7::new_generic("AsXML", "x")

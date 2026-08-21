@@ -11,7 +11,7 @@ class_datetime_na <- new_property(
     if (!is.na(value) && all(c(is.na(ymd_hms(value, quiet = TRUE)),
                               is.na(ymd(value, quiet = TRUE)))))
       "must be a NA or pass lubridate ymd_hms() / ymd() conversion"
-  }, default = as.character(NA)
+  }, default = NA_character_
 )
 
 class_character_na_nonempty_single <- new_property(
@@ -27,7 +27,7 @@ class_character_na_nonempty_single <- new_property(
                   na.ok = TRUE)
     )
       "must be a NA or a single non-empty string"
-  }, default = as.character(NA))
+  }, default = NA_character_)
 
 class_character_nonempty_single <- new_property(
   class_character,
@@ -77,7 +77,7 @@ class_number_na_single <- new_property(
     # value <- 
     if (!testNumber(value, na.ok = TRUE))
       "must be a NA or a number"
-  }, default = as.character(NA))
+  }, default = NA_character_)
 
 class_number_single <- new_property(
   class_numeric,
@@ -129,14 +129,23 @@ test_class <- function(className) {
 test_class_na <- function(className) {
   new_property(
     class_any,
+    
     validator = function(value) {
-      if (is.na(value) || 
-          (testClass(value, className) &&
-           length(value) == 1))
-        NULL
-      else
-        paste("must be a NA or", className)
+      
+      if (.is_single_na(value)) {
+        return(NULL)
+      }
+      
+      if (
+        testClass(value, className) &&
+        length(value) == 1L
+      ) {
+        return(NULL)
+      }
+      
+      paste("must be NA or", className)
     },
+    
     default = NA
   )
 }
@@ -537,11 +546,11 @@ dyeType <- new_class(
         class_any,
         validator = function(value) {
           if (
-            !(testClass(value, 
-                        "dyeChemistryType") ||
-              is.na(value))
-          )
-            "must be a NA or a single DyeChemistryType"
+            !.is_single_na(value) &&
+            !testClass(value, "dyeChemistryType")
+          ) {
+            "must be NA or a single dyeChemistryType"
+          }
         },
         default = NA
       )

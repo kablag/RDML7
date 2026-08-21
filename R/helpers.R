@@ -209,9 +209,7 @@ method(`[[<-`, rdmlKeyedList) <- function(x, i, ..., value) {
   
   data <- S7_data(x)
   
-  # -------------------------
-  # Индекс по id
-  # -------------------------
+  # character key ------------------------------------------------------
   
   if (is.character(i)) {
     
@@ -221,7 +219,7 @@ method(`[[<-`, rdmlKeyedList) <- function(x, i, ..., value) {
       !nzchar(i)
     ) {
       stop(
-        "character index must be one non-empty id",
+        "character index must be one non-empty key",
         call. = FALSE
       )
     }
@@ -230,14 +228,16 @@ method(`[[<-`, rdmlKeyedList) <- function(x, i, ..., value) {
       data,
       x@key
     )
+    
     pos <- match(i, keys)
     
-    # Удаление
+    # Удаление ---------------------------------------------------------
+    
     if (is.null(value)) {
       
       if (is.na(pos)) {
         stop(
-          "Unknown id: '", i, "'",
+          "Unknown ", x@key, ": '", i, "'",
           call. = FALSE
         )
       }
@@ -249,7 +249,6 @@ method(`[[<-`, rdmlKeyedList) <- function(x, i, ..., value) {
       )
     }
     
-    # Проверяем id нового объекта
     value_key <- .get_key(
       value,
       x@key
@@ -261,36 +260,67 @@ method(`[[<-`, rdmlKeyedList) <- function(x, i, ..., value) {
       !nzchar(value_key)
     ) {
       stop(
-        "replacement object must have a non-empty id",
+        "replacement object must have a non-empty ",
+        x@key,
         call. = FALSE
       )
     }
+    
+    # ---------------------------------------------------------------
+    # Существующий элемент:
+    # несовпадение ключа считаем ПЕРЕИМЕНОВАНИЕМ
+    # ---------------------------------------------------------------
+    
+    if (!is.na(pos)) {
+      
+      if (!identical(value_key, i)) {
+        
+        new_pos <- match(value_key, keys)
+        
+        # Новый ключ уже принадлежит другому элементу
+        if (
+          !is.na(new_pos) &&
+          new_pos != pos
+        ) {
+          stop(
+            "Cannot rename '", i,
+            "' to '", value_key,
+            "': this ", x@key,
+            " already exists",
+            call. = FALSE
+          )
+        }
+      }
+      
+      data[[pos]] <- value
+      
+      return(
+        .set_id_list_data(x, data)
+      )
+    }
+    
+    # ---------------------------------------------------------------
+    # Новый элемент:
+    # здесь индекс и реальный ключ должны совпадать
+    # ---------------------------------------------------------------
     
     if (!identical(value_key, i)) {
       stop(
-        "Index key ('", i,
-        "') does not match object ",
-        x@key,
-        " ('", value_key, "')",
+        "Cannot add object under key '", i,
+        "': object ", x@key,
+        " is '", value_key, "'",
         call. = FALSE
       )
     }
     
-    # Замена либо добавление
-    if (is.na(pos)) {
-      data[[length(data) + 1L]] <- value
-    } else {
-      data[[pos]] <- value
-    }
+    data[[length(data) + 1L]] <- value
     
     return(
       .set_id_list_data(x, data)
     )
   }
   
-  # -------------------------
-  # Обычный числовой индекс
-  # -------------------------
+  # numeric indexing --------------------------------------------------
   
   data[[i]] <- value
   
@@ -357,7 +387,9 @@ method(`[<-`, rdmlKeyedList) <- function(x, i, ..., value) {
   
   data <- S7_data(x)
   
-  # x[] <- ...
+  
+  # x[] <- value -------------------------------------------------------
+  
   if (missing(i)) {
     
     if (is.null(value)) {
@@ -373,9 +405,8 @@ method(`[<-`, rdmlKeyedList) <- function(x, i, ..., value) {
     )
   }
   
-  # -------------------------
-  # Обычные числовые индексы
-  # -------------------------
+  
+  # Числовой / логический индекс --------------------------------------
   
   if (!is.character(i)) {
     
@@ -391,9 +422,8 @@ method(`[<-`, rdmlKeyedList) <- function(x, i, ..., value) {
     )
   }
   
-  # -------------------------
-  # Индексы по id
-  # -------------------------
+  
+  # Character keys ----------------------------------------------------
   
   if (
     anyNA(i) ||
@@ -412,16 +442,23 @@ method(`[<-`, rdmlKeyedList) <- function(x, i, ..., value) {
     )
   }
   
-  current_keys <- .get_keys(data, x@key)
+  current_keys <- .get_keys(
+    data,
+    x@key
+  )
   
-  # Удаляем несколько объектов
+  
+  # Удаление -----------------------------------------------------------
+  
   if (is.null(value)) {
     
     pos <- match(i, current_keys)
     
     if (anyNA(pos)) {
       stop(
-        "Unknown key: ",
+        "Unknown ",
+        x@key,
+        ": ",
         paste(
           sprintf("'%s'", i[is.na(pos)]),
           collapse = ", "
@@ -436,6 +473,9 @@ method(`[<-`, rdmlKeyedList) <- function(x, i, ..., value) {
       .set_id_list_data(x, data)
     )
   }
+  
+  
+  # Замена / добавление ------------------------------------------------
   
   value <- .as_replacement_list(value)
   
@@ -455,42 +495,95 @@ method(`[<-`, rdmlKeyedList) <- function(x, i, ..., value) {
     x@key
   )
   
-  bad_id <- is.na(value_keys) | value_keys == ""
+  bad_key <- is.na(value_keys) | value_keys == ""
   
-  if (any(bad_id)) {
+  if (any(bad_key)) {
     stop(
-      paste0("all replacement objects must have a non-empty ", x@key),
+      "all replacement objects must have a non-empty ",
+      x@key,
       call. = FALSE
     )
   }
   
-  mismatch <- value_keys != i
   
-  if (any(mismatch)) {
-    k <- which(mismatch)[1L]
-    
-    stop(
-      "Index key ('", i[[k]],
-      "') does not match object ", x@key, " ('",
-      value_keys[[k]], "')",
-      call. = FALSE
-    )
-  }
+  # Обрабатываем элементы последовательно -----------------------------
   
-  # Последовательно заменяем существующие
-  # или добавляем новые
   for (k in seq_along(i)) {
     
-    current_keys <- .get_keys(data, x@key)
+    # Пересчитываем, потому что предыдущая итерация
+    # могла переименовать или добавить элемент
+    current_keys <- .get_keys(
+      data,
+      x@key
+    )
     
-    pos <- match(i[[k]], current_keys)
+    old_key <- i[[k]]
+    new_key <- value_keys[[k]]
     
-    if (is.na(pos)) {
-      data[[length(data) + 1L]] <- value[[k]]
-    } else {
+    pos <- match(
+      old_key,
+      current_keys
+    )
+    
+    
+    # ---------------------------------------------------------------
+    # Существующий элемент:
+    # new_key != old_key означает rename
+    # ---------------------------------------------------------------
+    
+    if (!is.na(pos)) {
+      
+      if (!identical(old_key, new_key)) {
+        
+        conflict_pos <- match(
+          new_key,
+          current_keys
+        )
+        
+        if (
+          !is.na(conflict_pos) &&
+          conflict_pos != pos
+        ) {
+          stop(
+            "Cannot rename '",
+            old_key,
+            "' to '",
+            new_key,
+            "': this ",
+            x@key,
+            " already exists",
+            call. = FALSE
+          )
+        }
+      }
+      
       data[[pos]] <- value[[k]]
+      
+      next
     }
+    
+    
+    # ---------------------------------------------------------------
+    # Новый элемент:
+    # индекс должен совпадать с реальным ключом объекта
+    # ---------------------------------------------------------------
+    
+    if (!identical(old_key, new_key)) {
+      stop(
+        "Cannot add object under key '",
+        old_key,
+        "': object ",
+        x@key,
+        " is '",
+        new_key,
+        "'",
+        call. = FALSE
+      )
+    }
+    
+    data[[length(data) + 1L]] <- value[[k]]
   }
+  
   
   .set_id_list_data(x, data)
 }
