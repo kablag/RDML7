@@ -51,7 +51,7 @@
   .get_keys(x, "id")
 }
 
-.set_id_list_data <- function(x, value) {
+.set_keyed_list_data <- function(x, value) {
   # Физических names быть не должно
   names(value) <- NULL
   
@@ -245,7 +245,7 @@ method(`[[<-`, rdmlKeyedList) <- function(x, i, ..., value) {
       data[[pos]] <- NULL
       
       return(
-        .set_id_list_data(x, data)
+        .set_keyed_list_data(x, data)
       )
     }
     
@@ -295,7 +295,7 @@ method(`[[<-`, rdmlKeyedList) <- function(x, i, ..., value) {
       data[[pos]] <- value
       
       return(
-        .set_id_list_data(x, data)
+        .set_keyed_list_data(x, data)
       )
     }
     
@@ -316,7 +316,7 @@ method(`[[<-`, rdmlKeyedList) <- function(x, i, ..., value) {
     data[[length(data) + 1L]] <- value
     
     return(
-      .set_id_list_data(x, data)
+      .set_keyed_list_data(x, data)
     )
   }
   
@@ -324,7 +324,7 @@ method(`[[<-`, rdmlKeyedList) <- function(x, i, ..., value) {
   
   data[[i]] <- value
   
-  .set_id_list_data(x, data)
+  .set_keyed_list_data(x, data)
 }
 
 method(`$`, rdmlKeyedList) <- function(x, name) {
@@ -394,14 +394,14 @@ method(`[<-`, rdmlKeyedList) <- function(x, i, ..., value) {
     
     if (is.null(value)) {
       return(
-        .set_id_list_data(x, list())
+        .set_keyed_list_data(x, list())
       )
     }
     
     value <- .as_replacement_list(value)
     
     return(
-      .set_id_list_data(x, value)
+      .set_keyed_list_data(x, value)
     )
   }
   
@@ -418,7 +418,7 @@ method(`[<-`, rdmlKeyedList) <- function(x, i, ..., value) {
     }
     
     return(
-      .set_id_list_data(x, data)
+      .set_keyed_list_data(x, data)
     )
   }
   
@@ -470,7 +470,7 @@ method(`[<-`, rdmlKeyedList) <- function(x, i, ..., value) {
     data <- data[-pos]
     
     return(
-      .set_id_list_data(x, data)
+      .set_keyed_list_data(x, data)
     )
   }
   
@@ -585,7 +585,7 @@ method(`[<-`, rdmlKeyedList) <- function(x, i, ..., value) {
   }
   
   
-  .set_id_list_data(x, data)
+  .set_keyed_list_data(x, data)
 }
 
 

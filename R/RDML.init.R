@@ -247,7 +247,20 @@ GetRefGenesRoche <- function(uniq.folder) {
   if (!length(ref)) NULL else ref
 }
 
-#' Read RDML file and return S7 rdmlType object
+#' Read qPCR data and return an S7 rdmlType object
+#'
+#' Supported import formats mirror the active import branches in the upstream
+#' PCRuniversum/RDML initializer: RDML/LC96, ABI `.eds`, Rotor-Gene `.rex`,
+#' Excel `.xlsx`/`.xls`, DTprime `.r96`, CSV, and FQD-96a text export.
+#' With `format = "auto"`, the importer is selected from the extension.
+#'
+#' @param filename Input file path.
+#' @param show.progress Show RDML parsing progress.
+#' @param conditions.sep Optional Roche condition separator retained for
+#'   compatibility with the original importer.
+#' @param cluster Reserved for compatibility.
+#' @param format One of `auto`, `rdml`, `xml`, `abi`, `rotorgene`, `excel`,
+#'   `dtprime`, `csv`, or `fqd`; extension aliases are also accepted.
 #' @export
 rdml_read <- function(filename,
                       show.progress = TRUE,
@@ -270,6 +283,955 @@ rdml_read <- function(filename,
     thermalCyclingConditions = list(),
     experiment = list()
   )
+
+  # Non-RDML import helpers -------------------------------------------------
+  # These importers are ports of the active import branches in
+  # PCRuniversum/RDML::RDML.init.R. They create the current S7 rdmlType via
+  # SetFData(), rather than mutating the old R6 object.
+
+  .new_import_rdml <- function(publisher = NULL, serial_number = "1") {
+    ids <- if (is.null(publisher)) {
+      list()
+    } else {
+      list(rdmlIdType(
+        publisher = publisher,
+        serialNumber = serial_number,
+        MD5Hash = NA_character_
+      ))
+    }
+
+    rdmlType(
+      version = "1.2",
+      dateMade = NA_character_,
+      dateUpadted = NA_character_,
+      id = ids,
+      experimenter = list(),
+      documentation = list(),
+      dye = list(),
+      sample = list(),
+      target = list(),
+      thermalCyclingConditions = list(),
+      experiment = list()
+    )
+  }
+
+  .set_fdata_import <- function(x, fdata, description, fdata.type = "adp") {
+    if (!exists("SetFData", mode = "function", inherits = TRUE)) {
+      stop(
+        "SetFData() is required for non-RDML imports; source/load RDML.SetFData.R",
+        call. = FALSE
+      )
+    }
+    SetFData(x, fdata, description, fdata.type = fdata.type)
+  }
+
+  .split_ws <- function(x) {
+    strsplit(trimws(x), "\\s+", perl = TRUE)[[1L]]
+  }
+
+  .first_match_field <- function(x, field, value, return_field, default = NA_character_) {
+    for (el in x) {
+      if (length(el) >= max(field, return_field) && identical(el[[field]], value)) {
+        return(el[[return_field]])
+      }
+    }
+    default
+  }
+
+  # Applied Biosystems .eds -------------------------------------------------
+  fromABI <- function() {
+    if (!requireNamespace("stringr", quietly = TRUE)) {
+      stop("Package 'stringr' is required for ABI .eds import", call. = FALSE)
+    }
+    if (!requireNamespace("data.table", quietly = TRUE)) {
+      stop("Package 'data.table' is required for ABI .eds import", call. = FALSE)
+    }
+
+    uniq.folder <- tempfile("rdml-abi-")
+    dir.create(uniq.folder, recursive = TRUE)
+    on.exit(unlink(uniq.folder, recursive = TRUE), add = TRUE)
+
+    utils::unzip(filename, exdir = uniq.folder)
+
+    data.file <- file.path(
+      uniq.folder, "apldbio", "sds", "multicomponent_data.txt"
+    )
+    plate.file <- file.path(
+      uniq.folder, "apldbio", "sds", "plate_setup.xml"
+    )
+
+    if (!file.exists(data.file) || !file.exists(plate.file)) {
+      stop(
+        "Not a supported ABI .eds archive: apldbio/sds data files are missing",
+        call. = FALSE
+      )
+    }
+
+    txt <- readChar(
+      data.file,
+      nchars = file.info(data.file)$size,
+      useBytes = TRUE
+    )
+
+    m <- stringr::str_match_all(
+      txt,
+      "([0-9]+)\\t([0-9]+)\\t([A-Z]+)\\t(?:Infinity)?(?:NaN)?[0-9E\\-]*\\.?[0-9E\\-]*\\t([0-9E\\-]+\\.?[0-9E\\-]*)"
+    )[[1L]]
+
+    if (!nrow(m)) {
+      stop("No fluorescence data found in ABI multicomponent_data.txt", call. = FALSE)
+    }
+
+    multicomponent.data <- data.table::data.table(
+      well = base::as.numeric(m[, 2L]),
+      cyc = base::as.numeric(m[, 3L]),
+      dye = m[, 4L],
+      fluor = base::as.numeric(m[, 5L])
+    )
+
+    plate.setup <- xml2::read_xml(plate.file)
+    rdml.env$ns <- xml2::xml_ns(plate.setup)
+
+    snames <- getTextVector(
+      plate.setup,
+      "/Plate/FeatureMap/Feature[Id='sample']/../FeatureValue/FeatureItem/Sample/Name"
+    )
+    sidx <- getIntegerVector(
+      plate.setup,
+      "/Plate/FeatureMap/Feature[Id='sample']/../FeatureValue/Index"
+    ) + 1L
+    names(snames) <- as.character(sidx)
+
+    detector_nodes <- xml2::xml_find_all(
+      plate.setup,
+      "/Plate/FeatureMap/Feature[Id='detector-task']/../FeatureValue"
+    )
+
+    rows <- list()
+    row_n <- 0L
+
+    for (el_i in seq_along(detector_nodes)) {
+      el <- detector_nodes[[el_i]]
+      index <- getIntegerValue(el, "Index") + 1L
+
+      task_raw <- getTextValue(el, "FeatureItem/DetectorTaskList/*[1]/Task")
+      task_map <- c(UNKNOWN = "unkn", NTC = "ntc", STANDARD = "std")
+      task <- unname(task_map[task_raw])
+      if (!length(task) || is.na(task)) task <- "unkn"
+
+      sample_name <- unname(snames[as.character(index)])
+      if (!length(sample_name) || is.na(sample_name) || !nzchar(sample_name)) {
+        sample_name <- "unnamed"
+      }
+
+      task_lists <- xml2::xml_find_all(el, "FeatureItem/DetectorTaskList")
+      for (tl_i in seq_along(task_lists)) {
+        tl <- task_lists[[tl_i]]
+        reporters <- getTextVector(tl, "DetectorTask/Detector/Reporter")
+        targets <- getTextVector(tl, "DetectorTask/Detector/Name")
+        quantities <- getNumericVector(tl, "DetectorTask/Concentration")
+
+        if (!length(reporters) || !length(targets)) next
+        n <- max(length(reporters), length(targets))
+
+        if (!length(quantities)) quantities <- rep(NA_real_, n)
+        if (length(quantities) < n) quantities <- rep(quantities, length.out = n)
+        if (length(reporters) < n) reporters <- rep(reporters, length.out = n)
+        if (length(targets) < n) targets <- rep(targets, length.out = n)
+
+        for (j in seq_len(n)) {
+          row_n <- row_n + 1L
+          rows[[row_n]] <- data.frame(
+            fdata.name = paste(index, reporters[[j]]),
+            exp.id = "exp1",
+            run.id = "run1",
+            react.id = index,
+            sample = sample_name,
+            sample.type = task,
+            target = targets[[j]],
+            target.dyeId = reporters[[j]],
+            quantity = quantities[[j]],
+            IsOmit = FALSE,
+            stringsAsFactors = FALSE
+          )
+        }
+      }
+    }
+
+    if (!length(rows)) {
+      stop("No detector tasks found in ABI plate_setup.xml", call. = FALSE)
+    }
+
+    description <- data.table::as.data.table(do.call(rbind, rows))
+
+    omitted.i <- getIntegerVector(
+      plate.setup,
+      "/Plate/Wells/Well[IsOmit='true']/Index"
+    ) + 1L
+    if (length(omitted.i)) {
+      description[react.id %in% omitted.i, IsOmit := TRUE]
+    }
+    description <- description[IsOmit == FALSE]
+
+    cycle0 <- sort(unique(multicomponent.data$cyc))
+    fdata <- data.frame(cyc = cycle0 + 1, check.names = FALSE)
+
+    for (j in seq_len(nrow(description))) {
+      r <- description[j]
+      sub <- multicomponent.data[
+        well == base::as.integer(r$react.id) - 1L &
+          dye == as.character(r$target.dyeId)
+      ]
+      vals <- sub$fluor[match(cycle0, sub$cyc)]
+      fdata[[as.character(r$fdata.name)]] <- vals
+    }
+
+    x <- .new_import_rdml("ABI", "1")
+    .set_fdata_import(x, fdata, description, "adp")
+  }
+
+  # Rotor-Gene .rex --------------------------------------------------------
+  fromRotorGene <- function() {
+    dat <- xml2::read_xml(filename)
+    rdml.env$ns <- xml2::xml_ns(dat)
+
+    sample_nodes <- xml2::xml_find_all(
+      dat,
+      "/Experiment/Samples/Page/Sample[Name]"
+    )
+
+    if (!length(sample_nodes)) {
+      stop("No samples found in Rotor-Gene .rex file", call. = FALSE)
+    }
+
+    description <- do.call(
+      rbind,
+      lapply(seq_along(sample_nodes), function(i) {
+        el <- sample_nodes[[i]]
+        type_raw <- getTextValue(el, "Type")
+        type_map <- c("5" = "pos", "3" = "ntc", "1" = "std")
+        sample_type <- unname(type_map[as.character(type_raw)])
+        if (!length(sample_type) || is.na(sample_type)) sample_type <- "unkn"
+
+        quantity <- .rdml_as_numeric(getTextValue(el, "GivenConc"))
+        if (!length(quantity)) quantity <- NA_real_ else quantity <- quantity[[1L]]
+
+        data.frame(
+          fdata.name = getTextValue(el, "ID"),
+          exp.id = "exp1",
+          run.id = "run1",
+          react.id = base::as.numeric(getTextValue(el, "TubePosition")),
+          sample = getTextValue(el, "Name"),
+          sample.type = sample_type,
+          quantity = quantity,
+          target = NA_character_,
+          target.dyeId = NA_character_,
+          stringsAsFactors = FALSE
+        )
+      })
+    )
+
+    groups <- xml2::xml_find_all(dat, "/Experiment/Samples/Groups/Group")
+    for (i in seq_along(groups)) {
+      group <- groups[[i]]
+      group_name <- getTextValue(group, "Name")
+      tube_nodes <- xml2::xml_find_all(group, ".//Tube")
+      ids <- xml2::xml_text(tube_nodes)
+      description$target[description$fdata.name %in% ids] <- group_name
+    }
+
+    original.targets <- description$target
+    original.targets[is.na(original.targets) | !nzchar(original.targets)] <- "unkn"
+
+    channels <- xml2::xml_find_all(dat, "/Experiment/RawChannels/RawChannel")
+    if (!length(channels)) {
+      stop("No raw channels found in Rotor-Gene .rex file", call. = FALSE)
+    }
+
+    x <- .new_import_rdml("RotorGene", "1")
+
+    for (i in seq_along(channels)) {
+      rawChannel <- channels[[i]]
+      dye_id <- getTextValue(rawChannel, "Name")
+      description$target.dyeId <- dye_id
+      description$target <- paste(original.targets, dye_id, sep = "#")
+
+      readings <- getTextVector(
+        rawChannel,
+        sprintf("Name[text()='%s']/../Reading", dye_id)
+      )
+      if (!length(readings)) {
+        readings <- xml2::xml_text(xml2::xml_find_all(rawChannel, ".//Reading"))
+      }
+
+      ridx <- base::as.integer(description$react.id)
+      selected <- readings[ridx]
+      curves <- lapply(selected, function(z) {
+        if (is.na(z) || !nzchar(z)) return(numeric())
+        .rdml_as_numeric(.split_ws(z))
+      })
+
+      lens <- lengths(curves)
+      if (!length(lens) || any(lens == 0L)) next
+      if (length(unique(lens)) != 1L) {
+        stop("Rotor-Gene fluorescence curves have unequal lengths", call. = FALSE)
+      }
+
+      mat <- do.call(cbind, curves)
+      fdata <- data.frame(cyc = seq_len(nrow(mat)), check.names = FALSE)
+      for (j in seq_len(ncol(mat))) {
+        fdata[[as.character(description$fdata.name[[j]])]] <- mat[, j]
+      }
+
+      x <- .set_fdata_import(x, fdata, description, "adp")
+    }
+
+    x
+  }
+
+  # Generic/Bio-Rad Excel ---------------------------------------------------
+  fromExcel <- function() {
+    if (!requireNamespace("readxl", quietly = TRUE)) {
+      stop("Package 'readxl' is required for Excel import", call. = FALSE)
+    }
+
+    descr <- as.data.frame(
+      readxl::read_excel(filename, sheet = "description"),
+      stringsAsFactors = FALSE,
+      check.names = FALSE
+    )
+
+    # Bio-Rad export layout.
+    if ("Well" %in% names(descr)) {
+      if (!("Starting Quantity (SQ)" %in% names(descr))) {
+        descr[["Starting Quantity (SQ)"]] <- NA_real_
+      }
+
+      required <- c("Well", "Sample", "Content", "Target", "Fluor")
+      miss <- setdiff(required, names(descr))
+      if (length(miss)) {
+        stop(
+          "Bio-Rad Excel description is missing: ",
+          paste(miss, collapse = ", "),
+          call. = FALSE
+        )
+      }
+
+      descr <- data.frame(
+        fdata.name = as.character(descr[["Well"]]),
+        exp.id = "Exp1",
+        run.id = "Run1",
+        react.id = seq_len(nrow(descr)),
+        sample = as.character(descr[["Sample"]]),
+        sample.type = tolower(as.character(descr[["Content"]])),
+        target = as.character(descr[["Target"]]),
+        target.dyeId = as.character(descr[["Fluor"]]),
+        quantity = suppressWarnings(base::as.numeric(descr[["Starting Quantity (SQ)"]])),
+        stringsAsFactors = FALSE,
+        check.names = FALSE
+      )
+
+      # Unkn-1 -> unkn, Std-2 -> std, etc.
+      descr$sample.type <- sub("-.*$", "", descr$sample.type)
+      # A01 -> A1.
+      descr$fdata.name <- sub(
+        "^([A-Za-z]+)0+([1-9].*)$",
+        "\\1\\2",
+        descr$fdata.name
+      )
+    }
+
+    read_numeric_sheet <- function(sheet) {
+      tryCatch({
+        z <- as.data.frame(
+          readxl::read_excel(filename, sheet = sheet),
+          stringsAsFactors = FALSE,
+          check.names = FALSE
+        )
+        z[] <- lapply(z, function(v) suppressWarnings(base::as.numeric(v)))
+        z
+      }, error = function(e) NULL)
+    }
+
+    adp_data <- read_numeric_sheet("adp")
+    mdp_data <- read_numeric_sheet("mdp")
+
+    if (is.null(adp_data) && is.null(mdp_data)) {
+      stop("Excel file contains neither 'adp' nor 'mdp' sheet", call. = FALSE)
+    }
+
+    x <- .new_import_rdml()
+    if (!is.null(adp_data)) {
+      x <- .set_fdata_import(x, adp_data, descr, "adp")
+    }
+    if (!is.null(mdp_data)) {
+      x <- .set_fdata_import(x, mdp_data, descr, "mdp")
+    }
+    x
+  }
+
+  # DTprime / DNA-Technology .r96 -----------------------------------------
+  fromDTprime <- function() {
+    if (!requireNamespace("data.table", quietly = TRUE)) {
+      stop(
+        "Package 'data.table' is required for DTprime .r96 import",
+        call. = FALSE
+      )
+    }
+    
+    DT96_OVERLOAD_SIGNAL <- 15000
+    
+    # Read as raw bytes first. readLines(..., encoding = "Windows-1251")
+    # is not reliable on all Windows/R builds: the returned strings may still
+    # contain CP1251 bytes but be treated as UTF-8, causing trimws()/sub()
+    # to fail on e.g. "Апрель".
+    raw <- readBin(
+      filename,
+      what = "raw",
+      n = file.info(filename)$size
+    )
+    
+    txt <- rawToChar(raw)
+    
+    if (validUTF8(txt)) {
+      txt <- enc2utf8(txt)
+    } else {
+      txt <- iconv(
+        txt,
+        from = "CP1251",
+        to = "UTF-8",
+        sub = NA_character_
+      )
+      
+      if (is.na(txt)) {
+        stop(
+          "Cannot decode DTprime .r96 file as UTF-8 or CP1251",
+          call. = FALSE
+        )
+      }
+    }
+    
+    lns <- strsplit(
+      txt,
+      "\\r\\n|\\n|\\r",
+      perl = TRUE
+    )[[1L]]
+    
+    # Keep the original lines for section detection, but parse data rows with
+    # whitespace normalization. Do NOT rely on empty fields created by
+    # str_split(" ") in the old importer.
+    trimmed <- trimws(lns)
+    
+    marker <- function(pattern, mode = c("exact", "prefix", "regex")) {
+      mode <- match.arg(mode)
+      
+      z <- switch(
+        mode,
+        exact  = which(trimmed == pattern),
+        prefix = which(startsWith(trimmed, pattern)),
+        regex  = which(grepl(pattern, trimmed, perl = TRUE))
+      )
+      
+      if (!length(z)) NA_integer_ else z[[1L]]
+    }
+    
+    i_tubes   <- marker("$Information about tubes:$", mode = "prefix")
+    i_samples <- marker("$Information about Samples:$", mode = "prefix")
+    i_multi   <- marker("$MultiChannel:$", mode = "prefix")
+    i_device  <- marker("^\\$Device", mode = "regex")
+    i_tests   <- marker("$Information about TESTs:$", mode = "prefix")
+    i_mut     <- marker("$Parameters MutationMC:$", mode = "prefix")
+    i_results <- marker("$Results of optical measurements:$", mode = "prefix")
+    
+    required_markers <- c(
+      tubes = i_tubes,
+      multi = i_multi,
+      device = i_device,
+      tests = i_tests,
+      mutation = i_mut,
+      results = i_results
+    )
+    
+    if (anyNA(required_markers)) {
+      stop(
+        "Unsupported or malformed DTprime .r96 file; missing section(s): ",
+        paste(names(required_markers)[is.na(required_markers)], collapse = ", "),
+        call. = FALSE
+      )
+    }
+    
+    # ---- Tube table ----------------------------------------------------
+    # Current .r96 tube rows contain 8 meaningful whitespace-separated
+    # fields. Example:
+    #   0  2 100 1 120 c0 1 CD53_1
+    # They used to become 10 tokens only because the old code replaced tabs
+    # and split on a single space, preserving empty tokens.
+    tube_end <- if (!is.na(i_samples) && i_samples > i_tubes) {
+      i_samples - 1L
+    } else {
+      i_multi - 1L
+    }
+    
+    tube_lines <- lns[(i_tubes + 1L):tube_end]
+    tube_lines <- tube_lines[
+      grepl("^\\s*[0-9]+\\s+", tube_lines)
+    ]
+    
+    tubes.info <- lapply(tube_lines, .split_ws)
+    tubes.info <- Filter(
+      function(z) {
+        length(z) >= 8L &&
+          grepl("^[0-9]+$", z[[1L]])
+      },
+      tubes.info
+    )
+    
+    if (!length(tubes.info)) {
+      stop("No tube records found in DTprime .r96 file", call. = FALSE)
+    }
+    
+    # ---- Test/kit table ------------------------------------------------
+    kit_lines <- lns[(i_tests + 1L):(i_mut - 1L)]
+    kits <- lapply(kit_lines, .split_ws)
+    kits <- Filter(
+      function(z) {
+        length(z) >= 2L &&
+          grepl("^[0-9]+$", z[[1L]])
+      },
+      kits
+    )
+    
+    # ---- Optional concentration table ---------------------------------
+    # Some DTprime files have no rows between MultiChannel and Device.
+    concentrations <- list()
+    
+    if (i_device > i_multi + 1L) {
+      conc_lines <- lns[(i_multi + 1L):(i_device - 1L)]
+      conc_lines <- conc_lines[
+        nzchar(trimws(conc_lines)) &
+          grepl("^\\s*[0-9]+(?:\\s|$)", conc_lines)
+      ]
+      
+      concentrations <- lapply(conc_lines, .split_ws)
+    }
+    
+    # ---- Optical measurements -----------------------------------------
+    measurement_lines <- lns[(i_results + 1L):length(lns)]
+    measurement_lines <- measurement_lines[nzchar(trimws(measurement_lines))]
+    
+    parts <- lapply(measurement_lines, .split_ws)
+    
+    if (!length(parts)) {
+      stop("DTprime file contains no optical measurements", call. = FALSE)
+    }
+    
+    part_lengths <- vapply(parts, length, integer(1))
+    
+    if (length(unique(part_lengths)) != 1L) {
+      stop(
+        "DTprime optical-data rows have inconsistent field counts: ",
+        paste(sort(unique(part_lengths)), collapse = ", "),
+        call. = FALSE
+      )
+    }
+    
+    fraw <- data.table::as.data.table(
+      data.table::transpose(parts, fill = NA_character_)
+    )
+    
+    # 7 metadata fields + 96 tube fields = 103 meaningful fields.
+    # Older RDML code expected a 104th '?' column solely because splitting
+    # lines ending in whitespace produced a trailing empty string.
+    raw_names_103 <- c(
+      "dye",
+      "x1",
+      "x2",
+      "x3",
+      "cycle",
+      "exposition",
+      "background",
+      paste0("tube_", 0:95)
+    )
+    
+    if (ncol(fraw) == length(raw_names_103)) {
+      data.table::setnames(fraw, raw_names_103)
+    } else if (ncol(fraw) == length(raw_names_103) + 1L) {
+      data.table::setnames(fraw, c(raw_names_103, "?"))
+    } else {
+      stop(
+        "Unexpected DTprime optical-data column count: ",
+        ncol(fraw),
+        " (expected ",
+        length(raw_names_103),
+        " meaningful columns",
+        " or ",
+        length(raw_names_103) + 1L,
+        " including a trailing empty field)",
+        call. = FALSE
+      )
+    }
+    
+    n_raw <- nrow(fraw)
+    
+    # Each PCR cycle has 5 dyes x 2 exposure rows.
+    if (n_raw %% 10L != 0L) {
+      stop(
+        "Unexpected DTprime optical-data row count: ",
+        n_raw,
+        " (must be divisible by 10: 5 dyes x 2 exposures)",
+        call. = FALSE
+      )
+    }
+    
+    n_cycles <- n_raw %/% 10L
+    fdata <- data.table::data.table(cyc = seq_len(n_cycles))
+    
+    descr_rows <- list()
+    nr <- 0L
+    dyes <- c("FAM", "HEX", "ROX", "Cy5", "Cy5.5")
+    
+    # Helpers for normalized DTprime tables -----------------------------
+    kit_name_for <- function(kit_id) {
+      for (kit in kits) {
+        if (length(kit) >= 2L && identical(kit[[1L]], kit_id)) {
+          return(kit[[2L]])
+        }
+      }
+      "unkn"
+    }
+    
+    concentration_for <- function(tube_id) {
+      for (conc in concentrations) {
+        # Normalized form corresponds to old conc[2] / conc[4].
+        # With empty tokens removed these are normally fields 1 / 3.
+        if (length(conc) >= 3L && identical(conc[[1L]], tube_id)) {
+          return(suppressWarnings(base::as.numeric(conc[[3L]])))
+        }
+      }
+      NA_real_
+    }
+    
+    for (tube in tubes.info) {
+      # Normalized tube layout:
+      # 1 = zero-based tube id
+      # 7 = TEST/kit id
+      # 8 = sample/tube name
+      tube_id   <- tube[[1L]]
+      kit_id    <- tube[[7L]]
+      tube.name <- tube[[8L]]
+      
+      if (identical(tube.name, "-")) {
+        next
+      }
+      
+      tube_col <- paste0("tube_", tube_id)
+      
+      if (!(tube_col %in% names(fraw))) {
+        next
+      }
+      
+      kit_name <- kit_name_for(kit_id)
+      quantity <- concentration_for(tube_id)
+      
+      for (dye_i in seq_along(dyes)) {
+        dye <- dyes[[dye_i]]
+        
+        first_idx <- (dye_i - 1L) * 2L + 1L
+        second_idx <- first_idx + 1L
+        
+        if (second_idx > n_raw) {
+          next
+        }
+        
+        marker_value <- fraw[[tube_col]][[first_idx]]
+        
+        # DTprime stores "1" for channels/tubes that were not measured.
+        if (is.na(marker_value) || identical(marker_value, "1")) {
+          next
+        }
+        
+        idx2000 <- seq(first_idx, n_raw, by = 10L)
+        idx400  <- seq(second_idx, n_raw, by = 10L)
+        
+        if (
+          length(idx2000) != n_cycles ||
+          length(idx400) != n_cycles
+        ) {
+          stop(
+            "Inconsistent DTprime exposure series for tube ",
+            tube_id,
+            ", dye ",
+            dye,
+            call. = FALSE
+          )
+        }
+        
+        sig2000 <-
+          suppressWarnings(base::as.numeric(fraw[[tube_col]][idx2000])) -
+          suppressWarnings(base::as.numeric(fraw$background[idx2000]))
+        
+        sig400 <-
+          suppressWarnings(base::as.numeric(fraw[[tube_col]][idx400])) -
+          suppressWarnings(base::as.numeric(fraw$background[idx400]))
+        
+        if (
+          all(is.na(sig2000)) ||
+          all(is.na(sig400))
+        ) {
+          next
+        }
+        
+        sigcomb <- if (
+          !any(sig2000 >= DT96_OVERLOAD_SIGNAL, na.rm = TRUE)
+        ) {
+          sig2000
+        } else {
+          sig400 * 5
+        }
+        
+        # fdata.name is an internal fluorescence-series key and must be
+        # unique. Sample names may repeat for technical replicates, therefore
+        # include the zero-based DTprime tube id.
+        nm2000 <- sprintf("tube_%s_%s_2000", tube_id, dye)
+        nm400  <- sprintf("tube_%s_%s_400",  tube_id, dye)
+        nmcomb <- sprintf("tube_%s_%s_comb", tube_id, dye)
+        
+        fdata[[nm2000]] <- sig2000
+        fdata[[nm400]]  <- sig400
+        fdata[[nmcomb]] <- sigcomb
+        
+        base_row <- list(
+          run.id = "run1",
+          react.id = base::as.integer(tube_id) + 1L,
+          sample = tube.name,
+          target = sprintf("%s#%s", kit_name, dye),
+          target.dyeId = dye,
+          sample.type = "unkn",
+          quantity = quantity
+        )
+        
+        nr <- nr + 1L
+        descr_rows[[nr]] <- data.frame(
+          fdata.name = nm2000,
+          exp.id = "exp_2000",
+          run.id = base_row$run.id,
+          react.id = base_row$react.id,
+          sample = base_row$sample,
+          target = base_row$target,
+          target.dyeId = base_row$target.dyeId,
+          sample.type = base_row$sample.type,
+          quantity = base_row$quantity,
+          stringsAsFactors = FALSE
+        )
+        
+        nr <- nr + 1L
+        descr_rows[[nr]] <- data.frame(
+          fdata.name = nm400,
+          exp.id = "exp_400",
+          run.id = base_row$run.id,
+          react.id = base_row$react.id,
+          sample = base_row$sample,
+          target = base_row$target,
+          target.dyeId = base_row$target.dyeId,
+          sample.type = base_row$sample.type,
+          quantity = base_row$quantity,
+          stringsAsFactors = FALSE
+        )
+        
+        nr <- nr + 1L
+        descr_rows[[nr]] <- data.frame(
+          fdata.name = nmcomb,
+          exp.id = "combined",
+          run.id = base_row$run.id,
+          react.id = base_row$react.id,
+          sample = base_row$sample,
+          target = base_row$target,
+          target.dyeId = base_row$target.dyeId,
+          sample.type = base_row$sample.type,
+          quantity = base_row$quantity,
+          stringsAsFactors = FALSE
+        )
+      }
+    }
+    
+    if (!length(descr_rows) || ncol(fdata) < 2L) {
+      stop(
+        "No usable fluorescence data found in DTprime .r96 file",
+        call. = FALSE
+      )
+    }
+    
+    description <- data.table::rbindlist(
+      descr_rows,
+      use.names = TRUE,
+      fill = TRUE
+    )
+    
+    description[, react.id := base::as.integer(react.id)]
+    description[, quantity := suppressWarnings(base::as.numeric(quantity))]
+    
+    if (show.progress) {
+      cat(
+        sprintf(
+          "\nDTprime: %d cycles, %d fluorescence series, %d active reactions\n",
+          n_cycles,
+          ncol(fdata) - 1L,
+          data.table::uniqueN(description$react.id)
+        )
+      )
+    }
+    
+    x <- .new_import_rdml("DTprime", "1")
+    
+    .set_fdata_import(
+      x,
+      fdata,
+      description,
+      "adp"
+    )
+  }
+
+  # Simple CSV --------------------------------------------------------------
+  fromCSV <- function() {
+    pcrdata <- utils::read.csv(
+      filename,
+      check.names = FALSE,
+      stringsAsFactors = FALSE
+    )
+    if (ncol(pcrdata) < 2L) {
+      stop("CSV must contain a coordinate column and fluorescence columns", call. = FALSE)
+    }
+
+    fdata.names <- names(pcrdata)[-1L]
+    first_name <- tolower(names(pcrdata)[1L])
+    data.type <- if (first_name %in% c("tmp", "temperature")) "mdp" else "adp"
+
+    descr <- data.frame(
+      fdata.name = fdata.names,
+      exp.id = "exp1",
+      run.id = "run1",
+      react.id = seq_along(fdata.names),
+      sample = fdata.names,
+      target = "unkn",
+      target.dyeId = "unkn",
+      sample.type = "unkn",
+      stringsAsFactors = FALSE,
+      check.names = FALSE
+    )
+
+    x <- .new_import_rdml()
+    .set_fdata_import(x, pcrdata, descr, data.type)
+  }
+
+  # FQD-96a text export -----------------------------------------------------
+  fromFQDexport <- function() {
+    if (!requireNamespace("data.table", quietly = TRUE)) {
+      stop("Package 'data.table' is required for FQD-96a import", call. = FALSE)
+    }
+
+    content <- readChar(
+      filename,
+      nchars = file.info(filename)$size,
+      useBytes = TRUE
+    )
+    inpstr <- strsplit(content, "Quan\\.", perl = TRUE)[[1L]]
+    if (length(inpstr) < 4L) {
+      stop("Unsupported FQD-96a text export", call. = FALSE)
+    }
+
+    description <- data.table::fread(
+      input = inpstr[[4L]],
+      fill = TRUE,
+      sep = "\t",
+      skip = 2,
+      blank.lines.skip = TRUE,
+      header = TRUE
+    )
+    description <- description[Well != "Well"]
+
+    expected_desc_names <- c(
+      "position", "sample.id", "sample", "sample.type",
+      "target", "target.dyeId", "cq", "cq.mean", "cq.sd",
+      "quantity", "quantity.avg", "quantity.sd", "V13", "fdata.name"
+    )
+    if (ncol(description) != length(expected_desc_names)) {
+      stop(
+        "Unexpected FQD description column count: ", ncol(description),
+        " (expected ", length(expected_desc_names), ")",
+        call. = FALSE
+      )
+    }
+    data.table::setnames(description, expected_desc_names)
+    description[, fdata.name := paste(position, target, sep = "_")]
+
+    num_cols <- c(
+      "cq", "cq.mean", "cq.sd", "quantity", "quantity.avg", "quantity.sd"
+    )
+    description[, (num_cols) := lapply(.SD, .rdml_as_numeric), .SDcols = num_cols]
+    description[, `:=`(
+      exp.id = "exp1",
+      run.id = "raw_data",
+      sample = ifelse(sample == "", "unkn_s", sample),
+      react.id = vapply(position, FromPositionToId, numeric(1))
+    )]
+
+    type_map <- c(
+      Unknown = "unkn",
+      Standard = "std",
+      Negative = "ntc",
+      Positive = "pos"
+    )
+    mapped <- unname(type_map[description$sample.type])
+    description$sample.type[!is.na(mapped)] <- mapped[!is.na(mapped)]
+
+    make_fdata <- function(txt) {
+      z <- data.table::fread(
+        input = txt,
+        fill = TRUE,
+        sep = "\t",
+        skip = 2,
+        blank.lines.skip = TRUE,
+        header = TRUE
+      )
+      z <- z[Well != "Well"]
+      drop <- c("Well", "Property", "Std. Con.", "Target", "Dye")
+      keep <- setdiff(names(z), drop)
+      if (!length(keep)) {
+        stop("FQD fluorescence table has no cycle columns", call. = FALSE)
+      }
+
+      m <- t(as.matrix(z[, ..keep]))
+      m_num <- matrix(
+        suppressWarnings(base::as.numeric(m)),
+        nrow = nrow(m),
+        ncol = ncol(m),
+        dimnames = dimnames(m)
+      )
+      if (ncol(m_num) != nrow(description)) {
+        stop(
+          "FQD fluorescence/description column mismatch",
+          call. = FALSE
+        )
+      }
+
+      out <- data.frame(cyc = seq_len(nrow(m_num)), check.names = FALSE)
+      for (j in seq_len(ncol(m_num))) {
+        out[[description$fdata.name[[j]]]] <- m_num[, j]
+      }
+      out
+    }
+
+    rawfdata <- make_fdata(inpstr[[2L]])
+    processedfdata <- make_fdata(inpstr[[3L]])
+
+    x <- .new_import_rdml()
+    x <- .set_fdata_import(x, rawfdata, description, "adp")
+
+    description_processed <- data.table::copy(description)
+    description_processed[, run.id := "processed_data"]
+    x <- .set_fdata_import(x, processedfdata, description_processed, "adp")
+    x
+  }
 
   as_table_rdml <- function(rdml_obj) {
     rows <- list()
@@ -539,7 +1501,6 @@ rdml_read <- function(filename,
     rdml_obj$dateUpadted <- getTextValue(rdml.doc, "/rdml:rdml/rdml:dateUpdated")
 
     # id -------------------------------------------------------------------
-    
     rdml_obj$id <- .xml_nodes_apply(
       xml2::xml_find_all(rdml.doc, "/rdml:rdml/rdml:id", rdml.env$ns),
       function(node) {
@@ -558,22 +1519,10 @@ rdml_read <- function(filename,
     rdml_obj$experimenter <- .xml_nodes_apply(
       xml2::xml_find_all(rdml.doc, "/rdml:rdml/rdml:experimenter", rdml.env$ns),
       function(node) {
-        id <- genId(node)
-        
-        # for BioRad empty firs/lastname
-        firstName <- getTextValue(node, "rdml:firstName")
-        if(is.na(firstName)) {
-          firstName <- id@id
-        }
-        lastName <- getTextValue(node, "rdml:lastName")
-        if(is.na(lastName)) {
-          lastName <- id@id
-        }
-        
         experimenterType(
-          id = id,
-          firstName = firstName,
-          lastName = lastName,
+          id = genId(node),
+          firstName = getTextValue(node, "rdml:firstName"),
+          lastName = getTextValue(node, "rdml:lastName"),
           email = getTextValue(node, "rdml:email"),
           labName = getTextValue(node, "rdml:labName"),
           labAddress = getTextValue(node, "rdml:labAddress")
@@ -1055,25 +2004,69 @@ rdml_read <- function(filename,
     rdml_obj
   }
 
-  if (identical(format, "auto")) {
+  # File-format dispatch ----------------------------------------------------
+  if (identical(tolower(format), "auto")) {
     ext <- tolower(tools::file_ext(filename))
     format <- switch(
       ext,
+      "eds" = "abi",
+      "rex" = "rotorgene",
+      "xlsx" = "excel",
+      "xls" = "excel",
+      "csv" = "csv",
+      "r96" = "dtprime",
+      "txt" = "fqd",
       "xml" = "xml",
       "rdml" = "rdml",
       "lc96p" = "rdml",
-      if (identical(ext, "")) "rdml" else ext
+      # Preserve the historical upstream fallback: unknown extensions are
+      # attempted as RDML archives.
+      "rdml"
+    )
+  } else {
+    format <- switch(
+      tolower(format),
+      "abi" = "abi",
+      "eds" = "abi",
+      "rotorgene" = "rotorgene",
+      "rotor-gene" = "rotorgene",
+      "rex" = "rotorgene",
+      "excel" = "excel",
+      "xlsx" = "excel",
+      "xls" = "excel",
+      "csv" = "csv",
+      "dtprime" = "dtprime",
+      "r96" = "dtprime",
+      "fqd" = "fqd",
+      "fqd96" = "fqd",
+      "txt" = "fqd",
+      "xml" = "xml",
+      "rdml" = "rdml",
+      "lc96p" = "rdml",
+      stop("Unsupported import format: ", format, call. = FALSE)
     )
   }
 
-  if (!format %in% c("rdml", "xml")) {
-    stop(
-      "Unsupported format for S7 rdml_read(): ", format,
-      ". Use an RDML archive (.rdml/.lc96p) or RDML XML file."
-    )
+  if (identical(format, "abi")) {
+    return(fromABI())
+  }
+  if (identical(format, "rotorgene")) {
+    return(fromRotorGene())
+  }
+  if (identical(format, "excel")) {
+    return(fromExcel())
+  }
+  if (identical(format, "csv")) {
+    return(fromCSV())
+  }
+  if (identical(format, "dtprime")) {
+    return(fromDTprime())
+  }
+  if (identical(format, "fqd")) {
+    return(fromFQDexport())
   }
 
+  # RDML XML/archive import keeps the richer dedicated parser above.
   rdml_obj <- fromRDML()
-  
   do.call(rdmlType, rdml_obj)
 }
