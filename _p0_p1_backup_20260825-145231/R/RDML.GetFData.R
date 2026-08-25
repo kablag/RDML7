@@ -4,7 +4,7 @@
 #' @param dp.type "adp" for amplification or "mdp" for melting data.
 #' @return data.table with cyc/tmp and fluor columns.
 #' @export
-#' @include generics.R rdml-utils.R
+#' @include functional_wrappers.R RDML.R
 S7::method(GetFData, dataType) <- function(x, dp.type = "adp", ...) {
   checkmate::assertChoice(dp.type, c("adp", "mdp"))
   if (!requireNamespace("data.table", quietly = TRUE)) {

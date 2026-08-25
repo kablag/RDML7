@@ -8,7 +8,7 @@
 #' @param to.merge List of rdmlType objects.
 #' @return rdmlType.
 #' @export
-#' @include rdml-utils.R
+#' @include RDML.R
 MergeRDMLs <- function(to.merge) {
   if (!is.list(to.merge) || !length(to.merge)) {
     stop("`to.merge` must be a non-empty list of rdmlType objects", call. = FALSE)

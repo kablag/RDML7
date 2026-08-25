@@ -11,7 +11,7 @@
 #' @param ... Additional named expressions.
 #' @return data.table.
 #' @export
-#' @include generics.R rdml-utils.R
+#' @include functional_wrappers.R RDML.R
 S7::method(AsTable, rdmlType) <- function(
     x,
     .default = list(
@@ -51,7 +51,7 @@ S7::method(AsTable, rdmlType) <- function(
   # Preserve the names used by the historical NSE interface. User expressions
   # in .default/add.columns/... can refer to these objects directly.
   dateMade <- x$dateMade
-  dateUpdated <- x$dateUpdated
+  dateUpdated <- x$dateUpadted
   id <- .rdml_prop_list(x, "id")
   experimenter <- .rdml_prop_keyed(x, "experimenter")
   documentation <- .rdml_prop_keyed(x, "documentation")

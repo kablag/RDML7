@@ -11,7 +11,7 @@
 #' @param fdata.type "adp" or "mdp".
 #' @return Modified rdmlType object.
 #' @export
-#' @include generics.R rdml-utils.R
+#' @include functional_wrappers.R RDML.R
 S7::method(SetFData, rdmlType) <- function(
     x,
     fdata,
@@ -142,7 +142,7 @@ S7::method(SetFData, rdmlType) <- function(
         id = idType(react_id),
         sample = idReferenceType(sample_id),
         data = list(),
-        partitions = list()
+        patitions = list()
       )
     }
 
@@ -212,7 +212,7 @@ S7::method(SetFData, rdmlType) <- function(
 
       if (nonempty_string(sample_type)) {
         st <- sampleTargetType(
-          targetId = idReferenceType(target_id),
+          targetId = idType(target_id),
           sampleType = sampleTypeType(sample_type)
         )
         sample_obj$type <- .rdml_upsert_list_by_key(
@@ -225,7 +225,7 @@ S7::method(SetFData, rdmlType) <- function(
         quantity <- value1(row, "quantity", NA_real_)
         if (length(quantity) == 1L && !is.na(quantity)) {
           q <- quantityType(
-            targetId = idReferenceType(target_id),
+            targetId = idType(target_id),
             value = as.numeric(quantity),
             unit = quantityUnitType("other")
           )
