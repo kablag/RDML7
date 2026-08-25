@@ -13,18 +13,18 @@ class_datetime_na <- S7::new_property(
     if (.is_single_na(value)) {
       return(NULL)
     }
-
+    
     if (length(value) != 1L) {
       return("must be NA or a single date/datetime value")
     }
-
+    
     parsed_datetime <- suppressWarnings(
       lubridate::ymd_hms(value, quiet = TRUE)
     )
     parsed_date <- suppressWarnings(
       lubridate::ymd(value, quiet = TRUE)
     )
-
+    
     if (is.na(parsed_datetime) && is.na(parsed_date)) {
       "must be NA or pass lubridate::ymd_hms()/ymd() conversion"
     }
@@ -136,45 +136,79 @@ class_positive_integer_na_single <- S7::new_property(
   default = NA_integer_
 )
 
+.resolve_s7_class <- function(className, envir = parent.frame()) {
+  cls <- get0(
+    className,
+    envir = envir,
+    inherits = TRUE
+  )
+  
+  if (is.null(cls)) {
+    stop(
+      "Unknown S7 class in property definition: ",
+      className,
+      call. = FALSE
+    )
+  }
+  
+  cls
+}
+
+
+# The class object is resolved when the property is created. This is
+# important for package code: an S7 instance may have a package-qualified
+# class name such as "RDML7::rdmlIdType", therefore checkmate::testClass(x,
+# "rdmlIdType") is not a reliable S7 class test.
 test_class <- function(className) {
+  cls <- .resolve_s7_class(
+    className,
+    envir = parent.frame()
+  )
+  
   S7::new_property(
     S7::class_any,
     validator = function(value) {
-      if (
-        checkmate::testClass(value, className) &&
-        length(value) == 1L
-      ) {
+      if (S7::S7_inherits(value, cls)) {
         return(NULL)
       }
-
+      
       paste("must be a", className)
     },
     default = NA
   )
 }
 
+
 test_class_na <- function(className) {
+  cls <- .resolve_s7_class(
+    className,
+    envir = parent.frame()
+  )
+  
   S7::new_property(
     S7::class_any,
     validator = function(value) {
       if (.is_single_na(value)) {
         return(NULL)
       }
-
-      if (
-        checkmate::testClass(value, className) &&
-        length(value) == 1L
-      ) {
+      
+      if (S7::S7_inherits(value, cls)) {
         return(NULL)
       }
-
+      
       paste("must be NA or", className)
     },
     default = NA
   )
 }
 
+
 test_class_list <- function(className) {
+  cls <- .resolve_s7_class(
+    className,
+    envir = parent.frame()
+  )
+  
   S7::new_property(
     S7::class_any,
     validator = function(value) {
@@ -182,68 +216,80 @@ test_class_list <- function(className) {
         is.list(value) &&
         all(vapply(
           value,
-          function(x) checkmate::testClass(x, className),
+          function(x) S7::S7_inherits(x, cls),
           logical(1)
         ))
       ) {
         return(NULL)
       }
-
+      
       paste("must be a list of", className)
     },
-    default = NA
+    default = list()
   )
 }
 
+
 test_class_na_list <- function(className) {
+  cls <- .resolve_s7_class(
+    className,
+    envir = parent.frame()
+  )
+  
   S7::new_property(
     S7::class_any,
     validator = function(value) {
       if (.is_single_na(value)) {
         return(NULL)
       }
-
+      
       if (
         is.list(value) &&
         all(vapply(
           value,
-          function(x) checkmate::testClass(x, className),
+          function(x) S7::S7_inherits(x, cls),
           logical(1)
         ))
       ) {
         return(NULL)
       }
-
+      
       paste("must be NA or a list of", className)
     },
     default = NA
   )
 }
 
+
 test_class_na_keyed_list <- function(className, key = "id") {
+  cls <- .resolve_s7_class(
+    className,
+    envir = parent.frame()
+  )
+  
   property <- S7::new_property(
     S7::class_any,
     validator = function(value) {
       if (.is_single_na(value)) {
         return(NULL)
       }
-
+      
       if (!is.list(value)) {
         return(paste("must be NA or a list of", className))
       }
-
+      
       correct_class <- vapply(
         value,
-        function(x) checkmate::testClass(x, className),
+        function(x) S7::S7_inherits(x, cls),
         logical(1)
       )
-
+      
       if (!all(correct_class)) {
         return(paste("must be NA or a list of", className))
       }
-
+      
       keys <- .get_keys(value, key)
-
+      
       if (anyNA(keys) || any(keys == "")) {
         return(
           paste0(
@@ -253,29 +299,36 @@ test_class_na_keyed_list <- function(className, key = "id") {
           )
         )
       }
-
+      
       if (anyDuplicated(keys)) {
-        duplicated_keys <- unique(keys[duplicated(keys)])
+        duplicated_keys <- unique(
+          keys[duplicated(keys)]
+        )
+        
         return(
           paste0(
             "duplicated ",
             key,
             ": ",
-            paste(duplicated_keys, collapse = ", ")
+            paste(
+              duplicated_keys,
+              collapse = ", "
+            )
           )
         )
       }
-
+      
       NULL
     },
     default = NA
   )
-
+  
   attr(property, "rdml_key") <- key
   attr(property, "rdml_element_class") <- className
-
+  
   property
 }
+
 
 test_class_na_id_list <- function(className) {
   test_class_na_keyed_list(
@@ -286,40 +339,40 @@ test_class_na_id_list <- function(className) {
 
 .get_property_definition <- function(x, name) {
   cls <- S7::S7_class(x)
-
+  
   repeat {
     properties <- cls@properties
-
+    
     if (name %in% names(properties)) {
       return(properties[[name]])
     }
-
+    
     parent <- cls@parent
-
+    
     if (is.null(parent)) {
       return(NULL)
     }
-
+    
     cls <- parent
   }
 }
 
 .property_key <- function(x, name) {
   property <- .get_property_definition(x, name)
-
+  
   if (is.null(property)) {
     return(NULL)
   }
-
+  
   attr(property, "rdml_key")
 }
 
 .property_element_class <- function(x, name) {
   property <- .get_property_definition(x, name)
-
+  
   if (is.null(property)) {
     return(NULL)
   }
-
+  
   attr(property, "rdml_element_class")
 }

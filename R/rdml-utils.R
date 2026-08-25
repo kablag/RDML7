@@ -59,19 +59,61 @@
 }
 
 .rdml_id_chr <- function(x) {
+  
   if (.rdml_is_missing(x)) {
     return(NA_character_)
   }
-  out <- tryCatch(as.character(x), error = function(e) NA_character_)
-  if (length(out) != 1L) NA_character_ else out
+  
+  if (S7::S7_inherits(x, idType)) {
+    id <- S7::prop(x, "id")
+    
+    if (
+      is.character(id) &&
+      length(id) == 1L
+    ) {
+      return(id)
+    }
+    
+    return(NA_character_)
+  }
+  
+  if (
+    is.character(x) &&
+    length(x) == 1L
+  ) {
+    return(x)
+  }
+  
+  NA_character_
 }
 
 .rdml_enum_chr <- function(x) {
+  
   if (.rdml_is_missing(x)) {
     return(NA_character_)
   }
-  out <- tryCatch(as.character(x), error = function(e) NA_character_)
-  if (length(out) != 1L) NA_character_ else out
+  
+  if (S7::S7_inherits(x, rdmlEnum)) {
+    value <- S7::prop(x, "value")
+    
+    if (
+      is.character(value) &&
+      length(value) == 1L
+    ) {
+      return(value)
+    }
+    
+    return(NA_character_)
+  }
+  
+  if (
+    is.character(x) &&
+    length(x) == 1L
+  ) {
+    return(x)
+  }
+  
+  NA_character_
 }
 
 # Human-readable well position. reactType in rdml7 intentionally stores only

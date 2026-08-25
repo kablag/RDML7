@@ -108,15 +108,15 @@ S7::method(names, rdmlBaseType) <- function(x) {
 
 # The default S7 `$` accessor is extended so list properties declared with
 # rdml_key metadata are exposed as transient rdmlKeyedList wrappers.
-#' @export
-`$.rdmlBaseType` <- function(x, name) {
-  if (typeof(x) %in% c("list", "environment")) {
-    return(NextMethod())
-  }
-
+S7::method(`$`, rdmlBaseType) <- function(x, name) {
+  
   value <- S7::prop(x, name)
-  key <- .property_key(x, name)
-
+  
+  key <- .property_key(
+    x,
+    name
+  )
+  
   if (
     !is.null(key) &&
     is.list(value)
@@ -128,21 +128,29 @@ S7::method(names, rdmlBaseType) <- function(x) {
       )
     )
   }
-
+  
   value
 }
 
-#' @export
-`$<-.rdmlBaseType` <- function(x, name, value) {
-  key <- .property_key(x, name)
 
+S7::method(`$<-`, rdmlBaseType) <- function(x, name, value) {
+  
+  key <- .property_key(
+    x,
+    name
+  )
+  
   if (
     !is.null(key) &&
-    S7::S7_inherits(value, rdmlKeyedList)
+    S7::S7_inherits(
+      value,
+      rdmlKeyedList
+    )
   ) {
     value <- S7::S7_data(value)
   }
-
+  
   S7::prop(x, name) <- value
+  
   x
 }

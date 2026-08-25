@@ -18,20 +18,20 @@ S7::method(SetFData, rdmlType) <- function(
     description,
     fdata.type = "adp",
     ...) {
-
+  
   checkmate::assertChoice(fdata.type, c("adp", "mdp"))
   if (!requireNamespace("data.table", quietly = TRUE)) {
     stop("Package 'data.table' is required", call. = FALSE)
   }
-
+  
   fdata <- data.table::as.data.table(fdata)
   description <- data.table::as.data.table(description)
-
+  
   if (ncol(fdata) < 2L) {
     stop("fdata must have a coordinate column and at least one fluorescence column",
          call. = FALSE)
   }
-
+  
   required <- c("fdata.name", "exp.id", "run.id", "react.id", "target")
   missing_cols <- setdiff(required, names(description))
   if (length(missing_cols)) {
@@ -41,24 +41,34 @@ S7::method(SetFData, rdmlType) <- function(
       call. = FALSE
     )
   }
-
+  
   coordinate <- fdata[[1L]]
   fdata_names <- names(fdata)[-1L]
-
+  
   value1 <- function(row, name, default = NA) {
     if (!name %in% names(row)) return(default)
     value <- row[[name]]
     if (!length(value)) default else value[[1L]]
   }
-
+  
   nonempty_string <- function(value) {
     length(value) == 1L && !is.na(value) && nzchar(as.character(value))
   }
-
+  
   make_pcr_format <- function(exp_id, run_id) {
     idx <- description[["exp.id"]] == exp_id & description[["run.id"]] == run_id
-    n_reacts <- length(unique(description[["react.id"]][idx]))
-    if (n_reacts > 96L) {
+    
+    react_ids <- suppressWarnings(
+      base::as.integer(description[["react.id"]][idx])
+    )
+    
+    max_react <- if (length(react_ids) && any(!is.na(react_ids))) {
+      max(react_ids, na.rm = TRUE)
+    } else {
+      96L
+    }
+    
+    if (max_react > 96L) {
       pcrFormatType(
         rows = 16L,
         columns = 24L,
@@ -74,10 +84,10 @@ S7::method(SetFData, rdmlType) <- function(
       )
     }
   }
-
+  
   for (fdata_name in fdata_names) {
     idx <- which(as.character(description[["fdata.name"]]) == fdata_name)
-
+    
     if (!length(idx)) {
       warning("No description for fluorescence column: ", fdata_name,
               call. = FALSE)
@@ -87,7 +97,7 @@ S7::method(SetFData, rdmlType) <- function(
       stop("Multiple description rows for fluorescence column: ", fdata_name,
            call. = FALSE)
     }
-
+    
     row <- description[idx]
     exp_id <- as.character(value1(row, "exp.id"))
     run_id <- as.character(value1(row, "run.id"))
@@ -96,7 +106,7 @@ S7::method(SetFData, rdmlType) <- function(
     sample_id <- as.character(value1(row, "sample"))
     sample_type <- as.character(value1(row, "sample.type"))
     dye_id <- as.character(value1(row, "target.dyeId"))
-
+    
     if (!all(vapply(
       list(exp_id, run_id, react_id, target_id),
       nonempty_string,
@@ -108,14 +118,14 @@ S7::method(SetFData, rdmlType) <- function(
         call. = FALSE
       )
     }
-
+    
     # Top-level experiment -------------------------------------------------
     experiments <- .rdml_prop_keyed(x, "experiment")
     experiment <- experiments[[exp_id]]
     if (is.null(experiment)) {
       experiment <- experimentType(id = idType(exp_id), run = list())
     }
-
+    
     # Run ------------------------------------------------------------------
     runs <- .rdml_prop_keyed(experiment, "run")
     run <- runs[[run_id]]
@@ -126,7 +136,7 @@ S7::method(SetFData, rdmlType) <- function(
         react = list()
       )
     }
-
+    
     # React ----------------------------------------------------------------
     reacts <- .rdml_prop_keyed(run, "react")
     react <- reacts[[react_id]]
@@ -145,7 +155,7 @@ S7::method(SetFData, rdmlType) <- function(
         partitions = list()
       )
     }
-
+    
     # dataType keyed by targetId ------------------------------------------
     data_list <- .rdml_prop_keyed(react, "data")
     data_obj <- data_list[[target_id]]
@@ -170,38 +180,43 @@ S7::method(SetFData, rdmlType) <- function(
         quantFluor = NA_real_
       )
     }
-
+    
     if ("cq" %in% names(row)) {
       cq <- value1(row, "cq", NA_real_)
-      if (length(cq) == 1L) data_obj$cq <- as.numeric(cq)
+      if (length(cq) == 1L) {
+        S7::prop(data_obj, "cq") <- as.numeric(cq)
+      }
     }
-
+    
     fluor <- as.numeric(fdata[[fdata_name]])
     if (identical(fdata.type, "adp")) {
-      data_obj$adp <- dpAmpCurveType(
+      S7::prop(data_obj, "adp") <- dpAmpCurveType(
         fpoints = data.table::data.table(
           cyc = as.numeric(coordinate),
           fluor = fluor
         )
       )
     } else {
-      data_obj$mdp <- dpMeltingCurveType(
+      S7::prop(data_obj, "mdp") <- dpMeltingCurveType(
         fpoints = data.table::data.table(
           tmp = as.numeric(coordinate),
           fluor = fluor
         )
       )
     }
-
+    
     data_list[[target_id]] <- data_obj
-    react$data <- data_list
+    react <- .rdml_set_prop_list(react, "data", data_list)
+    
     reacts[[react_id]] <- react
-    run$react <- reacts
+    run <- .rdml_set_prop_list(run, "react", reacts)
+    
     runs[[run_id]] <- run
-    experiment$run <- runs
+    experiment <- .rdml_set_prop_list(experiment, "run", runs)
+    
     experiments[[exp_id]] <- experiment
-    x$experiment <- experiments
-
+    x <- .rdml_set_prop_list(x, "experiment", experiments)
+    
     # Ensure referenced sample exists and update target-aware sample type. --
     if (nonempty_string(sample_id)) {
       samples <- .rdml_prop_keyed(x, "sample")
@@ -209,17 +224,22 @@ S7::method(SetFData, rdmlType) <- function(
       if (is.null(sample_obj)) {
         sample_obj <- sampleType(id = idType(sample_id), type = list(), quantity = list())
       }
-
+      
       if (nonempty_string(sample_type)) {
         st <- sampleTargetType(
           targetId = idReferenceType(target_id),
           sampleType = sampleTypeType(sample_type)
         )
-        sample_obj$type <- .rdml_upsert_list_by_key(
-          sample_obj$type, st, key = "targetId"
+        
+        sample_types <- .rdml_prop_keyed(sample_obj, "type")
+        sample_types[[target_id]] <- st
+        sample_obj <- .rdml_set_prop_list(
+          sample_obj,
+          "type",
+          sample_types
         )
       }
-
+      
       # Quantities are also target-aware in the rdml7 schema.
       if ("quantity" %in% names(row)) {
         quantity <- value1(row, "quantity", NA_real_)
@@ -229,16 +249,20 @@ S7::method(SetFData, rdmlType) <- function(
             value = as.numeric(quantity),
             unit = quantityUnitType("other")
           )
-          sample_obj$quantity <- .rdml_upsert_list_by_key(
-            sample_obj$quantity, q, key = "targetId"
+          quantities <- .rdml_prop_keyed(sample_obj, "quantity")
+          quantities[[target_id]] <- q
+          sample_obj <- .rdml_set_prop_list(
+            sample_obj,
+            "quantity",
+            quantities
           )
         }
       }
-
+      
       samples[[sample_id]] <- sample_obj
-      x$sample <- samples
+      x <- .rdml_set_prop_list(x, "sample", samples)
     }
-
+    
     # Ensure target/dye references exist when description provides dye id. --
     targets <- .rdml_prop_keyed(x, "target")
     if (is.null(targets[[target_id]])) {
@@ -258,7 +282,7 @@ S7::method(SetFData, rdmlType) <- function(
           sequences = NA,
           commercialAssay = NA
         )
-        x$target <- targets
+        x <- .rdml_set_prop_list(x, "target", targets)
       } else {
         warning(
           "Target '", target_id,
@@ -267,15 +291,15 @@ S7::method(SetFData, rdmlType) <- function(
         )
       }
     }
-
+    
     if (nonempty_string(dye_id)) {
       dyes <- .rdml_prop_keyed(x, "dye")
       if (is.null(dyes[[dye_id]])) {
         dyes[[dye_id]] <- dyeType(id = idType(dye_id))
-        x$dye <- dyes
+        x <- .rdml_set_prop_list(x, "dye", dyes)
       }
     }
   }
-
+  
   x
 }
