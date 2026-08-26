@@ -2,35 +2,70 @@
 #'
 #' @param x dataType object.
 #' @param dp.type "adp" for amplification or "mdp" for melting data.
-#' @return data.table with cyc/tmp and fluor columns.
+#' @return data.table containing the stored curve columns. Amplification data
+#'   retain an optional `tmp` column when present in `dpAmpCurveType@fpoints`.
 #' @export
 #' @include generics.R rdml-utils.R
 S7::method(GetFData, dataType) <- function(x, dp.type = "adp", ...) {
   checkmate::assertChoice(dp.type, c("adp", "mdp"))
+
   if (!requireNamespace("data.table", quietly = TRUE)) {
     stop("Package 'data.table' is required", call. = FALSE)
   }
 
   curve <- if (identical(dp.type, "adp")) x$adp else x$mdp
+
   if (.rdml_is_missing(curve)) {
-    coord <- if (identical(dp.type, "adp")) "cyc" else "tmp"
-    out <- data.table::data.table(numeric(), numeric())
-    data.table::setnames(out, c(coord, "fluor"))
-    return(out)
+    if (identical(dp.type, "adp")) {
+      return(data.table::data.table(cyc = numeric(), fluor = numeric()))
+    }
+    return(data.table::data.table(tmp = numeric(), fluor = numeric()))
   }
 
   if (identical(dp.type, "adp")) {
     if (!S7::S7_inherits(curve, dpAmpCurveType)) {
       stop("dataType@adp must be a dpAmpCurveType", call. = FALSE)
     }
-    return(data.table::as.data.table(curve$fpoints)[, c("cyc", "fluor"), with = FALSE])
+
+    points <- data.table::copy(
+      data.table::as.data.table(curve$fpoints)
+    )
+
+    required <- c("cyc", "fluor")
+    missing_cols <- setdiff(required, names(points))
+    if (length(missing_cols)) {
+      stop(
+        "dpAmpCurveType@fpoints is missing: ",
+        paste(missing_cols, collapse = ", "),
+        call. = FALSE
+      )
+    }
+
+    keep <- intersect(c("cyc", "tmp", "fluor"), names(points))
+    return(points[, keep, with = FALSE])
   }
 
   if (!S7::S7_inherits(curve, dpMeltingCurveType)) {
     stop("dataType@mdp must be a dpMeltingCurveType", call. = FALSE)
   }
-  data.table::as.data.table(curve$fpoints)[, c("tmp", "fluor"), with = FALSE]
+
+  points <- data.table::copy(
+    data.table::as.data.table(curve$fpoints)
+  )
+
+  required <- c("tmp", "fluor")
+  missing_cols <- setdiff(required, names(points))
+  if (length(missing_cols)) {
+    stop(
+      "dpMeltingCurveType@fpoints is missing: ",
+      paste(missing_cols, collapse = ", "),
+      call. = FALSE
+    )
+  }
+
+  points[, c("tmp", "fluor"), with = FALSE]
 }
+
 
 #' Get fluorescence data from rdmlType
 #'
@@ -49,6 +84,7 @@ S7::method(GetFData, rdmlType) <- function(
 
   checkmate::assertChoice(dp.type, c("adp", "mdp"))
   checkmate::assertFlag(long.table)
+
   if (!requireNamespace("data.table", quietly = TRUE)) {
     stop("Package 'data.table' is required", call. = FALSE)
   }
@@ -56,7 +92,9 @@ S7::method(GetFData, rdmlType) <- function(
   if (missing(request)) {
     request <- AsTable(x)
   } else {
-    request <- data.table::as.data.table(request)
+    request <- data.table::copy(
+      data.table::as.data.table(request)
+    )
   }
 
   required <- c("fdata.name", "exp.id", "run.id", "react.id", "target")
@@ -71,23 +109,29 @@ S7::method(GetFData, rdmlType) <- function(
 
   if (anyDuplicated(request$fdata.name)) {
     warning(
-      "fdata.name contains duplicates; generating names from exp.id/run.id/react.id/target",
+      "fdata.name contains duplicates; generating names from ",
+      "exp.id/run.id/react.id/target",
       call. = FALSE
     )
-    request[, fdata.name := paste(exp.id, run.id, react.id, target, sep = "_")]
-    if (anyDuplicated(request$fdata.name)) {
-      request[, fdata.name := make.unique(as.character(fdata.name), sep = "_")]
-    }
+
+    generated <- paste(
+      request[["exp.id"]],
+      request[["run.id"]],
+      request[["react.id"]],
+      request[["target"]],
+      sep = "_"
+    )
+    generated <- make.unique(as.character(generated), sep = "_")
+    data.table::set(request, j = "fdata.name", value = generated)
   }
 
   long_parts <- vector("list", nrow(request))
 
   for (i in seq_len(nrow(request))) {
-    row <- request[i]
-    exp_id <- as.character(row[["exp.id"]])
-    run_id <- as.character(row[["run.id"]])
-    react_id <- as.character(row[["react.id"]])
-    target_id <- as.character(row[["target"]])
+    exp_id <- as.character(request[["exp.id"]][[i]])
+    run_id <- as.character(request[["run.id"]][[i]])
+    react_id <- as.character(request[["react.id"]][[i]])
+    target_id <- as.character(request[["target"]][[i]])
 
     experiment <- x$experiment[[exp_id]]
     if (is.null(experiment)) stop("Unknown experiment: ", exp_id, call. = FALSE)
@@ -102,12 +146,16 @@ S7::method(GetFData, rdmlType) <- function(
     if (is.null(data_obj)) stop("Unknown target data: ", target_id, call. = FALSE)
 
     points <- GetFData(data_obj, dp.type = dp.type)
-    if (!nrow(points)) {
-      # Keep an empty component; it will simply not contribute points.
-      points[, fdata.name := character()]
+    if (nrow(points)) {
+      data.table::set(
+        points,
+        j = "fdata.name",
+        value = rep(as.character(request[["fdata.name"]][[i]]), nrow(points))
+      )
     } else {
-      points[, fdata.name := as.character(row[["fdata.name"]])]
+      points[, fdata.name := character()]
     }
+
     long_parts[[i]] <- points
   }
 
@@ -115,10 +163,17 @@ S7::method(GetFData, rdmlType) <- function(
   out_long <- data.table::rbindlist(long_parts, use.names = TRUE, fill = TRUE)
 
   if (long.table) {
-    if (!nrow(out_long)) {
-      return(merge(request, out_long, by = "fdata.name", all.x = TRUE, sort = FALSE))
-    }
-    return(merge(request, out_long, by = "fdata.name", sort = FALSE))
+    # Always keep every requested curve in long output, including curves that
+    # have metadata but no stored points.
+    return(
+      merge(
+        request,
+        out_long,
+        by = "fdata.name",
+        all.x = TRUE,
+        sort = FALSE
+      )
+    )
   }
 
   if (!nrow(out_long)) {
@@ -133,7 +188,23 @@ S7::method(GetFData, rdmlType) <- function(
     value.var = "fluor"
   )
 
-  desired <- c(coord, intersect(as.character(request$fdata.name), names(out)))
-  data.table::setcolorder(out, desired)
+  # If amplification temperatures are present and are unambiguous for each
+  # cycle across all selected curves, retain one tmp column in wide output.
+  if (identical(dp.type, "adp") && "tmp" %in% names(out_long)) {
+    tmp_rows <- out_long[!is.na(tmp), .(
+      n_tmp = data.table::uniqueN(tmp),
+      tmp = tmp[[1L]]
+    ), by = cyc]
+
+    if (nrow(tmp_rows) && all(tmp_rows$n_tmp <= 1L)) {
+      tmp_rows[, n_tmp := NULL]
+      out <- merge(out, tmp_rows, by = "cyc", all.x = TRUE, sort = FALSE)
+      data.table::setcolorder(out, c("cyc", "tmp", setdiff(names(out), c("cyc", "tmp"))))
+    }
+  }
+
+  desired_curves <- intersect(as.character(request$fdata.name), names(out))
+  prefix <- intersect(c(coord, "tmp"), names(out))
+  data.table::setcolorder(out, c(prefix, desired_curves))
   out
 }

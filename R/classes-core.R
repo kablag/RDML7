@@ -20,14 +20,12 @@ rdmlEnum <- S7::new_class(
   abstract = TRUE
 )
 
-#' @export
-print.rdmlEnum <- function(x, ...) {
+S7::method(print, rdmlEnum) <- function(x, ...) {
   cat(class(x)[1L], "::", x@value, sep = "")
   invisible(x)
 }
 
-#' @export
-as.character.rdmlEnum <- function(x, ...) {
+S7::method(as.character, rdmlEnum) <- function(x, ...) {
   x@value
 }
 
@@ -68,14 +66,12 @@ idType <- S7::new_class(
   }
 )
 
-#' @export
-print.idType <- function(x, ...) {
+S7::method(print, idType) <- function(x, ...) {
   cat(x@id)
   invisible(x)
 }
 
-#' @export
-as.character.idType <- function(x, ...) {
+S7::method(as.character, idType) <- function(x, ...) {
   as.character(x@id)
 }
 
@@ -106,51 +102,28 @@ S7::method(names, rdmlBaseType) <- function(x) {
   S7::prop_names(x)
 }
 
-# The default S7 `$` accessor is extended so list properties declared with
-# rdml_key metadata are exposed as transient rdmlKeyedList wrappers.
+# Public convenience accessor ------------------------------------------------
+#
+# RDML7 intentionally supports nested `$` navigation for S7 schema objects.
+# Keyed list properties are exposed as transient rdmlKeyedList wrappers.
 S7::method(`$`, rdmlBaseType) <- function(x, name) {
-  
   value <- S7::prop(x, name)
-  
-  key <- .property_key(
-    x,
-    name
-  )
-  
-  if (
-    !is.null(key) &&
-    is.list(value)
-  ) {
-    return(
-      rdmlKeyedList(
-        value,
-        key = key
-      )
-    )
+  key <- .property_key(x, name)
+
+  if (!is.null(key) && is.list(value)) {
+    return(rdmlKeyedList(value, key = key))
   }
-  
+
   value
 }
 
-
 S7::method(`$<-`, rdmlBaseType) <- function(x, name, value) {
-  
-  key <- .property_key(
-    x,
-    name
-  )
-  
-  if (
-    !is.null(key) &&
-    S7::S7_inherits(
-      value,
-      rdmlKeyedList
-    )
-  ) {
+  key <- .property_key(x, name)
+
+  if (!is.null(key) && S7::S7_inherits(value, rdmlKeyedList)) {
     value <- S7::S7_data(value)
   }
-  
+
   S7::prop(x, name) <- value
-  
   x
 }

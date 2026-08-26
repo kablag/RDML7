@@ -1,11 +1,5 @@
 # Generated for the S7 refactor. Run devtools::document() after adding
 # or removing roxygen exports.
-S3method("$",rdmlBaseType)
-S3method("$<-",rdmlBaseType)
-S3method(as.character,idType)
-S3method(as.character,rdmlEnum)
-S3method(print,idType)
-S3method(print,rdmlEnum)
 export(AsDendrogram)
 export(AsTable)
 export(AsXML)

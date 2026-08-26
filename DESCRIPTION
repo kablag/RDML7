@@ -1,4 +1,4 @@
-Package: RDML7
+Package: RDML
 Type: Package
 Title: Importing Real-Time Thermo Cycler (qPCR) Data from RDML Format Files
 Version: 1.3
@@ -46,6 +46,15 @@ Collate:
     'RDML.SetFData.R'
     'RDML.Merge.R'
     'RDML.AsDendrogram.R'
+    'import-utils.R'
+    'import-roche.R'
+    'import-abi.R'
+    'import-rotorgene.R'
+    'import-excel.R'
+    'import-dtprime.R'
+    'import-csv.R'
+    'import-fqd.R'
+    'import-rdml.R'
     'rdml-read.R'
     'rdmlEdit.R'
 Suggests:

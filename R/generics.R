@@ -4,9 +4,6 @@
 # (obj$AsTable(), obj$GetFData(), ...).  rdml7 uses S7 value objects, so the
 # public API is expressed as S7 generics.
 
-# For use data.table without import
-.datatable.aware <- TRUE
-
 #' Convert an RDML object to a description table
 #' @param x An RDML object.
 #' @param ... Method-specific arguments.

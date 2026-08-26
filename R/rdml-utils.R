@@ -1,3 +1,5 @@
+.datatable.aware <- TRUE
+
 # RDML object utilities ----------------------------------------------------
 
 .rdml_is_missing <- function(x) {
@@ -59,60 +61,32 @@
 }
 
 .rdml_id_chr <- function(x) {
-  
   if (.rdml_is_missing(x)) {
     return(NA_character_)
   }
-  
+
   if (S7::S7_inherits(x, idType)) {
     id <- S7::prop(x, "id")
-    
-    if (
-      is.character(id) &&
-      length(id) == 1L
-    ) {
-      return(id)
-    }
-    
+    if (is.character(id) && length(id) == 1L) return(id)
     return(NA_character_)
   }
-  
-  if (
-    is.character(x) &&
-    length(x) == 1L
-  ) {
-    return(x)
-  }
-  
+
+  if (is.character(x) && length(x) == 1L) return(x)
   NA_character_
 }
 
 .rdml_enum_chr <- function(x) {
-  
   if (.rdml_is_missing(x)) {
     return(NA_character_)
   }
-  
+
   if (S7::S7_inherits(x, rdmlEnum)) {
     value <- S7::prop(x, "value")
-    
-    if (
-      is.character(value) &&
-      length(value) == 1L
-    ) {
-      return(value)
-    }
-    
+    if (is.character(value) && length(value) == 1L) return(value)
     return(NA_character_)
   }
-  
-  if (
-    is.character(x) &&
-    length(x) == 1L
-  ) {
-    return(x)
-  }
-  
+
+  if (is.character(x) && length(x) == 1L) return(x)
   NA_character_
 }
 

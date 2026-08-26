@@ -1,13 +1,16 @@
 #' Represent fields of rdmlType as a data.table
 #'
-#' rdml7 version of the original RDML$AsTable() method. Collections are read
-#' through rdmlKeyedList virtual keys; no physical list names are required.
+#' Collections are read through rdmlKeyedList virtual keys; no physical list
+#' names are required. Expressions in `.default`, `name.pattern`,
+#' `add.columns`, and `...` are evaluated once per dataType element in the
+#' historical AsTable evaluation environment.
 #'
 #' @param x rdmlType object.
 #' @param .default Named list of expressions evaluated for each dataType object.
 #' @param name.pattern Expression used to generate fdata.name.
 #' @param add.columns Named list of extra expressions.
 #' @param treat.null.as.na Convert NULL results to NA.
+#' @param include.hidden Include experiments whose id starts with `.`.
 #' @param ... Additional named expressions.
 #' @return data.table.
 #' @export
@@ -30,6 +33,8 @@ S7::method(AsTable, rdmlType) <- function(
       mdp = .rdml_present(data$mdp)
     ),
     name.pattern = paste(
+      .rdml_id_chr(experiment$id),
+      .rdml_id_chr(run$id),
       .rdml_react_position(react, run$pcrFormat),
       .rdml_id_chr(react$sample),
       .rdml_sample_type(
@@ -41,15 +46,25 @@ S7::method(AsTable, rdmlType) <- function(
     ),
     add.columns = list(),
     treat.null.as.na = FALSE,
+    include.hidden = FALSE,
     ...) {
 
   checkmate::assertFlag(treat.null.as.na)
+  checkmate::assertFlag(include.hidden)
+
   if (!requireNamespace("data.table", quietly = TRUE)) {
     stop("Package 'data.table' is required", call. = FALSE)
   }
 
-  # Preserve the names used by the historical NSE interface. User expressions
-  # in .default/add.columns/... can refer to these objects directly.
+  # Capture the NSE expressions once rather than rebuilding them in every
+  # nested-loop iteration.
+  name_expr <- substitute(name.pattern)
+  default_expr <- substitute(.default)
+  add_expr <- substitute(add.columns)
+  dots_expr <- substitute(list(...))
+
+  # Historical evaluation environment names. User expressions may refer to
+  # these objects directly.
   dateMade <- x$dateMade
   dateUpdated <- x$dateUpdated
   id <- .rdml_prop_list(x, "id")
@@ -66,17 +81,17 @@ S7::method(AsTable, rdmlType) <- function(
 
   for (experiment in experiments) {
     exp_id <- .rdml_id_chr(experiment$id)
-    if (!is.na(exp_id) && grepl("^\\.", exp_id)) next
+    if (!include.hidden && !is.na(exp_id) && grepl("^\\.", exp_id)) next
 
     for (run in .rdml_prop_list(experiment, "run")) {
       for (react in .rdml_prop_list(run, "react")) {
         for (data in .rdml_prop_list(react, "data")) {
           row_i <- row_i + 1L
 
-          fdata_name <- eval(substitute(name.pattern), envir = environment())
-          default_values <- eval(substitute(.default), envir = environment())
-          add_values <- eval(substitute(add.columns), envir = environment())
-          dots_values <- eval(substitute(list(...)), envir = environment())
+          fdata_name <- eval(name_expr, envir = environment())
+          default_values <- eval(default_expr, envir = environment())
+          add_values <- eval(add_expr, envir = environment())
+          dots_values <- eval(dots_expr, envir = environment())
 
           if (!is.list(default_values)) {
             stop("`.default` must evaluate to a list", call. = FALSE)
@@ -124,9 +139,14 @@ S7::method(AsTable, rdmlType) <- function(
   out <- data.table::rbindlist(rows, fill = TRUE, use.names = TRUE)
 
   if (anyDuplicated(out$fdata.name)) {
-    # Match the old behaviour: add a sequence within each duplicate-name group.
-    out[, fdata.name := if (.N > 1L) paste(fdata.name, seq_len(.N), sep = "_") else fdata.name,
-        by = fdata.name]
+    # Preserve historical behaviour, but the default name now includes
+    # experiment and run ids so normal multi-experiment data are unique.
+    out[, fdata.name := if (.N > 1L) {
+      paste(fdata.name, seq_len(.N), sep = "_")
+    } else {
+      fdata.name
+    }, by = fdata.name]
+
     warning(
       "fdata.name column has duplicates; sequence numbers were added. ",
       "Consider a different `name.pattern`.",
