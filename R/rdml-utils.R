@@ -2,7 +2,7 @@
 
 # RDML object utilities ----------------------------------------------------
 
-.rdml_is_missing <- function(x) {
+.rdmlIsMissing <- function(x) {
   if (is.null(x)) {
     return(TRUE)
   }
@@ -18,12 +18,12 @@
     isTRUE(is.na(x))
 }
 
-.rdml_present <- function(x) {
-  !.rdml_is_missing(x)
+.rdmlPresent <- function(x) {
+  !.rdmlIsMissing(x)
 }
 
-.rdml_as_list <- function(x) {
-  if (.rdml_is_missing(x)) {
+.rdmlAsList <- function(x) {
+  if (.rdmlIsMissing(x)) {
     return(list())
   }
   if (S7::S7_inherits(x, rdmlKeyedList)) {
@@ -36,14 +36,14 @@
 }
 
 # Read a list-valued S7 property without relying on physical names().
-.rdml_prop_list <- function(x, name) {
-  .rdml_as_list(S7::prop(x, name))
+.rdmlPropList <- function(x, name) {
+  .rdmlAsList(S7::prop(x, name))
 }
 
 # Read a property as rdmlKeyedList when its S7_property contains rdml_key.
-.rdml_prop_keyed <- function(x, name) {
-  value <- .rdml_prop_list(x, name)
-  key <- .property_key(x, name)
+.rdmlPropKeyed <- function(x, name) {
+  value <- .rdmlPropList(x, name)
+  key <- .propertyKey(x, name)
   if (is.null(key)) {
     return(value)
   }
@@ -51,7 +51,7 @@
 }
 
 # Set a list-valued property, stripping the transient rdmlKeyedList wrapper.
-.rdml_set_prop_list <- function(x, name, value) {
+.rdmlSetPropList <- function(x, name, value) {
   if (S7::S7_inherits(value, rdmlKeyedList)) {
     value <- S7::S7_data(value)
   }
@@ -60,8 +60,8 @@
   x
 }
 
-.rdml_id_chr <- function(x) {
-  if (.rdml_is_missing(x)) {
+.rdmlIdChr <- function(x) {
+  if (.rdmlIsMissing(x)) {
     return(NA_character_)
   }
 
@@ -75,8 +75,8 @@
   NA_character_
 }
 
-.rdml_enum_chr <- function(x) {
-  if (.rdml_is_missing(x)) {
+.rdmlEnumChr <- function(x) {
+  if (.rdmlIsMissing(x)) {
     return(NA_character_)
   }
 
@@ -92,24 +92,24 @@
 
 # Human-readable well position. reactType in rdml7 intentionally stores only
 # the RDML reaction id; position is derived from run$pcrFormat when needed.
-.rdml_react_position <- function(react, pcrFormat) {
-  id <- .rdml_id_chr(react$id)
+.rdmlReactPosition <- function(react, pcrFormat) {
+  id <- .rdmlIdChr(react$id)
   if (is.na(id)) {
     return(NA_character_)
   }
 
   n <- suppressWarnings(base::as.integer(id))
-  if (is.na(n) || .rdml_is_missing(pcrFormat)) {
+  if (is.na(n) || .rdmlIsMissing(pcrFormat)) {
     # Imported hand-labelled ids are already human-readable.
     return(id)
   }
 
   rows <- pcrFormat$rows
   columns <- pcrFormat$columns
-  row_label <- .rdml_enum_chr(pcrFormat$rowLabel)
-  col_label <- .rdml_enum_chr(pcrFormat$columnLabel)
+  rowLabel <- .rdmlEnumChr(pcrFormat$rowLabel)
+  colLabel <- .rdmlEnumChr(pcrFormat$columnLabel)
 
-  if (row_label == "ABC" && col_label == "123") {
+  if (rowLabel == "ABC" && colLabel == "123") {
     if (rows > length(LETTERS)) {
       stop("Too many rows for 'ABC' PCR format", call. = FALSE)
     }
@@ -120,7 +120,7 @@
     ))
   }
 
-  if (row_label == "123" && col_label == "ABC") {
+  if (rowLabel == "123" && colLabel == "ABC") {
     if (columns > length(LETTERS)) {
       stop("Too many columns for 'ABC' PCR format", call. = FALSE)
     }
@@ -131,7 +131,7 @@
     ))
   }
 
-  if (row_label == "123" && col_label == "123") {
+  if (rowLabel == "123" && colLabel == "123") {
     return(sprintf(
       "r%02ic%02i",
       (n - 1L) %/% columns + 1L,
@@ -145,40 +145,40 @@
 
 # sampleType$type is target-aware in rdml7. Return the type corresponding to
 # the current target, rather than assuming one type per sample.
-.rdml_sample_type <- function(sample, target_id) {
-  if (is.null(sample) || .rdml_is_missing(sample)) {
+.rdmlSampleType <- function(sample, targetId) {
+  if (is.null(sample) || .rdmlIsMissing(sample)) {
     return(NA_character_)
   }
 
-  types <- .rdml_prop_list(sample, "type")
+  types <- .rdmlPropList(sample, "type")
   if (!length(types)) {
     return(NA_character_)
   }
 
-  type_keys <- .get_keys(types, "targetId")
-  pos <- match(target_id, type_keys)
+  typeKeys <- .getKeys(types, "targetId")
+  pos <- match(targetId, typeKeys)
   if (is.na(pos)) {
     return(NA_character_)
   }
 
-  .rdml_enum_chr(types[[pos]]$sampleType)
+  .rdmlEnumChr(types[[pos]]$sampleType)
 }
 
-.rdml_target_dye <- function(targets, target_id) {
-  target <- targets[[target_id]]
-  if (is.null(target) || .rdml_is_missing(target$dyeId)) {
+.rdmlTargetDye <- function(targets, targetId) {
+  target <- targets[[targetId]]
+  if (is.null(target) || .rdmlIsMissing(target$dyeId)) {
     return(NA_character_)
   }
-  .rdml_id_chr(target$dyeId)
+  .rdmlIdChr(target$dyeId)
 }
 
 # Upsert an object in an ordinary list by an S7 key property. This is useful
 # for RDML lists that are not declared as rdmlKeyedList (e.g. quantity).
-.rdml_upsert_list_by_key <- function(x, value, key = "id") {
-  x <- .rdml_as_list(x)
-  value_key <- .get_key(value, key)
-  current <- .get_keys(x, key)
-  pos <- match(value_key, current)
+.rdmlUpsertListByKey <- function(x, value, key = "id") {
+  x <- .rdmlAsList(x)
+  valueKey <- .getKey(value, key)
+  current <- .getKeys(x, key)
+  pos <- match(valueKey, current)
   if (is.na(pos)) {
     x[[length(x) + 1L]] <- value
   } else {

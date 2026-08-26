@@ -1,16 +1,16 @@
 # Property validators and property metadata ---------------------------------
 # Internal helpers used by the S7 RDML schema.
 
-.is_single_na <- function(x) {
+.isSingleNa <- function(x) {
   length(x) == 1L &&
     is.atomic(x) &&
     isTRUE(is.na(x))
 }
 
-class_datetime_na <- S7::new_property(
+classDateTimeNa <- S7::new_property(
   S7::class_any,
   validator = function(value) {
-    if (.is_single_na(value)) {
+    if (.isSingleNa(value)) {
       return(NULL)
     }
 
@@ -18,21 +18,21 @@ class_datetime_na <- S7::new_property(
       return("must be NA or a single date/datetime value")
     }
 
-    parsed_datetime <- suppressWarnings(
+    parsedDatetime <- suppressWarnings(
       lubridate::ymd_hms(value, quiet = TRUE)
     )
-    parsed_date <- suppressWarnings(
+    parsedDate <- suppressWarnings(
       lubridate::ymd(value, quiet = TRUE)
     )
 
-    if (is.na(parsed_datetime) && is.na(parsed_date)) {
+    if (is.na(parsedDatetime) && is.na(parsedDate)) {
       "must be NA or pass lubridate::ymd_hms()/ymd() conversion"
     }
   },
   default = NA_character_
 )
 
-class_character_na_nonempty_single <- S7::new_property(
+classCharacterNaNonemptySingle <- S7::new_property(
   S7::class_any,
   validator = function(value) {
     if (!checkmate::testString(
@@ -47,7 +47,7 @@ class_character_na_nonempty_single <- S7::new_property(
   default = NA_character_
 )
 
-class_character_nonempty_single <- S7::new_property(
+classCharacterNonemptySingle <- S7::new_property(
   S7::class_character,
   validator = function(value) {
     if (
@@ -60,7 +60,7 @@ class_character_nonempty_single <- S7::new_property(
   }
 )
 
-class_flag_na <- S7::new_property(
+classFlagNa <- S7::new_property(
   S7::class_any,
   validator = function(value) {
     if (!checkmate::testFlag(value, na.ok = TRUE)) {
@@ -70,7 +70,7 @@ class_flag_na <- S7::new_property(
   default = NA
 )
 
-class_flag <- S7::new_property(
+classFlag <- S7::new_property(
   S7::class_logical,
   validator = function(value) {
     if (length(value) != 1L || is.na(value)) {
@@ -81,11 +81,11 @@ class_flag <- S7::new_property(
 
 # data.table inherits data.frame; keeping the property typed as data.frame
 # accepts both without a setter that is coupled to a particular property name.
-class_datatable <- S7::new_property(
+classDataTable <- S7::new_property(
   S7::class_data.frame
 )
 
-class_number_na_single <- S7::new_property(
+classNumberNaSingle <- S7::new_property(
   S7::class_any,
   validator = function(value) {
     if (!checkmate::testNumber(value, na.ok = TRUE)) {
@@ -95,7 +95,7 @@ class_number_na_single <- S7::new_property(
   default = NA_real_
 )
 
-class_number_single <- S7::new_property(
+classNumberSingle <- S7::new_property(
   S7::class_numeric,
   validator = function(value) {
     if (
@@ -107,7 +107,7 @@ class_number_single <- S7::new_property(
   }
 )
 
-class_positive_integer_single <- S7::new_property(
+classPositiveIntegerSingle <- S7::new_property(
   S7::class_integer,
   validator = function(value) {
     if (!checkmate::testInt(value, lower = 0)) {
@@ -116,7 +116,7 @@ class_positive_integer_single <- S7::new_property(
   }
 )
 
-class_integer_na_single <- S7::new_property(
+classIntegerNaSingle <- S7::new_property(
   S7::class_any,
   validator = function(value) {
     if (!checkmate::testInt(value, na.ok = TRUE)) {
@@ -126,7 +126,7 @@ class_integer_na_single <- S7::new_property(
   default = NA_integer_
 )
 
-class_positive_integer_na_single <- S7::new_property(
+classPositiveIntegerNaSingle <- S7::new_property(
   S7::class_any,
   validator = function(value) {
     if (!checkmate::testInt(value, lower = 0, na.ok = TRUE)) {
@@ -136,7 +136,7 @@ class_positive_integer_na_single <- S7::new_property(
   default = NA_integer_
 )
 
-.resolve_s7_class <- function(className, envir = parent.frame()) {
+.resolveS7Class <- function(className, envir = parent.frame()) {
   cls <- get0(
     className,
     envir = envir,
@@ -159,8 +159,8 @@ class_positive_integer_na_single <- S7::new_property(
 # important for package code: an S7 instance may have a package-qualified
 # class name such as "RDML7::rdmlIdType", therefore checkmate::testClass(x,
 # "rdmlIdType") is not a reliable S7 class test.
-test_class <- function(className) {
-  cls <- .resolve_s7_class(
+.testClass <- function(className) {
+  cls <- .resolveS7Class(
     className,
     envir = parent.frame()
   )
@@ -179,8 +179,8 @@ test_class <- function(className) {
 }
 
 
-test_class_na <- function(className) {
-  cls <- .resolve_s7_class(
+.testClassNa <- function(className) {
+  cls <- .resolveS7Class(
     className,
     envir = parent.frame()
   )
@@ -188,7 +188,7 @@ test_class_na <- function(className) {
   S7::new_property(
     S7::class_any,
     validator = function(value) {
-      if (.is_single_na(value)) {
+      if (.isSingleNa(value)) {
         return(NULL)
       }
 
@@ -203,8 +203,8 @@ test_class_na <- function(className) {
 }
 
 
-test_class_list <- function(className) {
-  cls <- .resolve_s7_class(
+.testClassList <- function(className) {
+  cls <- .resolveS7Class(
     className,
     envir = parent.frame()
   )
@@ -230,8 +230,8 @@ test_class_list <- function(className) {
 }
 
 
-test_class_na_list <- function(className) {
-  cls <- .resolve_s7_class(
+.testClassNaList <- function(className) {
+  cls <- .resolveS7Class(
     className,
     envir = parent.frame()
   )
@@ -239,7 +239,7 @@ test_class_na_list <- function(className) {
   S7::new_property(
     S7::class_any,
     validator = function(value) {
-      if (.is_single_na(value)) {
+      if (.isSingleNa(value)) {
         return(NULL)
       }
 
@@ -261,8 +261,8 @@ test_class_na_list <- function(className) {
 }
 
 
-test_class_na_keyed_list <- function(className, key = "id") {
-  cls <- .resolve_s7_class(
+.testClassNaKeyedList <- function(className, key = "id") {
+  cls <- .resolveS7Class(
     className,
     envir = parent.frame()
   )
@@ -270,7 +270,7 @@ test_class_na_keyed_list <- function(className, key = "id") {
   property <- S7::new_property(
     S7::class_any,
     validator = function(value) {
-      if (.is_single_na(value)) {
+      if (.isSingleNa(value)) {
         return(NULL)
       }
 
@@ -278,17 +278,17 @@ test_class_na_keyed_list <- function(className, key = "id") {
         return(paste("must be NA or a list of", className))
       }
 
-      correct_class <- vapply(
+      correctClass <- vapply(
         value,
         function(x) S7::S7_inherits(x, cls),
         logical(1)
       )
 
-      if (!all(correct_class)) {
+      if (!all(correctClass)) {
         return(paste("must be NA or a list of", className))
       }
 
-      keys <- .get_keys(value, key)
+      keys <- .getKeys(value, key)
 
       if (anyNA(keys) || any(keys == "")) {
         return(
@@ -301,7 +301,7 @@ test_class_na_keyed_list <- function(className, key = "id") {
       }
 
       if (anyDuplicated(keys)) {
-        duplicated_keys <- unique(
+        duplicatedKeys <- unique(
           keys[duplicated(keys)]
         )
 
@@ -311,7 +311,7 @@ test_class_na_keyed_list <- function(className, key = "id") {
             key,
             ": ",
             paste(
-              duplicated_keys,
+              duplicatedKeys,
               collapse = ", "
             )
           )
@@ -323,21 +323,21 @@ test_class_na_keyed_list <- function(className, key = "id") {
     default = NA
   )
 
-  attr(property, "rdml_key") <- key
-  attr(property, "rdml_element_class") <- className
+  attr(property, "rdmlKey") <- key
+  attr(property, "rdmlElementClass") <- className
 
   property
 }
 
 
-test_class_na_id_list <- function(className) {
-  test_class_na_keyed_list(
+.testClassNaIdList <- function(className) {
+  .testClassNaKeyedList(
     className,
     key = "id"
   )
 }
 
-.get_property_definition <- function(x, name) {
+.getPropertyDefinition <- function(x, name) {
   cls <- S7::S7_class(x)
 
   repeat {
@@ -357,22 +357,22 @@ test_class_na_id_list <- function(className) {
   }
 }
 
-.property_key <- function(x, name) {
-  property <- .get_property_definition(x, name)
+.propertyKey <- function(x, name) {
+  property <- .getPropertyDefinition(x, name)
 
   if (is.null(property)) {
     return(NULL)
   }
 
-  attr(property, "rdml_key")
+  attr(property, "rdmlKey")
 }
 
-.property_element_class <- function(x, name) {
-  property <- .get_property_definition(x, name)
+.propertyElementClass <- function(x, name) {
+  property <- .getPropertyDefinition(x, name)
 
   if (is.null(property)) {
     return(NULL)
   }
 
-  attr(property, "rdml_element_class")
+  attr(property, "rdmlElementClass")
 }

@@ -2,11 +2,11 @@
 
 # XML namespace scratch environment retained for compatibility with the
 # upstream parser. It is used only during synchronous import calls.
-rdml.env <- new.env(parent = emptyenv())
+rdmlEnv <- new.env(parent = emptyenv())
 
-.is_xml_missing <- function(x) inherits(x, "xml_missing")
+.isXmlMissing <- function(x) inherits(x, "xml_missing")
 
-.xml_nodes_apply <- function(nodes, FUN) {
+.xmlNodesApply <- function(nodes, FUN) {
   if (length(nodes) == 0L) return(list())
   lapply(seq_along(nodes), function(i) FUN(nodes[[i]]))
 }
@@ -15,17 +15,17 @@ rdml.env <- new.env(parent = emptyenv())
   x[!vapply(x, is.null, logical(1))]
 }
 
-.list_get_by_key <- function(x, key, key_property = "id") {
+.listGetByKey <- function(x, key, keyProperty = "id") {
   if (!is.list(x) || length(x) == 0L) return(NULL)
-  pos <- match(key, .get_keys(x, key_property))
+  pos <- match(key, .getKeys(x, keyProperty))
   if (is.na(pos)) return(NULL)
   x[[pos]]
 }
 
-.list_set_by_key <- function(x, key, value, key_property = "id") {
+.listSetByKey <- function(x, key, value, keyProperty = "id") {
   if (!is.list(x)) stop("`x` must be a list", call. = FALSE)
 
-  keys <- if (length(x)) .get_keys(x, key_property) else character()
+  keys <- if (length(x)) .getKeys(x, keyProperty) else character()
   pos <- match(key, keys)
 
   if (is.null(value)) {
@@ -33,11 +33,11 @@ rdml.env <- new.env(parent = emptyenv())
     return(x)
   }
 
-  value_key <- .get_key(value, key_property)
-  if (is.na(value_key) || !identical(value_key, key)) {
+  valueKey <- .getKey(value, keyProperty)
+  if (is.na(valueKey) || !identical(valueKey, key)) {
     stop(
       "replacement key ('", key, "') does not match object ",
-      key_property, " ('", value_key, "')",
+      keyProperty, " ('", valueKey, "')",
       call. = FALSE
     )
   }
@@ -46,21 +46,21 @@ rdml.env <- new.env(parent = emptyenv())
   x
 }
 
-getTextValue <- function(tree, path, ns = rdml.env$ns) {
+.getTextValue <- function(tree, path, ns = rdmlEnv$ns) {
   node <- xml2::xml_find_first(tree, path, ns)
-  if (.is_xml_missing(node)) return(NA_character_)
+  if (.isXmlMissing(node)) return(NA_character_)
   txt <- xml2::xml_text(node)
   if (!length(txt) || !nzchar(trimws(txt))) return(NA_character_)
   txt
 }
 
-getTextVector <- function(tree, path, ns = rdml.env$ns) {
+.getTextVector <- function(tree, path, ns = rdmlEnv$ns) {
   xml2::xml_text(xml2::xml_find_all(tree, path, ns))
 }
 
-getLogicalValue <- function(tree, path, ns = rdml.env$ns) {
+.getLogicalValue <- function(tree, path, ns = rdmlEnv$ns) {
   node <- xml2::xml_find_first(tree, path, ns)
-  if (.is_xml_missing(node)) return(NA)
+  if (.isXmlMissing(node)) return(NA)
   switch(
     tolower(xml2::xml_text(node)),
     "true" = TRUE,
@@ -69,40 +69,40 @@ getLogicalValue <- function(tree, path, ns = rdml.env$ns) {
   )
 }
 
-getNumericValue <- function(tree, path, ns = rdml.env$ns) {
+.getNumericValue <- function(tree, path, ns = rdmlEnv$ns) {
   node <- xml2::xml_find_first(tree, path, ns)
-  if (.is_xml_missing(node)) return(NA_real_)
-  out <- .rdml_as_numeric(xml2::xml_text(node))
+  if (.isXmlMissing(node)) return(NA_real_)
+  out <- .rdmlAsNumeric(xml2::xml_text(node))
   if (!length(out)) NA_real_ else out[[1L]]
 }
 
-getNumericVector <- function(tree, path, ns = rdml.env$ns) {
-  .rdml_as_numeric(xml2::xml_text(xml2::xml_find_all(tree, path, ns)))
+.getNumericVector <- function(tree, path, ns = rdmlEnv$ns) {
+  .rdmlAsNumeric(xml2::xml_text(xml2::xml_find_all(tree, path, ns)))
 }
 
-getIntegerValue <- function(tree, path, ns = rdml.env$ns) {
+.getIntegerValue <- function(tree, path, ns = rdmlEnv$ns) {
   node <- xml2::xml_find_first(tree, path, ns)
-  if (.is_xml_missing(node)) return(NA_integer_)
+  if (.isXmlMissing(node)) return(NA_integer_)
   xml2::xml_integer(node)
 }
 
-getIntegerVector <- function(tree, path, ns = rdml.env$ns) {
+.getIntegerVector <- function(tree, path, ns = rdmlEnv$ns) {
   xml2::xml_integer(xml2::xml_find_all(tree, path, ns))
 }
 
-genId <- function(node) {
+.genId <- function(node) {
   id <- xml2::xml_attr(node, "id")
   if (length(id) != 1L || is.na(id)) stop("XML node has no id attribute")
   idType(id = id)
 }
 
-genIdRef <- function(node) {
+.genIdRef <- function(node) {
   id <- xml2::xml_attr(node, "id")
   if (length(id) != 1L || is.na(id)) stop("XML node has no id attribute")
   idReferenceType(id = id)
 }
 
-.rdml_as_numeric <- function(val) {
+.rdmlAsNumeric <- function(val) {
   if (!length(val)) return(NULL)
   out <- suppressWarnings(base::as.numeric(val))
   bad <- is.na(out) & !is.na(val)
@@ -112,30 +112,30 @@ genIdRef <- function(node) {
   out
 }
 
-FromPositionToId <- function(
-    react.id,
+.fromPositionToId <- function(
+    reactId,
     pcrFormat = pcrFormatType(
       rows = 8L,
       columns = 12L,
       rowLabel = labelFormatType("ABC"),
       columnLabel = labelFormatType("123")
     )) {
-  row <- which(LETTERS == gsub("([A-Z])[0-9]+", "\\1", react.id))
-  col <- base::as.integer(gsub("[A-Z]([0-9]+)", "\\1", react.id))
+  row <- which(LETTERS == gsub("([A-Z])[0-9]+", "\\1", reactId))
+  col <- base::as.integer(gsub("[A-Z]([0-9]+)", "\\1", reactId))
   (row - 1L) * pcrFormat$columns + col
 }
 
-GetIds <- function(l) {
-  unname(vapply(l, .get_id, character(1)))
+.getIds <- function(l) {
+  unname(vapply(l, .getId, character(1)))
 }
 
-.rdml_new_import <- function(publisher = NULL, serial_number = "1") {
+.rdmlNewImport <- function(publisher = NULL, serialNumber = "1") {
   ids <- if (is.null(publisher)) {
     list()
   } else {
     list(rdmlIdType(
       publisher = publisher,
-      serialNumber = serial_number,
+      serialNumber = serialNumber,
       MD5Hash = NA_character_
     ))
   }
@@ -155,19 +155,19 @@ GetIds <- function(l) {
   )
 }
 
-.rdml_set_fdata_import <- function(x, fdata, description, fdata.type = "adp") {
-  SetFData(x, fdata, description, fdata.type = fdata.type)
+.rdmlsetFDataImport <- function(x, fdata, description, fdataType = "adp") {
+  setFData(x, fdata, description, fdataType = fdataType)
 }
 
-.split_ws <- function(x) {
+.splitWs <- function(x) {
   strsplit(trimws(x), "\\s+", perl = TRUE)[[1L]]
 }
 
-.first_match_field <- function(
-    x, field, value, return_field, default = NA_character_) {
+.firstMatchField <- function(
+    x, field, value, returnField, default = NA_character_) {
   for (el in x) {
-    if (length(el) >= max(field, return_field) && identical(el[[field]], value)) {
-      return(el[[return_field]])
+    if (length(el) >= max(field, returnField) && identical(el[[field]], value)) {
+      return(el[[returnField]])
     }
   }
   default

@@ -6,12 +6,12 @@ experimenterType <- S7::new_class(
   "experimenterType",
   parent = rdmlBaseType,
   properties = list(
-    id = class_id,
-    firstName = class_character_nonempty_single,
-    lastName = class_character_nonempty_single,
-    email = class_character_na_nonempty_single,
-    labName = class_character_na_nonempty_single,
-    labAddress = class_character_na_nonempty_single
+    id = classId,
+    firstName = classCharacterNonemptySingle,
+    lastName = classCharacterNonemptySingle,
+    email = classCharacterNaNonemptySingle,
+    labName = classCharacterNaNonemptySingle,
+    labAddress = classCharacterNaNonemptySingle
   )
 )
 
@@ -23,8 +23,8 @@ documentationType <- S7::new_class(
   "documentationType",
   parent = rdmlBaseType,
   properties = list(
-    id = class_id,
-    text = class_character_na_nonempty_single
+    id = classId,
+    text = classCharacterNaNonemptySingle
   )
 )
 
@@ -36,7 +36,7 @@ documentationType <- S7::new_class(
 
 #' @export
 dyeChemistryType <- 
-  new_enum_class(
+  .newEnumClass(
     "dyeChemistryType",
     c("non-saturating DNA binding dye", 
       "saturating DNA binding dye",
@@ -55,12 +55,12 @@ dyeType <- S7::new_class(
   "dyeType",
   parent = rdmlBaseType,
   properties = list(
-    id = class_id,
-    description = class_character_na_nonempty_single,
+    id = classId,
+    description = classCharacterNaNonemptySingle,
     dyeChemistry = S7::new_property(
       S7::class_any,
       validator = function(value) {
-        if (.is_single_na(value)) {
+        if (.isSingleNa(value)) {
           return(NULL)
         }
 
@@ -84,8 +84,8 @@ xRefType <- S7::new_class(
   "xRefType",
   parent = rdmlBaseType,
   properties = list(
-    name = class_character_na_nonempty_single,
-    id = class_character_na_nonempty_single
+    name = classCharacterNaNonemptySingle,
+    id = classCharacterNaNonemptySingle
   )
 )
 
@@ -98,15 +98,15 @@ annotationType <- S7::new_class(
   "annotationType",
   parent = rdmlBaseType,
   properties = list(
-    property = class_character_na_nonempty_single,
-    value = class_character_na_nonempty_single
+    property = classCharacterNaNonemptySingle,
+    value = classCharacterNaNonemptySingle
   )
 )
 
 # sampleTypeType ----------------------------------------------------------
 
 #' @export
-sampleTypeType <- new_enum_class(
+sampleTypeType <- .newEnumClass(
   "sampleTypeType",
   c(
     "unkn", "ntc", "nac",
@@ -120,7 +120,7 @@ sampleTargetType <- S7::new_class(
   "sampleTargetType",
   parent = rdmlBaseType,
   properties = list(
-    targetId = test_class("idReferenceType"),
+    targetId = .testClass("idReferenceType"),
     sampleType = S7::new_property(
       sampleTypeType,
       validator = function(value) {
@@ -133,12 +133,12 @@ sampleTargetType <- S7::new_class(
 )
 
 #' @export
-quantityUnitType <- new_enum_class(
+quantityUnitType <- .newEnumClass(
   "quantityUnitType",
   c("cop", "fold", "dil", "ng", "nMol", "other")
 )
 
-class_quantityUnitType_nonempty_single <- S7::new_property(
+classQuantityUnitTypeNonemptySingle <- S7::new_property(
   quantityUnitType,
   validator = function(value) {
     if (length(value) != 1L) {
@@ -152,14 +152,14 @@ quantityType <- S7::new_class(
   "quantityType",
   parent = rdmlBaseType,
   properties = list(
-    targetId = test_class("idReferenceType"),
-    value = class_number_single,
-    unit = class_quantityUnitType_nonempty_single
+    targetId = .testClass("idReferenceType"),
+    value = classNumberSingle,
+    unit = classQuantityUnitTypeNonemptySingle
   )
 )
 
 #' @export
-primingMethodType <- new_enum_class(
+primingMethodType <- .newEnumClass(
   "primingMethodType",
   c(
     "oligo-dt",
@@ -175,15 +175,15 @@ cdnaSynthesisMethodType <- S7::new_class(
   "cdnaSynthesisMethodType",
   parent = rdmlBaseType,
   properties = list(
-    enzyme = class_character_na_nonempty_single,
-    primingMethod = test_class_na("primingMethodType"),
-    dnaseTreatment = class_flag_na,
-    thermalCyclingConditions = test_class_na("idReferenceType")
+    enzyme = classCharacterNaNonemptySingle,
+    primingMethod = .testClassNa("primingMethodType"),
+    dnaseTreatment = classFlagNa,
+    thermalCyclingConditions = .testClassNa("idReferenceType")
   )
 )
 
 #' @export
-nucleotideType <- new_enum_class(
+nucleotideType <- .newEnumClass(
   "nucleotideType",
   c("DNA", "genomic DNA", "cDNA", "RNA")
 )
@@ -193,7 +193,7 @@ templateQuantityType <- S7::new_class(
   "templateQuantityType",
   parent = rdmlBaseType,
   properties = list(
-    conc = class_number_single,
+    conc = classNumberSingle,
     nucleotide = S7::new_property(
       nucleotideType,
       validator = function(value) {
@@ -210,23 +210,23 @@ sampleType <- S7::new_class(
   "sampleType",
   parent = rdmlBaseType,
   properties = list(
-    id = class_id,
-    description = class_character_na_nonempty_single,
-    documentation = test_class_na_list("idReferenceType"),
-    xRef = test_class_na_list("xRefType"),
-    annotation = test_class_na_list("annotationType"),
-    type = test_class_na_keyed_list(
+    id = classId,
+    description = classCharacterNaNonemptySingle,
+    documentation = .testClassNaList("idReferenceType"),
+    xRef = .testClassNaList("xRefType"),
+    annotation = .testClassNaList("annotationType"),
+    type = .testClassNaKeyedList(
       "sampleTargetType",
       key = "targetId"
     ),
-    interRunCalibrator = class_flag_na,
-    quantity = test_class_na_keyed_list(
+    interRunCalibrator = classFlagNa,
+    quantity = .testClassNaKeyedList(
       "quantityType",
       key = "targetId"
     ),
-    calibratorSample = class_flag_na,
-    cdnaSynthesisMethod = test_class_na("cdnaSynthesisMethodType"),
-    templateQuantity = test_class_na("templateQuantityType")
+    calibratorSample = classFlagNa,
+    cdnaSynthesisMethod = .testClassNa("cdnaSynthesisMethodType"),
+    templateQuantity = .testClassNa("templateQuantityType")
   )
 )
 
@@ -235,9 +235,9 @@ oligoType <- S7::new_class(
   "oligoType",
   parent = rdmlBaseType,
   properties = list(
-    threePrimeTag = class_character_na_nonempty_single,
-    fivePrimeTag = class_character_na_nonempty_single,
-    sequence = class_character_nonempty_single
+    threePrimeTag = classCharacterNaNonemptySingle,
+    fivePrimeTag = classCharacterNaNonemptySingle,
+    sequence = classCharacterNonemptySingle
   )
 )
 
@@ -246,11 +246,11 @@ sequencesType <- S7::new_class(
   "sequencesType",
   parent = rdmlBaseType,
   properties = list(
-    forwardPrimer = test_class_na("oligoType"), 
-    reversePrimer = test_class_na("oligoType"),
-    probe1 = test_class_na("oligoType"),
-    probe2 = test_class_na("oligoType"),
-    amplicon = test_class_na("oligoType")
+    forwardPrimer = .testClassNa("oligoType"), 
+    reversePrimer = .testClassNa("oligoType"),
+    probe1 = .testClassNa("oligoType"),
+    probe2 = .testClassNa("oligoType"),
+    amplicon = .testClassNa("oligoType")
   )
 )
 
@@ -260,13 +260,13 @@ commercialAssayType <- S7::new_class(
   "commercialAssayType",
   parent = rdmlBaseType,
   properties = list(
-    company = class_character_nonempty_single,
-    orderNumber = class_character_nonempty_single
+    company = classCharacterNonemptySingle,
+    orderNumber = classCharacterNonemptySingle
   )
 )
 
 #' @export
-targetTypeType <-  new_enum_class(
+targetTypeType <-  .newEnumClass(
   "targetTypeType",
   c("ref", "toi")
 )
@@ -276,19 +276,19 @@ targetType <- S7::new_class(
   "targetType",
   parent = rdmlBaseType,
   properties = list(
-    id = class_id,
-    description = class_character_na_nonempty_single,
-    documentation = test_class_na_list("idReferenceType"),
-    xRef = test_class_na_list("xRefType"),
-    type = test_class("targetTypeType"),
-    amplificationEfficiencyMethod = class_character_na_nonempty_single,
-    amplificationEfficiency = class_number_na_single,
-    amplificationEfficiencySE = class_number_na_single,
-    meltingTemperature = class_number_na_single,
-    detectionLimit = class_number_na_single,
-    dyeId = test_class("idReferenceType"),
-    sequences = test_class_na("sequencesType"),
-    commercialAssay = test_class_na("commercialAssayType")
+    id = classId,
+    description = classCharacterNaNonemptySingle,
+    documentation = .testClassNaList("idReferenceType"),
+    xRef = .testClassNaList("xRefType"),
+    type = .testClass("targetTypeType"),
+    amplificationEfficiencyMethod = classCharacterNaNonemptySingle,
+    amplificationEfficiency = classNumberNaSingle,
+    amplificationEfficiencySE = classNumberNaSingle,
+    meltingTemperature = classNumberNaSingle,
+    detectionLimit = classNumberNaSingle,
+    dyeId = .testClass("idReferenceType"),
+    sequences = .testClassNa("sequencesType"),
+    commercialAssay = .testClassNa("commercialAssayType")
   )
 )
 
@@ -296,7 +296,7 @@ targetType <- S7::new_class(
 # thermalCyclingConditions ------------------------------------------------
 
 #' @export
-measureType <-  new_enum_class(
+measureType <-  .newEnumClass(
   "measureType",
   c("real time", "meltcurve")
 )
@@ -307,11 +307,11 @@ temperatureBaseType <- S7::new_class(
   "temperatureBaseType",
   parent = rdmlBaseType,
   properties = list(
-    duration = class_positive_integer_single,
-    temperatureChange = class_number_na_single,
-    durationChange = class_integer_na_single,
-    measure = test_class_na("measureType"),
-    ramp = class_number_na_single
+    duration = classPositiveIntegerSingle,
+    temperatureChange = classNumberNaSingle,
+    durationChange = classIntegerNaSingle,
+    measure = .testClassNa("measureType"),
+    ramp = classNumberNaSingle
   )
 )
 
@@ -320,7 +320,7 @@ temperatureType <- S7::new_class(
   "temperatureType",
   parent = temperatureBaseType,
   properties = list(
-    temperature = class_number_single
+    temperature = classNumberSingle
   )
 )
 
@@ -329,8 +329,8 @@ gradientType <- S7::new_class(
   "gradientType",
   parent = temperatureBaseType,
   properties = list(
-    highTemperature = class_number_single,
-    lowTemperature = class_number_single
+    highTemperature = classNumberSingle,
+    lowTemperature = classNumberSingle
   )
 )
 
@@ -339,8 +339,8 @@ loopType <- S7::new_class(
   "loopType",
   parent = rdmlBaseType,
   properties = list(
-    goto = class_positive_integer_single,
-    "repeat" = class_positive_integer_single
+    goto = classPositiveIntegerSingle,
+    "repeat" = classPositiveIntegerSingle
   )
 )
 
@@ -349,7 +349,7 @@ pauseType <- S7::new_class(
   "pauseType",
   parent = rdmlBaseType,
   properties = list(
-    temperature = class_number_single
+    temperature = classNumberSingle
   )
 )
 
@@ -366,13 +366,13 @@ stepType <- S7::new_class(
   "stepType",
   parent = rdmlBaseType,
   properties = list(
-    nr = class_positive_integer_single,
-    description = class_character_na_nonempty_single,
-    temperature = test_class_na("temperatureType"),
-    gradient = test_class_na("gradientType"),
-    loop = test_class_na("loopType"),
-    pause = test_class_na("pauseType"),
-    lidOpen = test_class_na("lidOpenType")
+    nr = classPositiveIntegerSingle,
+    description = classCharacterNaNonemptySingle,
+    temperature = .testClassNa("temperatureType"),
+    gradient = .testClassNa("gradientType"),
+    loop = .testClassNa("loopType"),
+    pause = .testClassNa("pauseType"),
+    lidOpen = .testClassNa("lidOpenType")
   )
 )
 
@@ -381,12 +381,12 @@ thermalCyclingConditionsType <- S7::new_class(
   "thermalCyclingConditionsType",
   parent = rdmlBaseType,
   properties = list(
-    id = class_id,
-    description = class_character_na_nonempty_single,
-    documentation = test_class_na_list("idReferenceType"),
-    lidTemperature = class_number_na_single,
-    experimenter = test_class_na_list("idReferenceType"),
-    step = test_class_list("stepType")
+    id = classId,
+    description = classCharacterNaNonemptySingle,
+    documentation = .testClassNaList("idReferenceType"),
+    lidTemperature = classNumberNaSingle,
+    experimenter = .testClassNaList("idReferenceType"),
+    step = .testClassList("stepType")
   )
 )
 
@@ -404,7 +404,7 @@ dpAmpCurveType <- S7::new_class(
     }
   },
   properties = list(
-    fpoints = class_datatable
+    fpoints = classDataTable
   )
 )
 
@@ -421,7 +421,7 @@ dpMeltingCurveType <- S7::new_class(
     }
   },
   properties = list(
-    fpoints = class_datatable
+    fpoints = classDataTable
   )
 )
 
@@ -433,23 +433,23 @@ dataType <-
   S7::new_class("dataType",
             parent = rdmlBaseType,
             properties = list(
-              targetId = test_class("idReferenceType"),
-              cq = class_number_na_single,
-              N0 = class_number_na_single,
-              ampEffMet = class_character_na_nonempty_single,
-              ampEff = class_number_na_single,
-              ampEffSE = class_number_na_single,
-              corrF = class_number_na_single,
-              corrP = class_number_na_single,
-              meltTemp = class_number_na_single,
-              excl = class_character_na_nonempty_single,
-              note = class_character_na_nonempty_single,
-              adp = test_class_na("dpAmpCurveType"),
-              mdp = test_class_na("dpMeltingCurveType"),
-              endPt = class_number_na_single,
-              bgFluor = class_number_na_single,
-              bgFluorSlp = class_number_na_single,
-              quantFluor = class_number_na_single
+              targetId = .testClass("idReferenceType"),
+              cq = classNumberNaSingle,
+              N0 = classNumberNaSingle,
+              ampEffMet = classCharacterNaNonemptySingle,
+              ampEff = classNumberNaSingle,
+              ampEffSE = classNumberNaSingle,
+              corrF = classNumberNaSingle,
+              corrP = classNumberNaSingle,
+              meltTemp = classNumberNaSingle,
+              excl = classCharacterNaNonemptySingle,
+              note = classCharacterNaNonemptySingle,
+              adp = .testClassNa("dpAmpCurveType"),
+              mdp = .testClassNa("dpMeltingCurveType"),
+              endPt = classNumberNaSingle,
+              bgFluor = classNumberNaSingle,
+              bgFluorSlp = classNumberNaSingle,
+              quantFluor = classNumberNaSingle
             ))
 
 
@@ -460,14 +460,14 @@ partitionDataType <-
   S7::new_class("partitionDataType",
             parent = rdmlBaseType,
             properties = list(
-              targetId = test_class("idReferenceType"),
-              excluded = class_character_na_nonempty_single,
-              note = class_character_na_nonempty_single,
-              pos = class_positive_integer_single,
-              neg = class_positive_integer_single,
-              undef = class_positive_integer_na_single,
-              excl = class_positive_integer_na_single,
-              conc = class_number_na_single
+              targetId = .testClass("idReferenceType"),
+              excluded = classCharacterNaNonemptySingle,
+              note = classCharacterNaNonemptySingle,
+              pos = classPositiveIntegerSingle,
+              neg = classPositiveIntegerSingle,
+              undef = classPositiveIntegerNaSingle,
+              excl = classPositiveIntegerNaSingle,
+              conc = classNumberNaSingle
             ))
 
 
@@ -478,10 +478,10 @@ partitionsType <- S7::new_class(
   "partitionsType",
   parent = rdmlBaseType,
   properties = list(
-    volume = class_number_single,
-    endPtTable = class_character_na_nonempty_single,
+    volume = classNumberSingle,
+    endPtTable = classCharacterNaNonemptySingle,
     
-    data = test_class_na_keyed_list(
+    data = .testClassNaKeyedList(
       "partitionDataType",
       key = "targetId"
     )
@@ -497,15 +497,15 @@ reactType <- S7::new_class(
   "reactType",
   parent = rdmlBaseType,
   properties = list(
-    id = class_id,
-    sample = test_class("idReferenceType"),
+    id = classId,
+    sample = .testClass("idReferenceType"),
     
-    data = test_class_na_keyed_list(
+    data = .testClassNaKeyedList(
       "dataType",
       key = "targetId"
     ),
     
-    partitions = test_class_na_list("partitionsType")
+    partitions = .testClassNaList("partitionsType")
   )
 )
 
@@ -518,8 +518,8 @@ dataCollectionSoftwareType <-
   S7::new_class("dataCollectionSoftwareType",
             parent = rdmlBaseType,
             properties = list(
-              name = class_character_nonempty_single,
-              version = class_character_nonempty_single
+              name = classCharacterNonemptySingle,
+              version = classCharacterNonemptySingle
             ))
 
 
@@ -528,7 +528,7 @@ dataCollectionSoftwareType <-
 
 #' @export
 labelFormatType <- 
-  new_enum_class(
+  .newEnumClass(
     "labelFormatType",
     c("ABC", 
       "123",
@@ -542,17 +542,17 @@ pcrFormatType <-
   S7::new_class("pcrFormatType",
             parent = rdmlBaseType,
             properties = list(
-              rows = class_positive_integer_single,
-              columns = class_positive_integer_single,
-              rowLabel = test_class("labelFormatType"),
-              columnLabel = test_class("labelFormatType")
+              rows = classPositiveIntegerSingle,
+              columns = classPositiveIntegerSingle,
+              rowLabel = .testClass("labelFormatType"),
+              columnLabel = .testClass("labelFormatType")
             ))
 
 # cqDetectionMethodType ---------------------------------------------------
 
 #' @export
 cqDetectionMethodType <-
-  new_enum_class("cqDetectionMethodType",
+  .newEnumClass("cqDetectionMethodType",
                  c("automated threshold and baseline settings",
                    "manual threshold and baseline settings",
                    "second derivative maximum",
@@ -566,19 +566,19 @@ runType <- S7::new_class(
   "runType",
   parent = rdmlBaseType,
   properties = list(
-    id = class_id,
-    description = class_character_na_nonempty_single,
-    documentation = test_class_na_list("idReferenceType"),
-    experimenter = test_class_na_list("idReferenceType"),
-    instrument = class_character_na_nonempty_single,
-    dataCollectionSoftware = test_class_na("dataCollectionSoftwareType"),
-    backgroundDeterminationMethod = class_character_na_nonempty_single,
-    cqDetectionMethod = test_class_na("cqDetectionMethodType"),
-    thermalCyclingConditions = test_class_na("idReferenceType"),
-    pcrFormat = test_class_na("pcrFormatType"),
-    runDate = class_datetime_na,
+    id = classId,
+    description = classCharacterNaNonemptySingle,
+    documentation = .testClassNaList("idReferenceType"),
+    experimenter = .testClassNaList("idReferenceType"),
+    instrument = classCharacterNaNonemptySingle,
+    dataCollectionSoftware = .testClassNa("dataCollectionSoftwareType"),
+    backgroundDeterminationMethod = classCharacterNaNonemptySingle,
+    cqDetectionMethod = .testClassNa("cqDetectionMethodType"),
+    thermalCyclingConditions = .testClassNa("idReferenceType"),
+    pcrFormat = .testClassNa("pcrFormatType"),
+    runDate = classDateTimeNa,
     
-    react = test_class_na_keyed_list(
+    react = .testClassNaKeyedList(
       "reactType",
       key = "id"
     )
@@ -593,11 +593,11 @@ experimentType <- S7::new_class(
   "experimentType",
   parent = rdmlBaseType,
   properties = list(
-    id = class_id,
-    description = class_character_na_nonempty_single,
-    documentation = test_class_na_list("idReferenceType"),
+    id = classId,
+    description = classCharacterNaNonemptySingle,
+    documentation = .testClassNaList("idReferenceType"),
     
-    run = test_class_na_keyed_list(
+    run = .testClassNaKeyedList(
       "runType",
       key = "id"
     )
@@ -612,9 +612,9 @@ rdmlIdType <-
   S7::new_class("rdmlIdType",
             parent = rdmlBaseType,
             properties = list(
-              publisher = class_character_nonempty_single,
-              serialNumber = class_character_nonempty_single,
-              MD5Hash = class_character_na_nonempty_single
+              publisher = classCharacterNonemptySingle,
+              serialNumber = classCharacterNonemptySingle,
+              MD5Hash = classCharacterNaNonemptySingle
             ))
 
 
@@ -629,33 +629,33 @@ rdmlType <- S7::new_class(
   
   properties = list(
     version = S7::class_character,
-    dateMade = class_datetime_na,
-    dateUpdated = class_datetime_na,
+    dateMade = classDateTimeNa,
+    dateUpdated = classDateTimeNa,
     
     id =
-      test_class_na_list("rdmlIdType"),
+      .testClassNaList("rdmlIdType"),
     
     experimenter =
-      test_class_na_id_list("experimenterType"),
+      .testClassNaIdList("experimenterType"),
     
     documentation =
-      test_class_na_id_list("documentationType"),
+      .testClassNaIdList("documentationType"),
     
     dye =
-      test_class_na_id_list("dyeType"),
+      .testClassNaIdList("dyeType"),
     
     sample =
-      test_class_na_id_list("sampleType"),
+      .testClassNaIdList("sampleType"),
     
     target =
-      test_class_na_id_list("targetType"),
+      .testClassNaIdList("targetType"),
     
     thermalCyclingConditions =
-      test_class_na_id_list(
+      .testClassNaIdList(
         "thermalCyclingConditionsType"
       ),
     
     experiment =
-      test_class_na_id_list("experimentType")
+      .testClassNaIdList("experimentType")
   )
 )

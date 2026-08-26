@@ -29,9 +29,9 @@ S7::method(as.character, rdmlEnum) <- function(x, ...) {
   x@value
 }
 
-new_enum_class <- function(enum_class, variants) {
+.newEnumClass <- function(enumClass, variants) {
   S7::new_class(
-    enum_class,
+    enumClass,
     parent = rdmlEnum,
     properties = list(
       value = S7::class_character,
@@ -75,7 +75,7 @@ S7::method(as.character, idType) <- function(x, ...) {
   as.character(x@id)
 }
 
-class_id <- S7::new_property(
+classId <- S7::new_property(
   S7::class_any,
   validator = function(value) {
     if (!S7::S7_inherits(value, idType)) {
@@ -108,7 +108,7 @@ S7::method(names, rdmlBaseType) <- function(x) {
 # Keyed list properties are exposed as transient rdmlKeyedList wrappers.
 S7::method(`$`, rdmlBaseType) <- function(x, name) {
   value <- S7::prop(x, name)
-  key <- .property_key(x, name)
+  key <- .propertyKey(x, name)
 
   if (!is.null(key) && is.list(value)) {
     return(rdmlKeyedList(value, key = key))
@@ -118,7 +118,7 @@ S7::method(`$`, rdmlBaseType) <- function(x, name) {
 }
 
 S7::method(`$<-`, rdmlBaseType) <- function(x, name, value) {
-  key <- .property_key(x, name)
+  key <- .propertyKey(x, name)
 
   if (!is.null(key) && S7::S7_inherits(value, rdmlKeyedList)) {
     value <- S7::S7_data(value)

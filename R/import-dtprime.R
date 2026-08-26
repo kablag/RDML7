@@ -1,6 +1,6 @@
 # fromDTprime importer -----------------------------------------------------------
 
-.rdml_import_dtprime <- function(filename, show.progress = TRUE) {
+.rdmlImportDtprime <- function(fileName, showProgress = TRUE) {
   fromDTprime <- function() {
     if (!requireNamespace("data.table", quietly = TRUE)) {
       stop(
@@ -9,16 +9,16 @@
       )
     }
 
-    DT96_OVERLOAD_SIGNAL <- 15000
+    dt96OverloadSignal <- 15000
 
     # Read as raw bytes first. readLines(..., encoding = "Windows-1251")
     # is not reliable on all Windows/R builds: the returned strings may still
     # contain CP1251 bytes but be treated as UTF-8, causing trimws()/sub()
     # to fail on e.g. "Апрель".
     raw <- readBin(
-      filename,
+      fileName,
       what = "raw",
-      n = file.info(filename)$size
+      n = file.info(fileName)$size
     )
 
     txt <- rawToChar(raw)
@@ -69,27 +69,27 @@
     # In the supplied file, for example:
     #   "$Information about tubes:$ 00"
     # so this marker must be matched by prefix rather than exact equality.
-    i_tubes   <- marker("$Information about tubes:$", mode = "prefix")
-    i_samples <- marker("$Information about Samples:$", mode = "prefix")
-    i_multi   <- marker("$MultiChannel:$", mode = "prefix")
-    i_device  <- marker("^\\$Device", mode = "regex")
-    i_tests   <- marker("$Information about TESTs:$", mode = "prefix")
-    i_mut     <- marker("$Parameters MutationMC:$", mode = "prefix")
-    i_results <- marker("$Results of optical measurements:$", mode = "prefix")
+    iTubes   <- marker("$Information about tubes:$", mode = "prefix")
+    iSamples <- marker("$Information about Samples:$", mode = "prefix")
+    iMulti   <- marker("$MultiChannel:$", mode = "prefix")
+    iDevice  <- marker("^\\$Device", mode = "regex")
+    iTests   <- marker("$Information about TESTs:$", mode = "prefix")
+    iMut     <- marker("$Parameters MutationMC:$", mode = "prefix")
+    iResults <- marker("$Results of optical measurements:$", mode = "prefix")
 
-    required_markers <- c(
-      tubes = i_tubes,
-      multi = i_multi,
-      device = i_device,
-      tests = i_tests,
-      mutation = i_mut,
-      results = i_results
+    requiredMarkers <- c(
+      tubes = iTubes,
+      multi = iMulti,
+      device = iDevice,
+      tests = iTests,
+      mutation = iMut,
+      results = iResults
     )
 
-    if (anyNA(required_markers)) {
+    if (anyNA(requiredMarkers)) {
       stop(
         "Unsupported or malformed DTprime .r96 file; missing section(s): ",
-        paste(names(required_markers)[is.na(required_markers)], collapse = ", "),
+        paste(names(requiredMarkers)[is.na(requiredMarkers)], collapse = ", "),
         call. = FALSE
       )
     }
@@ -100,33 +100,33 @@
     #   0  2 100 1 120 c0 1 CD53_1
     # They used to become 10 tokens only because the old code replaced tabs
     # and split on a single space, preserving empty tokens.
-    tube_end <- if (!is.na(i_samples) && i_samples > i_tubes) {
-      i_samples - 1L
+    tubeEnd <- if (!is.na(iSamples) && iSamples > iTubes) {
+      iSamples - 1L
     } else {
-      i_multi - 1L
+      iMulti - 1L
     }
 
-    tube_lines <- lns[(i_tubes + 1L):tube_end]
-    tube_lines <- tube_lines[
-      grepl("^\\s*[0-9]+\\s+", tube_lines)
+    tubeLines <- lns[(iTubes + 1L):tubeEnd]
+    tubeLines <- tubeLines[
+      grepl("^\\s*[0-9]+\\s+", tubeLines)
     ]
 
-    tubes.info <- lapply(tube_lines, .split_ws)
-    tubes.info <- Filter(
+    tubesInfo <- lapply(tubeLines, .splitWs)
+    tubesInfo <- Filter(
       function(z) {
         length(z) >= 8L &&
           grepl("^[0-9]+$", z[[1L]])
       },
-      tubes.info
+      tubesInfo
     )
 
-    if (!length(tubes.info)) {
+    if (!length(tubesInfo)) {
       stop("No tube records found in DTprime .r96 file", call. = FALSE)
     }
 
     # ---- Test/kit table ------------------------------------------------
-    kit_lines <- lns[(i_tests + 1L):(i_mut - 1L)]
-    kits <- lapply(kit_lines, .split_ws)
+    kitLines <- lns[(iTests + 1L):(iMut - 1L)]
+    kits <- lapply(kitLines, .splitWs)
     kits <- Filter(
       function(z) {
         length(z) >= 2L &&
@@ -139,32 +139,32 @@
     # Some DTprime files have no rows between MultiChannel and Device.
     concentrations <- list()
 
-    if (i_device > i_multi + 1L) {
-      conc_lines <- lns[(i_multi + 1L):(i_device - 1L)]
-      conc_lines <- conc_lines[
-        nzchar(trimws(conc_lines)) &
-          grepl("^\\s*[0-9]+(?:\\s|$)", conc_lines)
+    if (iDevice > iMulti + 1L) {
+      concLines <- lns[(iMulti + 1L):(iDevice - 1L)]
+      concLines <- concLines[
+        nzchar(trimws(concLines)) &
+          grepl("^\\s*[0-9]+(?:\\s|$)", concLines)
       ]
 
-      concentrations <- lapply(conc_lines, .split_ws)
+      concentrations <- lapply(concLines, .splitWs)
     }
 
     # ---- Optical measurements -----------------------------------------
-    measurement_lines <- lns[(i_results + 1L):length(lns)]
-    measurement_lines <- measurement_lines[nzchar(trimws(measurement_lines))]
+    measurementLines <- lns[(iResults + 1L):length(lns)]
+    measurementLines <- measurementLines[nzchar(trimws(measurementLines))]
 
-    parts <- lapply(measurement_lines, .split_ws)
+    parts <- lapply(measurementLines, .splitWs)
 
     if (!length(parts)) {
       stop("DTprime file contains no optical measurements", call. = FALSE)
     }
 
-    part_lengths <- vapply(parts, length, integer(1))
+    partLengths <- vapply(parts, length, integer(1))
 
-    if (length(unique(part_lengths)) != 1L) {
+    if (length(unique(partLengths)) != 1L) {
       stop(
         "DTprime optical-data rows have inconsistent field counts: ",
-        paste(sort(unique(part_lengths)), collapse = ", "),
+        paste(sort(unique(partLengths)), collapse = ", "),
         call. = FALSE
       )
     }
@@ -176,7 +176,7 @@
     # 7 metadata fields + 96 tube fields = 103 meaningful fields.
     # Older RDML code expected a 104th '?' column solely because splitting
     # lines ending in whitespace produced a trailing empty string.
-    raw_names_103 <- c(
+    rawNames103 <- c(
       "dye",
       "x1",
       "x2",
@@ -187,113 +187,113 @@
       paste0("tube_", 0:95)
     )
 
-    if (ncol(fraw) == length(raw_names_103)) {
-      data.table::setnames(fraw, raw_names_103)
-    } else if (ncol(fraw) == length(raw_names_103) + 1L) {
-      data.table::setnames(fraw, c(raw_names_103, "?"))
+    if (ncol(fraw) == length(rawNames103)) {
+      data.table::setnames(fraw, rawNames103)
+    } else if (ncol(fraw) == length(rawNames103) + 1L) {
+      data.table::setnames(fraw, c(rawNames103, "?"))
     } else {
       stop(
         "Unexpected DTprime optical-data column count: ",
         ncol(fraw),
         " (expected ",
-        length(raw_names_103),
+        length(rawNames103),
         " meaningful columns",
         " or ",
-        length(raw_names_103) + 1L,
+        length(rawNames103) + 1L,
         " including a trailing empty field)",
         call. = FALSE
       )
     }
 
-    n_raw <- nrow(fraw)
+    nRaw <- nrow(fraw)
 
     # Each PCR cycle has 5 dyes x 2 exposure rows.
-    if (n_raw %% 10L != 0L) {
+    if (nRaw %% 10L != 0L) {
       stop(
         "Unexpected DTprime optical-data row count: ",
-        n_raw,
+        nRaw,
         " (must be divisible by 10: 5 dyes x 2 exposures)",
         call. = FALSE
       )
     }
 
-    n_cycles <- n_raw %/% 10L
-    fdata <- data.table::data.table(cyc = seq_len(n_cycles))
+    nCycles <- nRaw %/% 10L
+    fdata <- data.table::data.table(cyc = seq_len(nCycles))
 
-    descr_rows <- list()
+    descrRows <- list()
     nr <- 0L
     dyes <- c("FAM", "HEX", "ROX", "Cy5", "Cy5.5")
 
     # Helpers for normalized DTprime tables -----------------------------
-    kit_name_for <- function(kit_id) {
+    kitNameFor <- function(kitId) {
       for (kit in kits) {
-        if (length(kit) >= 2L && identical(kit[[1L]], kit_id)) {
+        if (length(kit) >= 2L && identical(kit[[1L]], kitId)) {
           return(kit[[2L]])
         }
       }
       "unkn"
     }
 
-    concentration_for <- function(tube_id) {
+    concentrationFor <- function(tubeId) {
       for (conc in concentrations) {
         # Normalized form corresponds to old conc[2] / conc[4].
         # With empty tokens removed these are normally fields 1 / 3.
-        if (length(conc) >= 3L && identical(conc[[1L]], tube_id)) {
+        if (length(conc) >= 3L && identical(conc[[1L]], tubeId)) {
           return(suppressWarnings(base::as.numeric(conc[[3L]])))
         }
       }
       NA_real_
     }
 
-    for (tube in tubes.info) {
+    for (tube in tubesInfo) {
       # Normalized tube layout:
       # 1 = zero-based tube id
       # 7 = TEST/kit id
       # 8 = sample/tube name
-      tube_id   <- tube[[1L]]
-      kit_id    <- tube[[7L]]
-      tube.name <- tube[[8L]]
+      tubeId   <- tube[[1L]]
+      kitId    <- tube[[7L]]
+      tubeName <- tube[[8L]]
 
-      if (identical(tube.name, "-")) {
+      if (identical(tubeName, "-")) {
         next
       }
 
-      tube_col <- paste0("tube_", tube_id)
+      tubeCol <- paste0("tube_", tubeId)
 
-      if (!(tube_col %in% names(fraw))) {
+      if (!(tubeCol %in% names(fraw))) {
         next
       }
 
-      kit_name <- kit_name_for(kit_id)
-      quantity <- concentration_for(tube_id)
+      kitName <- kitNameFor(kitId)
+      quantity <- concentrationFor(tubeId)
 
-      for (dye_i in seq_along(dyes)) {
-        dye <- dyes[[dye_i]]
+      for (dyeI in seq_along(dyes)) {
+        dye <- dyes[[dyeI]]
 
-        first_idx <- (dye_i - 1L) * 2L + 1L
-        second_idx <- first_idx + 1L
+        firstIdx <- (dyeI - 1L) * 2L + 1L
+        secondIdx <- firstIdx + 1L
 
-        if (second_idx > n_raw) {
+        if (secondIdx > nRaw) {
           next
         }
 
-        marker_value <- fraw[[tube_col]][[first_idx]]
+        markerValue <- fraw[[tubeCol]][[firstIdx]]
 
         # DTprime stores "1" for channels/tubes that were not measured.
-        if (is.na(marker_value) || identical(marker_value, "1")) {
+        if (is.na(markerValue) || identical(markerValue, "1")) {
           next
         }
 
-        idx2000 <- seq(first_idx, n_raw, by = 10L)
-        idx400  <- seq(second_idx, n_raw, by = 10L)
+        idx2000 <- seq(firstIdx, nRaw, by = 10L)
+        idx400  <- seq(secondIdx, nRaw, by = 10L)
 
         if (
-          length(idx2000) != n_cycles ||
-          length(idx400) != n_cycles
+          length(idx2000) != nCycles ||
+          length(idx400) != nCycles
         ) {
           stop(
             "Inconsistent DTprime exposure series for tube ",
-            tube_id,
+            tubeId,
             ", dye ",
             dye,
             call. = FALSE
@@ -301,11 +301,11 @@
         }
 
         sig2000 <-
-          suppressWarnings(base::as.numeric(fraw[[tube_col]][idx2000])) -
+          suppressWarnings(base::as.numeric(fraw[[tubeCol]][idx2000])) -
           suppressWarnings(base::as.numeric(fraw$background[idx2000]))
 
         sig400 <-
-          suppressWarnings(base::as.numeric(fraw[[tube_col]][idx400])) -
+          suppressWarnings(base::as.numeric(fraw[[tubeCol]][idx400])) -
           suppressWarnings(base::as.numeric(fraw$background[idx400]))
 
         if (
@@ -316,79 +316,79 @@
         }
 
         sigcomb <- if (
-          !any(sig2000 >= DT96_OVERLOAD_SIGNAL, na.rm = TRUE)
+          !any(sig2000 >= dt96OverloadSignal, na.rm = TRUE)
         ) {
           sig2000
         } else {
           sig400 * 5
         }
 
-        # fdata.name is an internal fluorescence-series key and must be
+        # fdataName is an internal fluorescence-series key and must be
         # unique. Sample names may repeat for technical replicates, therefore
         # include the zero-based DTprime tube id.
-        nm2000 <- sprintf("tube_%s_%s_2000", tube_id, dye)
-        nm400  <- sprintf("tube_%s_%s_400",  tube_id, dye)
-        nmcomb <- sprintf("tube_%s_%s_comb", tube_id, dye)
+        nm2000 <- sprintf("tube_%s_%s_2000", tubeId, dye)
+        nm400  <- sprintf("tube_%s_%s_400",  tubeId, dye)
+        nmcomb <- sprintf("tube_%s_%s_comb", tubeId, dye)
 
         fdata[[nm2000]] <- sig2000
         fdata[[nm400]]  <- sig400
         fdata[[nmcomb]] <- sigcomb
 
-        base_row <- list(
-          run.id = "run1",
-          react.id = base::as.integer(tube_id) + 1L,
-          sample = tube.name,
-          target = sprintf("%s#%s", kit_name, dye),
-          target.dyeId = dye,
-          sample.type = "unkn",
+        baseRow <- list(
+          runId = "run1",
+          reactId = base::as.integer(tubeId) + 1L,
+          sample = tubeName,
+          target = sprintf("%s#%s", kitName, dye),
+          targetDyeId = dye,
+          sampleType = "unkn",
           quantity = quantity
         )
 
         nr <- nr + 1L
-        descr_rows[[nr]] <- data.frame(
-          fdata.name = nm2000,
-          exp.id = "exp_2000",
-          run.id = base_row$run.id,
-          react.id = base_row$react.id,
-          sample = base_row$sample,
-          target = base_row$target,
-          target.dyeId = base_row$target.dyeId,
-          sample.type = base_row$sample.type,
-          quantity = base_row$quantity,
+        descrRows[[nr]] <- data.frame(
+          fdataName = nm2000,
+          expId = "exp_2000",
+          runId = baseRow$runId,
+          reactId = baseRow$reactId,
+          sample = baseRow$sample,
+          target = baseRow$target,
+          targetDyeId = baseRow$targetDyeId,
+          sampleType = baseRow$sampleType,
+          quantity = baseRow$quantity,
           stringsAsFactors = FALSE
         )
 
         nr <- nr + 1L
-        descr_rows[[nr]] <- data.frame(
-          fdata.name = nm400,
-          exp.id = "exp_400",
-          run.id = base_row$run.id,
-          react.id = base_row$react.id,
-          sample = base_row$sample,
-          target = base_row$target,
-          target.dyeId = base_row$target.dyeId,
-          sample.type = base_row$sample.type,
-          quantity = base_row$quantity,
+        descrRows[[nr]] <- data.frame(
+          fdataName = nm400,
+          expId = "exp_400",
+          runId = baseRow$runId,
+          reactId = baseRow$reactId,
+          sample = baseRow$sample,
+          target = baseRow$target,
+          targetDyeId = baseRow$targetDyeId,
+          sampleType = baseRow$sampleType,
+          quantity = baseRow$quantity,
           stringsAsFactors = FALSE
         )
 
         nr <- nr + 1L
-        descr_rows[[nr]] <- data.frame(
-          fdata.name = nmcomb,
-          exp.id = "combined",
-          run.id = base_row$run.id,
-          react.id = base_row$react.id,
-          sample = base_row$sample,
-          target = base_row$target,
-          target.dyeId = base_row$target.dyeId,
-          sample.type = base_row$sample.type,
-          quantity = base_row$quantity,
+        descrRows[[nr]] <- data.frame(
+          fdataName = nmcomb,
+          expId = "combined",
+          runId = baseRow$runId,
+          reactId = baseRow$reactId,
+          sample = baseRow$sample,
+          target = baseRow$target,
+          targetDyeId = baseRow$targetDyeId,
+          sampleType = baseRow$sampleType,
+          quantity = baseRow$quantity,
           stringsAsFactors = FALSE
         )
       }
     }
 
-    if (!length(descr_rows) || ncol(fdata) < 2L) {
+    if (!length(descrRows) || ncol(fdata) < 2L) {
       stop(
         "No usable fluorescence data found in DTprime .r96 file",
         call. = FALSE
@@ -396,28 +396,28 @@
     }
 
     description <- data.table::rbindlist(
-      descr_rows,
+      descrRows,
       use.names = TRUE,
       fill = TRUE
     )
 
-    description[, react.id := base::as.integer(react.id)]
+    description[, reactId := base::as.integer(reactId)]
     description[, quantity := suppressWarnings(base::as.numeric(quantity))]
 
-    if (show.progress) {
+    if (showProgress) {
       cat(
         sprintf(
           "\nDTprime: %d cycles, %d fluorescence series, %d active reactions\n",
-          n_cycles,
+          nCycles,
           ncol(fdata) - 1L,
-          data.table::uniqueN(description$react.id)
+          data.table::uniqueN(description$reactId)
         )
       )
     }
 
-    x <- .rdml_new_import("DTprime", "1")
+    x <- .rdmlNewImport("DTprime", "1")
 
-    .rdml_set_fdata_import(
+    .rdmlsetFDataImport(
       x,
       fdata,
       description,

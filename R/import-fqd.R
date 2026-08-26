@@ -1,14 +1,14 @@
 # fromFQDexport importer -----------------------------------------------------------
 
-.rdml_import_fqd <- function(filename, show.progress = TRUE) {
+.rdmlImportFqd <- function(fileName, showProgress = TRUE) {
   fromFQDexport <- function() {
     if (!requireNamespace("data.table", quietly = TRUE)) {
       stop("Package 'data.table' is required for FQD-96a import", call. = FALSE)
     }
 
     content <- readChar(
-      filename,
-      nchars = file.info(filename)$size,
+      fileName,
+      nchars = file.info(fileName)$size,
       useBytes = TRUE
     )
     inpstr <- strsplit(content, "Quan\\.", perl = TRUE)[[1L]]
@@ -26,42 +26,42 @@
     )
     description <- description[Well != "Well"]
 
-    expected_desc_names <- c(
-      "position", "sample.id", "sample", "sample.type",
-      "target", "target.dyeId", "cq", "cq.mean", "cq.sd",
-      "quantity", "quantity.avg", "quantity.sd", "V13", "fdata.name"
+    expectedDescNames <- c(
+      "position", "sample.id", "sample", "sampleType",
+      "target", "targetDyeId", "cq", "cq.mean", "cq.sd",
+      "quantity", "quantity.avg", "quantity.sd", "V13", "fdataName"
     )
-    if (ncol(description) != length(expected_desc_names)) {
+    if (ncol(description) != length(expectedDescNames)) {
       stop(
         "Unexpected FQD description column count: ", ncol(description),
-        " (expected ", length(expected_desc_names), ")",
+        " (expected ", length(expectedDescNames), ")",
         call. = FALSE
       )
     }
-    data.table::setnames(description, expected_desc_names)
-    description[, fdata.name := paste(position, target, sep = "_")]
+    data.table::setnames(description, expectedDescNames)
+    description[, fdataName := paste(position, target, sep = "_")]
 
-    num_cols <- c(
+    numCols <- c(
       "cq", "cq.mean", "cq.sd", "quantity", "quantity.avg", "quantity.sd"
     )
-    description[, (num_cols) := lapply(.SD, .rdml_as_numeric), .SDcols = num_cols]
+    description[, (numCols) := lapply(.SD, .rdmlAsNumeric), .SDcols = numCols]
     description[, `:=`(
-      exp.id = "exp1",
-      run.id = "raw_data",
+      expId = "exp1",
+      runId = "raw_data",
       sample = ifelse(sample == "", "unkn_s", sample),
-      react.id = vapply(position, FromPositionToId, numeric(1))
+      reactId = vapply(position, .fromPositionToId, numeric(1))
     )]
 
-    type_map <- c(
+    typeMap <- c(
       Unknown = "unkn",
       Standard = "std",
       Negative = "ntc",
       Positive = "pos"
     )
-    mapped <- unname(type_map[description$sample.type])
-    description$sample.type[!is.na(mapped)] <- mapped[!is.na(mapped)]
+    mapped <- unname(typeMap[description$sampleType])
+    description$sampleType[!is.na(mapped)] <- mapped[!is.na(mapped)]
 
-    make_fdata <- function(txt) {
+    makeFData <- function(txt) {
       z <- data.table::fread(
         input = txt,
         fill = TRUE,
@@ -78,35 +78,35 @@
       }
 
       m <- t(as.matrix(z[, ..keep]))
-      m_num <- matrix(
+      mNum <- matrix(
         suppressWarnings(base::as.numeric(m)),
         nrow = nrow(m),
         ncol = ncol(m),
         dimnames = dimnames(m)
       )
-      if (ncol(m_num) != nrow(description)) {
+      if (ncol(mNum) != nrow(description)) {
         stop(
           "FQD fluorescence/description column mismatch",
           call. = FALSE
         )
       }
 
-      out <- data.frame(cyc = seq_len(nrow(m_num)), check.names = FALSE)
-      for (j in seq_len(ncol(m_num))) {
-        out[[description$fdata.name[[j]]]] <- m_num[, j]
+      out <- data.frame(cyc = seq_len(nrow(mNum)), check.names = FALSE)
+      for (j in seq_len(ncol(mNum))) {
+        out[[description$fdataName[[j]]]] <- mNum[, j]
       }
       out
     }
 
-    rawfdata <- make_fdata(inpstr[[2L]])
-    processedfdata <- make_fdata(inpstr[[3L]])
+    rawfdata <- makeFData(inpstr[[2L]])
+    processedfdata <- makeFData(inpstr[[3L]])
 
-    x <- .rdml_new_import()
-    x <- .rdml_set_fdata_import(x, rawfdata, description, "adp")
+    x <- .rdmlNewImport()
+    x <- .rdmlsetFDataImport(x, rawfdata, description, "adp")
 
-    description_processed <- data.table::copy(description)
-    description_processed[, run.id := "processed_data"]
-    x <- .rdml_set_fdata_import(x, processedfdata, description_processed, "adp")
+    descriptionProcessed <- data.table::copy(description)
+    descriptionProcessed[, runId := "processed_data"]
+    x <- .rdmlsetFDataImport(x, processedfdata, descriptionProcessed, "adp")
     x
   }
 

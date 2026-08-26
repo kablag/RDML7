@@ -12,17 +12,17 @@ rdmlEdit <- function() {
     )
   }
 
-  app_dir <- system.file(
+  appDir <- system.file(
     "RDMLedit",
     package = "RDML"
   )
 
-  if (!nzchar(app_dir)) {
+  if (!nzchar(appDir)) {
     stop(
       "Bundled RDMLedit application was not found in the installed package.",
       call. = FALSE
     )
   }
 
-  shiny::runApp(app_dir)
+  shiny::runApp(appDir)
 }

@@ -1,9 +1,9 @@
 # fromCSV importer -----------------------------------------------------------
 
-.rdml_import_csv <- function(filename, show.progress = TRUE) {
+.rdmlImportCsv <- function(fileName, showProgress = TRUE) {
   fromCSV <- function() {
     pcrdata <- utils::read.csv(
-      filename,
+      fileName,
       check.names = FALSE,
       stringsAsFactors = FALSE
     )
@@ -11,25 +11,25 @@
       stop("CSV must contain a coordinate column and fluorescence columns", call. = FALSE)
     }
 
-    fdata.names <- names(pcrdata)[-1L]
-    first_name <- tolower(names(pcrdata)[1L])
-    data.type <- if (first_name %in% c("tmp", "temperature")) "mdp" else "adp"
+    fdataNames <- names(pcrdata)[-1L]
+    firstName <- tolower(names(pcrdata)[1L])
+    dataType <- if (firstName %in% c("tmp", "temperature")) "mdp" else "adp"
 
     descr <- data.frame(
-      fdata.name = fdata.names,
-      exp.id = "exp1",
-      run.id = "run1",
-      react.id = seq_along(fdata.names),
-      sample = fdata.names,
+      fdataName = fdataNames,
+      expId = "exp1",
+      runId = "run1",
+      reactId = seq_along(fdataNames),
+      sample = fdataNames,
       target = "unkn",
-      target.dyeId = "unkn",
-      sample.type = "unkn",
+      targetDyeId = "unkn",
+      sampleType = "unkn",
       stringsAsFactors = FALSE,
       check.names = FALSE
     )
 
-    x <- .rdml_new_import()
-    .rdml_set_fdata_import(x, pcrdata, descr, data.type)
+    x <- .rdmlNewImport()
+    .rdmlsetFDataImport(x, pcrdata, descr, dataType)
   }
 
   fromCSV()

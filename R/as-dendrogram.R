@@ -1,28 +1,28 @@
 #' Represent rdmlType structure as a dendrogram
 #'
-#' S7 port of PCRuniversum/RDML::RDML$AsDendrogram().
+#' S7 port of PCRuniversum/RDML::RDML$asDendrogram().
 #' The hierarchy is:
 #'
-#' experiment -> run -> target -> sample.type -> adp/mdp
+#' experiment -> run -> target -> sampleType -> adp/mdp
 #'
 #' The leaf label contains the number of reactions with the corresponding
 #' fluorescence-data type, matching the behaviour of the original package.
 #'
 #' @param x A `rdmlType` object.
-#' @param plot.dendrogram Logical; plot the dendrogram when `TRUE`.
+#' @param plotDendrogram Logical; plot the dendrogram when `TRUE`.
 #' @param ... Reserved for future use.
 #'
 #' @return A base R `dendrogram` object.
 #' @export
-#' @include generics.R RDML.AsTable.R
-S7::method(AsDendrogram, rdmlType) <- function(
+#' @include generics.R RDML.asTable.R
+S7::method(asDendrogram, rdmlType) <- function(
     x,
-    plot.dendrogram = TRUE,
+    plotDendrogram = TRUE,
     ...) {
 
-  checkmate::assertFlag(plot.dendrogram)
+  checkmate::assertFlag(plotDendrogram)
 
-  cut.text <- function(text) {
+  cutText <- function(text) {
     text <- as.character(text)
 
     if (
@@ -54,7 +54,7 @@ S7::method(AsDendrogram, rdmlType) <- function(
   }
 
   # Avoid NA/empty list indices while keeping the displayed label separate.
-  tree.key <- function(x) {
+  treeKey <- function(x) {
     x <- as.character(x)
 
     if (
@@ -71,7 +71,7 @@ S7::method(AsDendrogram, rdmlType) <- function(
     x
   }
 
-  total.table <- AsTable(x)
+  totalTable <- asTable(x)
 
   tree <- list()
   attributes(tree) <- list(
@@ -80,8 +80,8 @@ S7::method(AsDendrogram, rdmlType) <- function(
   )
   class(tree) <- "dendrogram"
 
-  if (!nrow(total.table)) {
-    if (plot.dendrogram) {
+  if (!nrow(totalTable)) {
+    if (plotDendrogram) {
       warning(
         "RDML object contains no fluorescence data",
         call. = FALSE
@@ -92,177 +92,177 @@ S7::method(AsDendrogram, rdmlType) <- function(
   }
 
   required <- c(
-    "exp.id",
-    "run.id",
+    "expId",
+    "runId",
     "target",
-    "sample.type",
+    "sampleType",
     "adp",
     "mdp"
   )
 
-  missing.columns <- setdiff(
+  missingColumns <- setdiff(
     required,
-    names(total.table)
+    names(totalTable)
   )
 
-  if (length(missing.columns)) {
+  if (length(missingColumns)) {
     stop(
-      "AsTable() result is missing required column(s): ",
-      paste(missing.columns, collapse = ", "),
+      "asTable() result is missing required column(s): ",
+      paste(missingColumns, collapse = ", "),
       call. = FALSE
     )
   }
 
   # Work on a private copy because data.table's := modifies by reference.
-  total.table <- data.table::copy(total.table)
+  totalTable <- data.table::copy(totalTable)
 
-  total.table[
-    is.na(exp.id) | !nzchar(as.character(exp.id)),
-    exp.id := "NA"
+  totalTable[
+    is.na(expId) | !nzchar(as.character(expId)),
+    expId := "NA"
   ]
-  total.table[
-    is.na(run.id) | !nzchar(as.character(run.id)),
-    run.id := "NA"
+  totalTable[
+    is.na(runId) | !nzchar(as.character(runId)),
+    runId := "NA"
   ]
-  total.table[
+  totalTable[
     is.na(target) | !nzchar(as.character(target)),
     target := "NA"
   ]
-  total.table[
-    is.na(sample.type) | !nzchar(as.character(sample.type)),
-    sample.type := "NA"
+  totalTable[
+    is.na(sampleType) | !nzchar(as.character(sampleType)),
+    sampleType := "NA"
   ]
 
-  for (exper.id in unique(total.table$exp.id)) {
+  for (experId in unique(totalTable$expId)) {
 
-    exper.key <- tree.key(exper.id)
+    experKey <- treeKey(experId)
 
-    tree[[exper.key]] <- list()
-    attributes(tree[[exper.key]]) <- list(
+    tree[[experKey]] <- list()
+    attributes(tree[[experKey]]) <- list(
       members = 0L,
       height = 4,
-      edgetext = cut.text(exper.id)
+      edgetext = cutText(experId)
     )
 
-    run.ids <- unique(
-      total.table[
-        exp.id == exper.id,
-        run.id
+    runIds <- unique(
+      totalTable[
+        expId == experId,
+        runId
       ]
     )
 
-    for (r.id in run.ids) {
+    for (rId in runIds) {
 
-      run.key <- tree.key(r.id)
+      runKey <- treeKey(rId)
 
-      tree[[exper.key]][[run.key]] <- list()
-      attributes(tree[[exper.key]][[run.key]]) <- list(
+      tree[[experKey]][[runKey]] <- list()
+      attributes(tree[[experKey]][[runKey]]) <- list(
         members = 0L,
         height = 3,
-        edgetext = cut.text(r.id)
+        edgetext = cutText(rId)
       )
 
       targets <- unique(
-        total.table[
-          exp.id == exper.id &
-            run.id == r.id,
+        totalTable[
+          expId == experId &
+            runId == rId,
           target
         ]
       )
 
       for (trgt in targets) {
 
-        target.key <- tree.key(trgt)
+        targetKey <- treeKey(trgt)
 
-        tree[[exper.key]][[run.key]][[target.key]] <- list()
+        tree[[experKey]][[runKey]][[targetKey]] <- list()
         attributes(
-          tree[[exper.key]][[run.key]][[target.key]]
+          tree[[experKey]][[runKey]][[targetKey]]
         ) <- list(
           members = 0L,
           height = 2,
-          edgetext = cut.text(trgt)
+          edgetext = cutText(trgt)
         )
 
-        sample.types <- unique(
-          total.table[
-            exp.id == exper.id &
-              run.id == r.id &
+        sampleTypes <- unique(
+          totalTable[
+            expId == experId &
+              runId == rId &
               target == trgt,
-            sample.type
+            sampleType
           ]
         )
 
-        for (stype in sample.types) {
+        for (stype in sampleTypes) {
 
-          stype.key <- tree.key(stype)
+          stypeKey <- treeKey(stype)
 
-          tree[[exper.key]][[run.key]][[target.key]][[stype.key]] <- list()
+          tree[[experKey]][[runKey]][[targetKey]][[stypeKey]] <- list()
 
           attributes(
-            tree[[exper.key]][[run.key]][[target.key]][[stype.key]]
+            tree[[experKey]][[runKey]][[targetKey]][[stypeKey]]
           ) <- list(
             members = 0L,
             height = 1,
-            edgetext = cut.text(stype)
+            edgetext = cutText(stype)
           )
 
-          subset <- total.table[
-            exp.id == exper.id &
-              run.id == r.id &
+          subset <- totalTable[
+            expId == experId &
+              runId == rId &
               target == trgt &
-              sample.type == stype
+              sampleType == stype
           ]
 
-          for (exp.type in c("adp", "mdp")) {
+          for (expType in c("adp", "mdp")) {
 
-            n.rows <- sum(
-              subset[[exp.type]] %in% TRUE,
+            nRows <- sum(
+              subset[[expType]] %in% TRUE,
               na.rm = TRUE
             )
 
-            if (n.rows == 0L) {
+            if (nRows == 0L) {
               next
             }
 
-            tree[[exper.key]][[run.key]][[target.key]][[stype.key]][[exp.type]] <-
+            tree[[experKey]][[runKey]][[targetKey]][[stypeKey]][[expType]] <-
               list()
 
             attributes(
-              tree[[exper.key]][[run.key]][[target.key]][[stype.key]][[exp.type]]
+              tree[[experKey]][[runKey]][[targetKey]][[stypeKey]][[expType]]
             ) <- list(
               members = 1L,
               height = 0,
-              edgetext = exp.type,
-              label = n.rows,
+              edgetext = expType,
+              label = nRows,
               leaf = TRUE
             )
 
             attributes(
-              tree[[exper.key]][[run.key]][[target.key]][[stype.key]]
+              tree[[experKey]][[runKey]][[targetKey]][[stypeKey]]
             )$members <-
               attributes(
-                tree[[exper.key]][[run.key]][[target.key]][[stype.key]]
+                tree[[experKey]][[runKey]][[targetKey]][[stypeKey]]
               )$members + 1L
 
             attributes(
-              tree[[exper.key]][[run.key]][[target.key]]
+              tree[[experKey]][[runKey]][[targetKey]]
             )$members <-
               attributes(
-                tree[[exper.key]][[run.key]][[target.key]]
+                tree[[experKey]][[runKey]][[targetKey]]
               )$members + 1L
 
             attributes(
-              tree[[exper.key]][[run.key]]
+              tree[[experKey]][[runKey]]
             )$members <-
               attributes(
-                tree[[exper.key]][[run.key]]
+                tree[[experKey]][[runKey]]
               )$members + 1L
 
             attributes(
-              tree[[exper.key]]
+              tree[[experKey]]
             )$members <-
               attributes(
-                tree[[exper.key]]
+                tree[[experKey]]
               )$members + 1L
 
             attributes(tree)$members <-
@@ -273,7 +273,7 @@ S7::method(AsDendrogram, rdmlType) <- function(
     }
   }
 
-  if (plot.dendrogram) {
+  if (plotDendrogram) {
 
     suppressWarnings(
       plot(

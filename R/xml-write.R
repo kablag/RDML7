@@ -1,9 +1,9 @@
 # XML serialization --------------------------------------------------------
-# Single serializer for S7 RDML objects. Legacy XML serializer removed; AsXML() is the single writer.
+# Single serializer for S7 RDML objects. Legacy XML serializer removed; asXml() is the single writer.
 
-.rdml_xml_value <- function(value, node_name) {
+.rdmlXmlValue <- function(value, nodeName) {
 
-  if (.rdml_is_missing(value)) {
+  if (.rdmlIsMissing(value)) {
     return("")
   }
 
@@ -22,7 +22,7 @@
           value,
           function(item) {
             paste0(
-              .rdml_xml_node(item, node_name),
+              .rdmlXmlNode(item, nodeName),
               collapse = ""
             )
           },
@@ -45,7 +45,7 @@
           value,
           function(item) {
             paste0(
-              .rdml_xml_node(item, node_name),
+              .rdmlXmlNode(item, nodeName),
               collapse = ""
             )
           },
@@ -60,7 +60,7 @@
   if (S7::S7_inherits(value)) {
     return(
       paste0(
-        .rdml_xml_node(value, node_name),
+        .rdmlXmlNode(value, nodeName),
         collapse = ""
       )
     )
@@ -68,12 +68,12 @@
 
   # Atomic value.
   paste0(
-    .rdml_xml_atomic(node_name, value),
+    .rdmlXmlAtomic(nodeName, value),
     collapse = ""
   )
 }
 
-.rdml_check_fpoints <- function(dt, required, type) {
+.rdmlCheckFPoints <- function(dt, required, type) {
   
   if (!is.data.frame(dt)) {
     stop(
@@ -83,16 +83,16 @@
     )
   }
   
-  missing_columns <- setdiff(
+  missingColumns <- setdiff(
     required,
     names(dt)
   )
   
-  if (length(missing_columns)) {
+  if (length(missingColumns)) {
     stop(
       type,
       "@fpoints is missing column(s): ",
-      paste(missing_columns, collapse = ", "),
+      paste(missingColumns, collapse = ", "),
       call. = FALSE
     )
   }
@@ -106,7 +106,7 @@
 # private fields. It also maps rdml7 internal property names back to RDML XML
 # names (targetId -> tar for data and partitionData).
 
-.rdml_xml_escape <- function(x, attribute = FALSE) {
+.rdmlXmlEscape <- function(x, attribute = FALSE) {
   x <- as.character(x)
   x <- gsub("&", "&amp;", x, fixed = TRUE)
   x <- gsub("<", "&lt;", x, fixed = TRUE)
@@ -118,7 +118,7 @@
   x
 }
 
-.rdml_xml_name <- function(object, property) {
+.rdmlXmlName <- function(object, property) {
   if (
     identical(property, "targetId") &&
     (
@@ -132,30 +132,30 @@
   property
 }
 
-.rdml_xml_atomic <- function(name, value) {
-  if (.rdml_is_missing(value)) return(character())
+.rdmlXmlAtomic <- function(name, value) {
+  if (.rdmlIsMissing(value)) return(character())
   text <- if (is.logical(value)) {
     ifelse(value, "true", "false")
   } else {
-    .rdml_xml_escape(value)
+    .rdmlXmlEscape(value)
   }
   sprintf("<%s>%s</%s>", name, text, name)
 }
 
-.rdml_xml_node <- function(x, node_name) {
-  if (.rdml_is_missing(x)) return(character())
+.rdmlXmlNode <- function(x, nodeName) {
+  if (.rdmlIsMissing(x)) return(character())
 
   # Enum values are element text.
   if (S7::S7_inherits(x, rdmlEnum)) {
     return(sprintf(
-      "<%s>%s</%s>", node_name, .rdml_xml_escape(as.character(x)), node_name
+      "<%s>%s</%s>", nodeName, .rdmlXmlEscape(as.character(x)), nodeName
     ))
   }
 
   # References and ids are represented by an id attribute.
   if (S7::S7_inherits(x, idType)) {
     return(sprintf(
-      '<%s id="%s"/>', node_name, .rdml_xml_escape(as.character(x), TRUE)
+      '<%s id="%s"/>', nodeName, .rdmlXmlEscape(as.character(x), TRUE)
     ))
   }
 
@@ -178,23 +178,23 @@
       "fluor"
     )
     
-    missing_columns <- setdiff(
+    missingColumns <- setdiff(
       required,
       names(dt)
     )
     
-    if (length(missing_columns)) {
+    if (length(missingColumns)) {
       stop(
         "dpAmpCurveType@fpoints is missing column(s): ",
         paste(
-          missing_columns,
+          missingColumns,
           collapse = ", "
         ),
         call. = FALSE
       )
     }
     
-    has_tmp <- "tmp" %in% names(dt)
+    hasTmp <- "tmp" %in% names(dt)
     
     return(
       vapply(
@@ -202,7 +202,7 @@
         function(i) {
           
           if (
-            has_tmp &&
+            hasTmp &&
             !is.na(dt$tmp[[i]])
           ) {
             
@@ -214,9 +214,9 @@
                 "<fluor>%s</fluor>",
                 "</adp>"
               ),
-              .rdml_xml_escape(dt$cyc[[i]]),
-              .rdml_xml_escape(dt$tmp[[i]]),
-              .rdml_xml_escape(dt$fluor[[i]])
+              .rdmlXmlEscape(dt$cyc[[i]]),
+              .rdmlXmlEscape(dt$tmp[[i]]),
+              .rdmlXmlEscape(dt$fluor[[i]])
             )
             
           } else {
@@ -228,8 +228,8 @@
                 "<fluor>%s</fluor>",
                 "</adp>"
               ),
-              .rdml_xml_escape(dt$cyc[[i]]),
-              .rdml_xml_escape(dt$fluor[[i]])
+              .rdmlXmlEscape(dt$cyc[[i]]),
+              .rdmlXmlEscape(dt$fluor[[i]])
             )
           }
         },
@@ -257,16 +257,16 @@
       "fluor"
     )
     
-    missing_columns <- setdiff(
+    missingColumns <- setdiff(
       required,
       names(dt)
     )
     
-    if (length(missing_columns)) {
+    if (length(missingColumns)) {
       stop(
         "dpMeltingCurveType@fpoints is missing column(s): ",
         paste(
-          missing_columns,
+          missingColumns,
           collapse = ", "
         ),
         call. = FALSE
@@ -285,8 +285,8 @@
               "<fluor>%s</fluor>",
               "</mdp>"
             ),
-            .rdml_xml_escape(dt$tmp[[i]]),
-            .rdml_xml_escape(dt$fluor[[i]])
+            .rdmlXmlEscape(dt$tmp[[i]]),
+            .rdmlXmlEscape(dt$fluor[[i]])
           )
         },
         character(1)
@@ -300,10 +300,10 @@
     return(
       sprintf(
         '<%s targetId="%s">%s</%s>',
-        node_name,
-        .rdml_xml_escape(.rdml_id_chr(x$targetId), TRUE),
-        .rdml_xml_escape(.rdml_enum_chr(x$sampleType)),
-        node_name
+        nodeName,
+        .rdmlXmlEscape(.rdmlIdChr(x$targetId), TRUE),
+        .rdmlXmlEscape(.rdmlEnumChr(x$sampleType)),
+        nodeName
       )
     )
   }
@@ -311,20 +311,20 @@
   # quantity has a targetId attribute plus value/unit children.
   if (S7::S7_inherits(x, quantityType)) {
     body <- c(
-      .rdml_xml_atomic("value", x$value),
-      .rdml_xml_node(x$unit, "unit")
+      .rdmlXmlAtomic("value", x$value),
+      .rdmlXmlNode(x$unit, "unit")
     )
     return(sprintf(
       '<%s targetId="%s">%s</%s>',
-      node_name,
-      .rdml_xml_escape(.rdml_id_chr(x$targetId), TRUE),
+      nodeName,
+      .rdmlXmlEscape(.rdmlIdChr(x$targetId), TRUE),
       paste0(body, collapse = ""),
-      node_name
+      nodeName
     ))
   }
 
   if (!S7::S7_inherits(x, rdmlBaseType)) {
-    return(.rdml_xml_atomic(node_name, x))
+    return(.rdmlXmlAtomic(nodeName, x))
   }
 
   properties <- S7::prop_names(x)
@@ -334,7 +334,7 @@
   if ("id" %in% properties && S7::S7_inherits(S7::prop(x, "id"), idType)) {
     attributes <- sprintf(
       ' id="%s"',
-      .rdml_xml_escape(.rdml_id_chr(S7::prop(x, "id")), TRUE)
+      .rdmlXmlEscape(.rdmlIdChr(S7::prop(x, "id")), TRUE)
     )
     properties <- setdiff(properties, "id")
   }
@@ -356,18 +356,18 @@
       property
     )
     
-    if (.rdml_is_missing(value)) {
+    if (.rdmlIsMissing(value)) {
       next
     }
     
-    xml_name <- .rdml_xml_name(
+    xmlName <- .rdmlXmlName(
       x,
       property
     )
     
-    child <- .rdml_xml_value(
+    child <- .rdmlXmlValue(
       value,
-      xml_name
+      xmlName
     )
     
     if (length(child) && nzchar(child)) {
@@ -380,78 +380,78 @@
 
   if (S7::S7_inherits(x, rdmlType)) {
     version <- x$version
-    if (.rdml_is_missing(version)) version <- "1.2"
+    if (.rdmlIsMissing(version)) version <- "1.2"
     attributes <- paste0(
       ' xmlns="http://www.rdml.org" version="',
-      .rdml_xml_escape(version, TRUE),
+      .rdmlXmlEscape(version, TRUE),
       '"'
     )
   }
 
   sprintf(
     "<%s%s>%s</%s>",
-    node_name, attributes, paste0(children, collapse = ""), node_name
+    nodeName, attributes, paste0(children, collapse = ""), nodeName
   )
 }
 
-.rdml_output_path <- function(file.name) {
-  checkmate::assertString(file.name)
+.rdmlOutputPath <- function(fileName) {
+  checkmate::assertString(fileName)
 
   # A bare file name is explicitly placed in the current working directory.
-  if (identical(dirname(file.name), ".")) {
-    file.name <- file.path(getwd(), basename(file.name))
+  if (identical(dirname(fileName), ".")) {
+    fileName <- file.path(getwd(), basename(fileName))
   } else {
-    is_absolute <- grepl(
+    isAbsolute <- grepl(
       "^(?:[A-Za-z]:[/\\\\]|[/\\\\]{2}|/)",
-      file.name
+      fileName
     )
 
-    if (!is_absolute) {
-      file.name <- file.path(getwd(), file.name)
+    if (!isAbsolute) {
+      fileName <- file.path(getwd(), fileName)
     }
   }
 
-  out_dir <- dirname(file.name)
+  outDir <- dirname(fileName)
 
-  if (!dir.exists(out_dir)) {
+  if (!dir.exists(outDir)) {
     stop(
       "Output directory does not exist: ",
-      out_dir,
+      outDir,
       call. = FALSE
     )
   }
 
   file.path(
     normalizePath(
-      out_dir,
+      outDir,
       winslash = "/",
       mustWork = TRUE
     ),
-    basename(file.name)
+    basename(fileName)
   )
 }
 
 
 #' Serialize rdmlType as XML or a .rdml zip archive
 #' @param x rdmlType object.
-#' @param file.name Optional destination. If omitted, XML text is returned.
-#' @return XML text invisibly when file.name is supplied; otherwise XML text.
-S7::method(AsXML, rdmlType) <- function(x, file.name) {
+#' @param fileName Optional destination. If omitted, XML text is returned.
+#' @return XML text invisibly when fileName is supplied; otherwise XML text.
+S7::method(asXml, rdmlType) <- function(x, fileName) {
 
-  tree <- .rdml_xml_node(x, "rdml")
+  tree <- .rdmlXmlNode(x, "rdml")
 
-  if (missing(file.name)) {
+  if (missing(fileName)) {
     return(tree)
   }
 
-  file.name <- .rdml_output_path(file.name)
-  ext <- tolower(tools::file_ext(file.name))
+  fileName <- .rdmlOutputPath(fileName)
+  ext <- tolower(tools::file_ext(fileName))
 
   # Plain XML ----------------------------------------------------------
   if (identical(ext, "xml")) {
     writeLines(
       enc2utf8(tree),
-      con = file.name,
+      con = fileName,
       useBytes = TRUE
     )
 
@@ -465,40 +465,40 @@ S7::method(AsXML, rdmlType) <- function(x, file.name) {
   }
   on.exit(unlink(tmpdir, recursive = TRUE, force = TRUE), add = TRUE)
 
-  xml_file <- file.path(tmpdir, "rdml_data.xml")
+  xmlFile <- file.path(tmpdir, "rdml_data.xml")
   writeLines(
     enc2utf8(tree),
-    con = xml_file,
+    con = xmlFile,
     useBytes = TRUE
   )
 
-  zip_file <- tempfile(fileext = ".zip")
-  on.exit(unlink(zip_file, force = TRUE), add = TRUE)
+  zipFile <- tempfile(fileext = ".zip")
+  on.exit(unlink(zipFile, force = TRUE), add = TRUE)
 
-  old_wd <- getwd()
-  on.exit(setwd(old_wd), add = TRUE)
+  oldWd <- getwd()
+  on.exit(setwd(oldWd), add = TRUE)
 
   setwd(tmpdir)
-  zip_status <- utils::zip(
-    zipfile = zip_file,
+  zipStatus <- utils::zip(
+    zipfile = zipFile,
     files = "rdml_data.xml"
   )
-  setwd(old_wd)
+  setwd(oldWd)
 
   # utils::zip() commonly returns 0 on success; tolerate NULL for
   # implementations where no explicit status is returned.
   if (
-    !file.exists(zip_file) ||
-    (!is.null(zip_status) && length(zip_status) == 1L &&
-       is.numeric(zip_status) && zip_status != 0)
+    !file.exists(zipFile) ||
+    (!is.null(zipStatus) && length(zipStatus) == 1L &&
+       is.numeric(zipStatus) && zipStatus != 0)
   ) {
     stop("Failed to create RDML ZIP archive", call. = FALSE)
   }
 
-  if (!file.copy(zip_file, file.name, overwrite = TRUE)) {
+  if (!file.copy(zipFile, fileName, overwrite = TRUE)) {
     stop(
       "Failed to write RDML file: ",
-      file.name,
+      fileName,
       call. = FALSE
     )
   }
