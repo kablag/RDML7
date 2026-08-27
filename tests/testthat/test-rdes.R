@@ -336,7 +336,7 @@ test_that("RDES both export creates separate amplification and melting files", {
 })
 
 
-test_that("RDES multiple Tm values warn and retain the first meltTemp", {
+test_that("RDES multiple Tm values are retained", {
 
   path <- tempfile(
     fileext = ".tsv"
@@ -345,27 +345,71 @@ test_that("RDES multiple Tm values warn and retain the first meltTemp", {
   .writeRdesFixture(
     path,
     c(
-      "Well\tSample\tSample Type\tTarget\tTarget Type\tDye\tTm\t70\t71",
-      "A1\ts1\tunkn\tACTB\ttoi\tEvaGreen\t71.5;75.2\t10\t20"
+      "Well	Sample	Sample Type	Target	Target Type	Dye	Tm	70	71",
+      "A1	s1	unkn	ACTB	toi	EvaGreen	71.5;75.2	10	20"
     )
   )
 
-  expect_warning(
-    x <- rdmlRead(
-      path,
-      format = "rdes",
-      expId = "exp1",
-      runId = "run1"
-    ),
-    "multiple Tm"
+  x <- rdmlRead(
+    path,
+    format = "rdes",
+    expId = "exp1",
+    runId = "run1"
+  )
+
+  dataObj <- x$experiment$exp1$
+    run$run1$
+    react$A1$
+    data$ACTB
+
+  expect_equal(
+    dataObj$meltTemp,
+    71.5
   )
 
   expect_equal(
-    x$experiment$exp1$
-      run$run1$
-      react$A1$
-      data$ACTB$
-      meltTemp,
-    71.5
+    dataObj$meltTemps,
+    c(71.5, 75.2)
+  )
+})
+
+
+test_that("official-style RDES header starting at cycle 3 imports", {
+  path <- tempfile(fileext = ".tsv")
+
+  header <- paste(
+    c(
+      "Well", "Sample", "Sample Type", "Target", "Target Type", "Dye", "Cq",
+      as.character(3:40)
+    ),
+    collapse = "\t"
+  )
+
+  row <- paste(
+    c(
+      "A1", "gDNA", "unkn", "Exon 1", "toi", "SYBRGreen I", "-1.0",
+      as.character(seq_len(38))
+    ),
+    collapse = "\t"
+  )
+
+  .writeRdesFixture(
+    path,
+    c(
+      paste0(header, "\t"),
+      paste0(row, "\t")
+    )
+  )
+
+  x <- rdmlRead(
+    path,
+    format = "rdes",
+    expId = "exp1",
+    runId = "run1"
+  )
+
+  expect_equal(
+    x$experiment$exp1$run$run1$react$A1$data$`Exon 1`$adp$fpoints$cyc,
+    3:40
   )
 })

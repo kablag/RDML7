@@ -95,28 +95,6 @@ classNumberNaSingle <- S7::new_property(
   default = NA_real_
 )
 
-classNumberNaVector <- S7::new_property(
-  S7::class_any,
-  validator = function(value) {
-    if (.isSingleNa(value)) {
-      return(NULL)
-    }
-
-    if (
-      !is.numeric(value) ||
-      !length(value) ||
-      anyNA(value) ||
-      any(!is.finite(value))
-    ) {
-      return("must be NA or a non-empty finite numeric vector")
-    }
-
-    NULL
-  },
-  default = NA_real_
-)
-
-
 classNumberSingle <- S7::new_property(
   S7::class_numeric,
   validator = function(value) {

@@ -101,24 +101,13 @@
     rawfdata <- makeFData(inpstr[[2L]])
     processedfdata <- makeFData(inpstr[[3L]])
 
+    x <- .rdmlNewImport()
+    x <- .rdmlsetFDataImport(x, rawfdata, description, "adp")
+
     descriptionProcessed <- data.table::copy(description)
     descriptionProcessed[, runId := "processed_data"]
-
-    rdmlImportData(
-      series = list(
-        rdmlImportSeries(
-          fdataType = "adp",
-          fdata = rawfdata,
-          description = description
-        ),
-        rdmlImportSeries(
-          fdataType = "adp",
-          fdata = processedfdata,
-          description = descriptionProcessed
-        )
-      ),
-      format = "fqd"
-    )
+    x <- .rdmlsetFDataImport(x, processedfdata, descriptionProcessed, "adp")
+    x
   }
 
   fromFQDexport()

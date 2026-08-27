@@ -429,7 +429,6 @@ rdml_read <- function(
     conditions.sep = NULL,
     cluster = NULL,
     format = "auto",
-    loss = c("warn", "error", "allow"),
     ...) {
 
   rdmlRead(
@@ -438,7 +437,6 @@ rdml_read <- function(
     conditionsSep = conditions.sep,
     cluster = cluster,
     format = format,
-    loss = loss,
     ...
   )
 }
@@ -450,7 +448,6 @@ rdml_write <- function(
     filename,
     format = "auto",
     overwrite = FALSE,
-    loss = c("warn", "error", "allow"),
     ...) {
 
   rdmlWrite(
@@ -458,7 +455,6 @@ rdml_write <- function(
     fileName = filename,
     format = format,
     overwrite = overwrite,
-    loss = loss,
     ...
   )
 }
@@ -466,18 +462,7 @@ rdml_write <- function(
 
 #' @export
 rdml_formats <- function() {
-  out <- rdmlFormats()
-  legacyColumns <- c(
-    "format",
-    "extensions",
-    "aliases",
-    "read",
-    "write",
-    "sniff",
-    "priority",
-    "builtin"
-  )
-  out[, intersect(legacyColumns, names(out)), drop = FALSE]
+  rdmlFormats()
 }
 
 

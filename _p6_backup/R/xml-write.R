@@ -1,6 +1,3 @@
-#' @include conditions.R rdml-utils.R classes-schema.R
-NULL
-
 # XML serialization --------------------------------------------------------
 # Single serializer for S7 RDML objects. Legacy XML serializer removed; asXml() is the single writer.
 
@@ -345,12 +342,6 @@ NULL
   children <- character()
   
   for (property in properties) {
-
-    # Package-only extension fields are retained in memory but are not part of
-    # the RDML XML schema.
-    if (property %in% c("meltTemps")) {
-      next
-    }
     
     # version у корневого rdml — attribute
     if (
@@ -441,60 +432,11 @@ NULL
 }
 
 
-.rdmlXmlLosses <- function(x) {
-  losses <- list()
-
-  for (experiment in .rdmlPropList(x, "experiment")) {
-    expId <- .rdmlIdChr(experiment$id)
-    for (run in .rdmlPropList(experiment, "run")) {
-      runId <- .rdmlIdChr(run$id)
-      for (react in .rdmlPropList(run, "react")) {
-        reactId <- .rdmlIdChr(react$id)
-        for (dataObj in .rdmlPropList(react, "data")) {
-          if (
-            .rdmlPresent(dataObj$meltTemps) &&
-            length(dataObj$meltTemps) > 1L
-          ) {
-            targetId <- .rdmlIdChr(dataObj$targetId)
-            losses[[length(losses) + 1L]] <- rdmlLossRecord(
-              code = "multipleTmUnsupported",
-              message = paste0(
-                "RDML XML supports one meltTemp value; ",
-                "additional meltTemps values are not serialized"
-              ),
-              path = paste0(
-                "experiment.", expId,
-                ".run.", runId,
-                ".react.", reactId,
-                ".data.", targetId
-              ),
-              details = list(values = dataObj$meltTemps)
-            )
-          }
-        }
-      }
-    }
-  }
-
-  losses
-}
-
-
 #' Serialize rdmlType as XML or a .rdml zip archive
 #' @param x rdmlType object.
 #' @param fileName Optional destination. If omitted, XML text is returned.
 #' @return XML text invisibly when fileName is supplied; otherwise XML text.
-#' @param loss Lossy-conversion policy for package-only data not representable in RDML XML.
-S7::method(asXml, rdmlType) <- function(
-    x,
-    fileName,
-    loss = c("warn", "error", "allow")) {
-
-  loss <- match.arg(loss)
-  .rdmlSignalLosses(
-    .rdmlXmlLosses(x),
-    loss = loss
-  )
+S7::method(asXml, rdmlType) <- function(x, fileName) {
 
   tree <- .rdmlXmlNode(x, "rdml")
 

@@ -58,7 +58,7 @@
       stop("No raw channels found in Rotor-Gene .rex file", call. = FALSE)
     }
 
-    series <- list()
+    x <- .rdmlNewImport("RotorGene", "1")
 
     for (i in seq_along(channels)) {
       rawChannel <- channels[[i]]
@@ -93,24 +93,10 @@
         fdata[[as.character(description$fdataName[[j]])]] <- mat[, j]
       }
 
-      series[[length(series) + 1L]] <- rdmlImportSeries(
-        fdataType = "adp",
-        fdata = fdata,
-        description = data.table::copy(description)
-      )
+      x <- .rdmlsetFDataImport(x, fdata, description, "adp")
     }
 
-    if (!length(series)) {
-      stop("No usable Rotor-Gene fluorescence data found", call. = FALSE)
-    }
-
-    rdmlImportData(
-      series = series,
-      publisher = "RotorGene",
-      serialNumber = "1",
-      format = "rotorgene",
-      preserveReactIds = TRUE
-    )
+    x
   }
 
   fromRotorGene()

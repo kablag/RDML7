@@ -415,17 +415,13 @@
       )
     }
 
-    rdmlImportData(
-      series = list(
-        rdmlImportSeries(
-          fdataType = "adp",
-          fdata = fdata,
-          description = description
-        )
-      ),
-      publisher = "DTprime",
-      serialNumber = "1",
-      format = "dtprime"
+    x <- .rdmlNewImport("DTprime", "1")
+
+    .rdmlsetFDataImport(
+      x,
+      fdata,
+      description,
+      "adp"
     )
   }
 

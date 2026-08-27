@@ -71,28 +71,14 @@
       stop("Excel file contains neither 'adp' nor 'mdp' sheet", call. = FALSE)
     }
 
-    series <- list()
-
+    x <- .rdmlNewImport()
     if (!is.null(adpData)) {
-      series[[length(series) + 1L]] <- rdmlImportSeries(
-        fdataType = "adp",
-        fdata = adpData,
-        description = descr
-      )
+      x <- .rdmlsetFDataImport(x, adpData, descr, "adp")
     }
-
     if (!is.null(mdpData)) {
-      series[[length(series) + 1L]] <- rdmlImportSeries(
-        fdataType = "mdp",
-        fdata = mdpData,
-        description = descr
-      )
+      x <- .rdmlsetFDataImport(x, mdpData, descr, "mdp")
     }
-
-    rdmlImportData(
-      series = series,
-      format = "excel"
-    )
+    x
   }
 
   fromExcel()

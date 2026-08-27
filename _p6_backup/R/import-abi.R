@@ -148,18 +148,8 @@
       fdata[[as.character(r$fdataName)]] <- vals
     }
 
-    rdmlImportData(
-      series = list(
-        rdmlImportSeries(
-          fdataType = "adp",
-          fdata = fdata,
-          description = description
-        )
-      ),
-      publisher = "ABI",
-      serialNumber = "1",
-      format = "abi"
-    )
+    x <- .rdmlNewImport("ABI", "1")
+    .rdmlsetFDataImport(x, fdata, description, "adp")
   }
 
   fromABI()

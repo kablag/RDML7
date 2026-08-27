@@ -140,7 +140,6 @@ S7::method(setFData, rdmlType) <- function(
     sampleId <- as.character(value1(row, "sample"))
     sampleType <- as.character(value1(row, "sampleType"))
     dyeId <- as.character(value1(row, "targetDyeId"))
-    targetTypeValue <- as.character(value1(row, "targetType"))
 
     if (!all(vapply(
       list(expId, runId, reactId, targetId),
@@ -218,7 +217,6 @@ S7::method(setFData, rdmlType) <- function(
         corrF = NA_real_,
         corrP = NA_real_,
         meltTemp = NA_real_,
-        meltTemps = NA_real_,
         excl = NA_character_,
         note = NA_character_,
         adp = NA,
@@ -234,28 +232,6 @@ S7::method(setFData, rdmlType) <- function(
       cq <- value1(row, "cq", NA_real_)
       if (length(cq) == 1L) {
         S7::prop(dataObj, "cq") <- as.numeric(cq)
-      }
-    }
-
-
-    if ("meltTemp" %in% names(row)) {
-      meltTemp <- value1(row, "meltTemp", NA_real_)
-      if (length(meltTemp) == 1L && !is.na(meltTemp)) {
-        S7::prop(dataObj, "meltTemp") <- as.numeric(meltTemp)
-      }
-    }
-
-    if ("meltTemps" %in% names(row)) {
-      meltTemps <- value1(row, "meltTemps", NA_real_)
-      meltTemps <- suppressWarnings(as.numeric(meltTemps))
-      meltTemps <- meltTemps[!is.na(meltTemps)]
-
-      if (length(meltTemps)) {
-        S7::prop(dataObj, "meltTemps") <- meltTemps
-
-        if (is.na(dataObj$meltTemp)) {
-          S7::prop(dataObj, "meltTemp") <- meltTemps[[1L]]
-        }
       }
     }
 
@@ -332,9 +308,7 @@ S7::method(setFData, rdmlType) <- function(
           description = NA_character_,
           documentation = list(),
           xRef = list(),
-          type = targetTypeType(
-            if (nonemptyString(targetTypeValue)) targetTypeValue else "toi"
-          ),
+          type = targetTypeType("toi"),
           amplificationEfficiencyMethod = NA_character_,
           amplificationEfficiency = NA_real_,
           amplificationEfficiencySE = NA_real_,
@@ -352,21 +326,7 @@ S7::method(setFData, rdmlType) <- function(
           call. = FALSE
         )
       }
-    } else {
-      if (nonemptyString(targetTypeValue)) {
-        oldTargetType <- .rdmlEnumChr(targetObj$type)
-        if (!is.na(oldTargetType) && !identical(oldTargetType, targetTypeValue)) {
-          handleConflict(sprintf(
-            "Target '%s' already has type '%s', not '%s'",
-            targetId, oldTargetType, targetTypeValue
-          ))
-          if (identical(conflict, "replace")) {
-            S7::prop(targetObj, "type") <- targetTypeType(targetTypeValue)
-          }
-        }
-      }
-
-      if (nonemptyString(dyeId)) {
+    } else if (nonemptyString(dyeId)) {
       oldDye <- .rdmlIdChr(targetObj$dyeId)
       if (!is.na(oldDye) && !identical(oldDye, dyeId)) {
         handleConflict(sprintf(
@@ -375,11 +335,9 @@ S7::method(setFData, rdmlType) <- function(
         ))
         if (identical(conflict, "replace")) {
           S7::prop(targetObj, "dyeId") <- idReferenceType(dyeId)
+          targets[[targetId]] <- targetObj
         }
       }
-      }
-
-      targets[[targetId]] <- targetObj
     }
 
     if (nonemptyString(dyeId) && is.null(dyes[[dyeId]])) {

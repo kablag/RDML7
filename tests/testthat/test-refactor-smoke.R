@@ -109,7 +109,7 @@ testthat::test_that("ADP and MDP survive XML serialization", {
     )
   )
 
-  xml <- .rdml_xml_node(d, "data")
+  xml <- .rdmlXmlNode(d, "data")
 
   testthat::expect_length(xml, 1L)
   testthat::expect_true(grepl("<adp>", xml, fixed = TRUE))

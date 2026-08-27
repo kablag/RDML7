@@ -442,10 +442,6 @@ dataType <-
               corrF = classNumberNaSingle,
               corrP = classNumberNaSingle,
               meltTemp = classNumberNaSingle,
-              # Package extension: RDES can represent multiple measured Tm
-              # values while the RDML schema has a single meltTemp element.
-              # XML serializers intentionally do not emit meltTemps.
-              meltTemps = classNumberNaVector,
               excl = classCharacterNaNonemptySingle,
               note = classCharacterNaNonemptySingle,
               adp = .testClassNa("dpAmpCurveType"),

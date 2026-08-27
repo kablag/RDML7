@@ -20,12 +20,18 @@ rdmlModule <- function() {
     # target
     # targetDyeId
     #
+    # Preferred: return parsed intermediate data and let RDML build the tree.
     # return(
-    #   rdmlFromFData(
-    #     fdata = fdata,
-    #     description = description,
-    #     fdataType = "adp",
-    #     publisher = "My instrument"
+    #   rdmlImportData(
+    #     series = list(
+    #       rdmlImportSeries(
+    #         fdataType = "adp",
+    #         fdata = fdata,
+    #         description = description
+    #       )
+    #     ),
+    #     publisher = "My instrument",
+    #     format = "my-format"
     #   )
     # )
 
@@ -50,6 +56,8 @@ rdmlModule <- function() {
     extensions = "foo",
     reader = reader,
     writer = writer,
-    sniff = sniff
+    sniff = sniff,
+    apiVersion = 1L,
+    capabilities = c("adp", "intermediate")
   )
 }

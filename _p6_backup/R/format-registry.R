@@ -1,4 +1,4 @@
-#' @include conditions.R import-data.R xml-write.R set-fdata.R import-utils.R import-roche.R
+#' @include xml-write.R set-fdata.R import-utils.R import-roche.R
 #' @include import-abi.R import-rotorgene.R import-excel.R import-dtprime.R
 #' @include import-csv.R import-fqd.R import-rdes.R export-rdes.R import-rdml.R
 NULL
@@ -63,22 +63,6 @@ NULL
 }
 
 
-.rdmlFormatApiVersions <- 1L
-
-
-.rdmlNormalizeCapabilities <- function(x) {
-  if (is.null(x) || !length(x)) {
-    return(character())
-  }
-
-  if (!is.character(x) || anyNA(x)) {
-    stop("`capabilities` must be a character vector without NA", call. = FALSE)
-  }
-
-  unique(x[nzchar(x)])
-}
-
-
 .rdmlFormatSpecs <- function() {
   keys <- ls(
     envir = .rdmlFormatRegistry,
@@ -110,30 +94,12 @@ NULL
     sniff = NULL,
     aliases = character(),
     priority = 0L,
-    apiVersion = 1L,
-    capabilities = character(),
     overwrite = FALSE,
     builtin = FALSE) {
 
   name <- .rdmlNormalizeFormatName(name, "name")
   extensions <- .rdmlNormalizeExtensions(extensions)
   aliases <- .rdmlNormalizeAliases(aliases)
-  capabilities <- .rdmlNormalizeCapabilities(capabilities)
-  apiVersion <- as.integer(apiVersion)
-
-  if (
-    length(apiVersion) != 1L ||
-    is.na(apiVersion) ||
-    !apiVersion %in% .rdmlFormatApiVersions
-  ) {
-    stop(
-      "Unsupported format API version: ",
-      apiVersion,
-      ". Supported: ",
-      paste(.rdmlFormatApiVersions, collapse = ", "),
-      call. = FALSE
-    )
-  }
 
   checkmate::assertFlag(overwrite)
   checkmate::assertFlag(builtin)
@@ -227,8 +193,6 @@ NULL
     writer = writer,
     sniff = sniff,
     priority = priority,
-    apiVersion = apiVersion,
-    capabilities = capabilities,
     builtin = builtin
   )
 
@@ -249,7 +213,7 @@ NULL
 #' and then `priority` are used to choose a handler.
 #'
 #' A reader should accept `fileName` and may accept `...`; it must return an
-#' `rdmlType` or `rdmlImportData`. A writer should accept `x`, `fileName` and may accept `...`.
+#' `rdmlType`.  A writer should accept `x`, `fileName` and may accept `...`.
 #'
 #' @param name Unique format name.
 #' @param extensions File extensions, with or without the leading dot.
@@ -258,9 +222,7 @@ NULL
 #' @param sniff Optional `function(fileName)` returning confidence from 0 to 1.
 #'   Logical values are also accepted.
 #' @param aliases Explicit aliases for `format=`.
-#' @param priority Integer tie-break priority. Higher values win.
-#' @param apiVersion Format plugin API version. Currently version 1 is supported.
-#' @param capabilities Character vector describing supported data/features.
+#' @param priority Integer tie-break priority.  Higher values win.
 #' @param overwrite Replace an existing format with the same name.
 #' @return The registered format specification, invisibly.
 #' @export
@@ -272,8 +234,6 @@ rdmlRegisterFormat <- function(
     sniff = NULL,
     aliases = character(),
     priority = 0L,
-    apiVersion = 1L,
-    capabilities = character(),
     overwrite = FALSE) {
 
   .rdmlRegisterFormat(
@@ -284,8 +244,6 @@ rdmlRegisterFormat <- function(
     sniff = sniff,
     aliases = aliases,
     priority = priority,
-    apiVersion = apiVersion,
-    capabilities = capabilities,
     overwrite = overwrite,
     builtin = FALSE
   )
@@ -357,8 +315,6 @@ rdmlFormats <- function() {
         write = logical(),
         sniff = logical(),
         priority = integer(),
-        apiVersion = integer(),
-        capabilities = character(),
         builtin = logical(),
         stringsAsFactors = FALSE
       )
@@ -378,8 +334,6 @@ rdmlFormats <- function() {
           write = !is.null(spec$writer),
           sniff = !is.null(spec$sniff),
           priority = spec$priority,
-          apiVersion = spec$apiVersion,
-          capabilities = paste(spec$capabilities, collapse = ", "),
           builtin = isTRUE(spec$builtin),
           stringsAsFactors = FALSE
         )
@@ -740,52 +694,6 @@ rdmlDetectFormat <- function(
 }
 
 
-.rdmlFormatWriteLosses <- function(x, spec) {
-  losses <- list()
-
-  if (!("multiTm" %in% spec$capabilities)) {
-    experiments <- .rdmlPropList(x, "experiment")
-
-    for (experiment in experiments) {
-      expId <- .rdmlIdChr(experiment$id)
-      for (run in .rdmlPropList(experiment, "run")) {
-        runId <- .rdmlIdChr(run$id)
-        for (react in .rdmlPropList(run, "react")) {
-          reactId <- .rdmlIdChr(react$id)
-          for (dataObj in .rdmlPropList(react, "data")) {
-            if (
-              .rdmlPresent(dataObj$meltTemps) &&
-              length(dataObj$meltTemps) > 1L
-            ) {
-              targetId <- .rdmlIdChr(dataObj$targetId)
-              losses[[length(losses) + 1L]] <- rdmlLossRecord(
-                code = "multipleTmUnsupported",
-                message = paste0(
-                  "Format '", spec$name,
-                  "' cannot represent multiple Tm values; only meltTemp is written"
-                ),
-                path = paste0(
-                  "experiment.", expId,
-                  ".run.", runId,
-                  ".react.", reactId,
-                  ".data.", targetId
-                ),
-                details = list(
-                  format = spec$name,
-                  values = dataObj$meltTemps
-                )
-              )
-            }
-          }
-        }
-      }
-    }
-  }
-
-  losses
-}
-
-
 # Built-in writer helpers ---------------------------------------------------
 
 .rdmlWriteXmlFile <- function(
@@ -804,7 +712,7 @@ rdmlDetectFormat <- function(
     )
   }
 
-  tree <- asXml(x, loss = "allow")
+  tree <- asXml(x)
 
   writeLines(
     enc2utf8(tree),
@@ -832,7 +740,7 @@ rdmlDetectFormat <- function(
     )
   }
 
-  tree <- asXml(x, loss = "allow")
+  tree <- asXml(x)
 
   tmpdir <- tempfile("rdml-write-")
 
@@ -1146,7 +1054,6 @@ rdmlDetectFormat <- function(
         showProgress
       )
     },
-    capabilities = c("adp", "cq", "basicMetadata", "intermediate"),
     builtin = TRUE
   )
 
@@ -1166,7 +1073,6 @@ rdmlDetectFormat <- function(
         showProgress
       )
     },
-    capabilities = c("adp", "basicMetadata", "intermediate"),
     builtin = TRUE
   )
 
@@ -1189,7 +1095,6 @@ rdmlDetectFormat <- function(
         showProgress
       )
     },
-    capabilities = c("adp", "mdp", "basicMetadata", "intermediate"),
     builtin = TRUE
   )
 
@@ -1206,7 +1111,6 @@ rdmlDetectFormat <- function(
         showProgress
       )
     },
-    capabilities = c("adp", "mdp", "intermediate"),
     builtin = TRUE
   )
 
@@ -1224,7 +1128,6 @@ rdmlDetectFormat <- function(
       )
     },
     sniff = .rdmlSniffDtprime,
-    capabilities = c("adp", "basicMetadata", "intermediate"),
     builtin = TRUE
   )
 
@@ -1245,7 +1148,6 @@ rdmlDetectFormat <- function(
       )
     },
     sniff = .rdmlSniffFqd,
-    capabilities = c("adp", "cq", "basicMetadata", "intermediate"),
     builtin = TRUE
   )
 
@@ -1301,7 +1203,6 @@ rdmlDetectFormat <- function(
     },
     sniff = .rdmlSniffRdes,
     priority = -10L,
-    capabilities = c("adp", "mdp", "cq", "meltTemp", "multiTm", "basicMetadata", "intermediate"),
     builtin = TRUE
   )
 
@@ -1325,7 +1226,6 @@ rdmlDetectFormat <- function(
     },
     writer = .rdmlWriteXmlFile,
     sniff = .rdmlSniffXml,
-    capabilities = c("adp", "mdp", "cq", "meltTemp", "fullMetadata"),
     builtin = TRUE
   )
 
@@ -1351,7 +1251,6 @@ rdmlDetectFormat <- function(
       )
     },
     writer = .rdmlWriteArchive,
-    capabilities = c("adp", "mdp", "cq", "meltTemp", "fullMetadata"),
     builtin = TRUE
   )
 
@@ -1378,7 +1277,6 @@ rdmlDetectFormat <- function(
         format = "rdml"
       )
     },
-    capabilities = c("adp", "mdp", "cq", "meltTemp", "fullMetadata"),
     builtin = TRUE
   )
 
@@ -1403,7 +1301,6 @@ rdmlDetectFormat <- function(
 #'   compatibility with the original importer.
 #' @param cluster Reserved for compatibility.
 #' @param format Registered format name/alias/extension or `"auto"`.
-#' @param loss Lossy-conversion policy: `"warn"`, `"error"`, or `"allow"`.
 #' @param ... Additional arguments forwarded to the selected reader.
 #' @return An `rdmlType` object.
 #' @export
@@ -1413,7 +1310,6 @@ rdmlRead <- function(
     conditionsSep = NULL,
     cluster = NULL,
     format = "auto",
-    loss = c("warn", "error", "allow"),
     ...) {
 
   if (missing(fileName)) {
@@ -1425,7 +1321,6 @@ rdmlRead <- function(
 
   checkmate::assertString(fileName)
   checkmate::assertFlag(showProgress)
-  loss <- match.arg(loss)
 
   if (!file.exists(fileName)) {
     stop(
@@ -1448,31 +1343,25 @@ rdmlRead <- function(
         fileName = fileName,
         showProgress = showProgress,
         conditionsSep = conditionsSep,
-        cluster = cluster,
-        loss = loss
+        cluster = cluster
       ),
       list(...)
     )
   )
 
-  if (S7::S7_inherits(result, rdmlImportData)) {
-    result <- rdmlBuildImport(
+  if (
+    !S7::S7_inherits(
       result,
-      loss = loss
+      rdmlType
     )
-  }
-
-  if (!S7::S7_inherits(result, rdmlType)) {
-    .rdmlAbort(
-      code = "invalidReaderResult",
-      message = paste0(
-        "Reader '",
-        spec$name,
-        "' returned ",
-        paste(class(result), collapse = "/"),
-        " instead of rdmlType or rdmlImportData"
-      ),
-      format = spec$name
+  ) {
+    stop(
+      "Reader '",
+      spec$name,
+      "' returned ",
+      paste(class(result), collapse = "/"),
+      " instead of rdmlType",
+      call. = FALSE
     )
   }
 
@@ -1489,7 +1378,6 @@ rdmlRead <- function(
 #' @param fileName Destination file.
 #' @param format Registered format name/alias/extension or `"auto"`.
 #' @param overwrite Replace an existing destination.
-#' @param loss Lossy-conversion policy: `"warn"`, `"error"`, or `"allow"`.
 #' @param ... Additional arguments forwarded to the selected writer.
 #' @return Writer-specific result, usually the destination path invisibly.
 #' @export
@@ -1498,7 +1386,6 @@ rdmlWrite <- function(
     fileName,
     format = "auto",
     overwrite = FALSE,
-    loss = c("warn", "error", "allow"),
     ...) {
 
   if (
@@ -1515,21 +1402,11 @@ rdmlWrite <- function(
 
   checkmate::assertString(fileName)
   checkmate::assertFlag(overwrite)
-  loss <- match.arg(loss)
 
   spec <- .rdmlResolveFormat(
     fileName,
     format = format,
     operation = "write"
-  )
-
-  losses <- .rdmlFormatWriteLosses(
-    x,
-    spec
-  )
-  .rdmlSignalLosses(
-    losses,
-    loss = loss
   )
 
   .rdmlCallHandler(
@@ -1538,8 +1415,7 @@ rdmlWrite <- function(
       list(
         x = x,
         fileName = fileName,
-        overwrite = overwrite,
-        loss = loss
+        overwrite = overwrite
       ),
       list(...)
     )
@@ -1583,22 +1459,21 @@ rdmlFromFData <- function(
 
   checkmate::assertString(version)
 
-  importData <- rdmlImportData(
-    series = list(
-      rdmlImportSeries(
-        fdataType = fdataType,
-        fdata = data.table::as.data.table(fdata),
-        description = data.table::as.data.table(description)
-      )
-    ),
-    publisher = if (is.null(publisher)) NA_character_ else publisher,
-    serialNumber = serialNumber,
-    version = version,
-    format = "fdata"
+  x <- .rdmlNewImport(
+    publisher = publisher,
+    serialNumber = serialNumber
   )
 
-  rdmlBuildImport(
-    importData,
+  S7::prop(
+    x,
+    "version"
+  ) <- version
+
+  setFData(
+    x,
+    fdata,
+    description,
+    fdataType = fdataType,
     ...
   )
 }
@@ -1727,9 +1602,7 @@ rdmlLoadModule <- function(
     "writer",
     "sniff",
     "aliases",
-    "priority",
-    "apiVersion",
-    "capabilities"
+    "priority"
   )
 
   registered <- character(

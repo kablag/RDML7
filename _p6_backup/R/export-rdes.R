@@ -22,29 +22,6 @@
 }
 
 
-.rdmlRdesFormatTm <- function(x) {
-  if (.rdmlIsMissing(x)) {
-    return("")
-  }
-
-  values <- suppressWarnings(as.numeric(x))
-  values <- values[!is.na(values)]
-
-  if (!length(values)) {
-    return("")
-  }
-
-  paste(
-    vapply(
-      values,
-      .rdmlRdesFormatNumber,
-      character(1)
-    ),
-    collapse = ";"
-  )
-}
-
-
 .rdmlRdesCleanText <- function(x) {
   if (
     length(x) != 1L ||
@@ -337,8 +314,6 @@
         identical(rdesType, "adp")
       ) {
         dataObj$cq
-      } else if (.rdmlPresent(dataObj$meltTemps)) {
-        dataObj$meltTemps
       } else {
         dataObj$meltTemp
       }
@@ -572,11 +547,9 @@
       .rdmlRdesCleanText(
         record$dye
       ),
-      if (identical(rdesType, "adp")) {
-        .rdmlRdesFormatNumber(record$metric)
-      } else {
-        .rdmlRdesFormatTm(record$metric)
-      },
+      .rdmlRdesFormatNumber(
+        record$metric
+      ),
       fluorescence
     )
 

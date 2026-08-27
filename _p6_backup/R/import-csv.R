@@ -28,16 +28,8 @@
       check.names = FALSE
     )
 
-    rdmlImportData(
-      series = list(
-        rdmlImportSeries(
-          fdataType = dataType,
-          fdata = pcrdata,
-          description = descr
-        )
-      ),
-      format = "csv"
-    )
+    x <- .rdmlNewImport()
+    .rdmlsetFDataImport(x, pcrdata, descr, dataType)
   }
 
   fromCSV()
