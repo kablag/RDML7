@@ -1,5 +1,3 @@
-#' @include as-table.R get-fdata.R set-fdata.R merge-rdmls.R
-#' @include as-dendrogram.R xml-write.R format-registry.R
 NULL
 
 # Legacy API compatibility ---------------------------------------------------
@@ -234,7 +232,7 @@ NULL
 }
 
 
-#' Legacy description-table API
+#' @rdname legacy-api
 #' @export
 AsTable <- function(
     x,
@@ -293,6 +291,7 @@ AsTable <- function(
 
 # Legacy fluorescence API ---------------------------------------------------
 
+#' @rdname legacy-api
 #' @export
 GetFData <- function(
     x,
@@ -344,6 +343,7 @@ GetFData <- function(
 }
 
 
+#' @rdname legacy-api
 #' @export
 SetFData <- function(
     x,
@@ -372,6 +372,7 @@ SetFData <- function(
 
 # Other legacy operations ---------------------------------------------------
 
+#' @rdname legacy-api
 #' @export
 AsDendrogram <- function(
     x,
@@ -386,6 +387,7 @@ AsDendrogram <- function(
 }
 
 
+#' @rdname legacy-api
 #' @export
 AsXML <- function(
     x,
@@ -404,6 +406,7 @@ AsXML <- function(
 }
 
 
+#' @rdname legacy-api
 #' @export
 MergeRDMLs <- function(
     to.merge,
@@ -422,6 +425,7 @@ MergeRDMLs <- function(
 
 # Legacy file-format registry ----------------------------------------------
 
+#' @rdname legacy-api
 #' @export
 rdml_read <- function(
     filename,
@@ -444,6 +448,7 @@ rdml_read <- function(
 }
 
 
+#' @rdname legacy-api
 #' @export
 rdml_write <- function(
     x,
@@ -464,6 +469,7 @@ rdml_write <- function(
 }
 
 
+#' @rdname legacy-api
 #' @export
 rdml_formats <- function() {
   out <- rdmlFormats()
@@ -481,18 +487,21 @@ rdml_formats <- function() {
 }
 
 
+#' @rdname legacy-api
 #' @export
 rdml_register_format <- function(...) {
   rdmlRegisterFormat(...)
 }
 
 
+#' @rdname legacy-api
 #' @export
 rdml_unregister_format <- function(...) {
   rdmlUnregisterFormat(...)
 }
 
 
+#' @rdname legacy-api
 #' @export
 rdml_detect_format <- function(
     filename,
@@ -508,6 +517,7 @@ rdml_detect_format <- function(
 }
 
 
+#' @rdname legacy-api
 #' @export
 rdml_load_module <- function(
     path,
@@ -520,6 +530,7 @@ rdml_load_module <- function(
 }
 
 
+#' @rdname legacy-api
 #' @export
 rdml_from_fdata <- function(
     fdata,

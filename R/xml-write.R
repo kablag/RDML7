@@ -1,4 +1,3 @@
-#' @include conditions.R rdml-utils.R classes-schema.R
 NULL
 
 # XML serialization --------------------------------------------------------
@@ -480,11 +479,21 @@ NULL
 }
 
 
-#' Serialize rdmlType as XML or a .rdml zip archive
-#' @param x rdmlType object.
-#' @param fileName Optional destination. If omitted, XML text is returned.
-#' @return XML text invisibly when fileName is supplied; otherwise XML text.
-#' @param loss Lossy-conversion policy for package-only data not representable in RDML XML.
+#' Serialize an RDML object as XML or an RDML archive
+#'
+#' Standard schema properties are serialized to RDML XML. Package-only
+#' extension fields such as `meltTemps` are kept in memory but are not emitted
+#' as non-standard XML elements.
+#'
+#' @param x `rdmlType`.
+#' @param fileName Optional destination. If omitted, return XML text. A `.xml`
+#' destination writes plain XML; other destinations use the RDML zip/archive
+#' serializer.
+#' @param loss Loss policy for package data that cannot be represented in
+#' standard RDML XML: `"warn"`, `"error"`, or `"allow"`.
+#' @return XML text, invisibly when a file is written.
+#' @rdname asXml
+#' @export
 S7::method(asXml, rdmlType) <- function(
     x,
     fileName,

@@ -1,6 +1,3 @@
-#' @include conditions.R import-data.R xml-write.R set-fdata.R import-utils.R import-roche.R
-#' @include import-abi.R import-rotorgene.R import-excel.R import-dtprime.R
-#' @include import-csv.R import-fqd.R import-rdes.R export-rdes.R import-rdml.R
 NULL
 
 # Extensible RDML format registry --------------------------------------------
@@ -242,27 +239,23 @@ NULL
 }
 
 
-#' Register an RDML import/export format
+#' Register a file-format reader and/or writer
 #'
-#' Registers a runtime file-format handler.  Extension collisions are allowed;
-#' when more than one reader supports the same extension, `sniff` functions
-#' and then `priority` are used to choose a handler.
-#'
-#' A reader should accept `fileName` and may accept `...`; it must return an
-#' `rdmlType` or `rdmlImportData`. A writer should accept `x`, `fileName` and may accept `...`.
+#' Extension collisions are allowed. On read, sniffer confidence and then
+#' priority choose a handler. A reader returns `rdmlType` or `rdmlImportData`.
 #'
 #' @param name Unique format name.
-#' @param extensions File extensions, with or without the leading dot.
-#' @param reader Import function or `NULL`.
-#' @param writer Export function or `NULL`.
-#' @param sniff Optional `function(fileName)` returning confidence from 0 to 1.
-#'   Logical values are also accepted.
-#' @param aliases Explicit aliases for `format=`.
-#' @param priority Integer tie-break priority. Higher values win.
-#' @param apiVersion Format plugin API version. Currently version 1 is supported.
-#' @param capabilities Character vector describing supported data/features.
-#' @param overwrite Replace an existing format with the same name.
-#' @return The registered format specification, invisibly.
+#' @param extensions Extensions with or without a leading dot.
+#' @param reader Reader function or `NULL`.
+#' @param writer Writer function or `NULL`.
+#' @param sniff Optional `function(fileName)` returning confidence 0..1.
+#' @param aliases Explicit aliases accepted by `format=`.
+#' @param priority Integer tie-break priority; larger values win.
+#' @param apiVersion Plugin API version (currently 1).
+#' @param capabilities Character vector of supported features.
+#' @param overwrite Replace an existing format of the same name.
+#' @return Registered format specification invisibly.
+#' @seealso `rdmlLoadModule`, `rdmlFormats`, `rdmlRead`
 #' @export
 rdmlRegisterFormat <- function(
     name,
@@ -297,6 +290,7 @@ rdmlRegisterFormat <- function(
 #' @param name Registered format name.
 #' @param force Allow removal of a built-in format.
 #' @return `TRUE` invisibly when removed.
+#' @seealso `rdmlRegisterFormat`, `rdmlFormats`
 #' @export
 rdmlUnregisterFormat <- function(name, force = FALSE) {
   name <- .rdmlNormalizeFormatName(name, "name")
@@ -340,9 +334,11 @@ rdmlUnregisterFormat <- function(name, force = FALSE) {
 }
 
 
-#' List registered RDML formats
+#' List registered RDML file formats
 #'
-#' @return A data.frame describing registered readers and writers.
+#' @return Data frame containing extensions, aliases, reader/writer/sniffer
+#' availability, priority, API version, capabilities, and built-in status.
+#' @seealso `rdmlRegisterFormat`, `rdmlDetectFormat`
 #' @export
 rdmlFormats <- function() {
   specs <- .rdmlFormatSpecs()
@@ -661,11 +657,12 @@ rdmlFormats <- function() {
 }
 
 
-#' Detect the handler that RDML7 would use for a file
+#' Detect the format handler selected for a path
 #'
 #' @param fileName File path.
 #' @param operation `"read"` or `"write"`.
 #' @return Registered format name.
+#' @seealso `rdmlFormats`, `rdmlRead`, `rdmlWrite`
 #' @export
 rdmlDetectFormat <- function(
     fileName,
@@ -1391,21 +1388,22 @@ rdmlDetectFormat <- function(
 
 # Public read/write dispatchers --------------------------------------------
 
-#' Read qPCR data as an `rdmlType`
+#' Read qPCR data into an RDML object
 #'
-#' The reader is selected from the runtime format registry.  With
-#' `format = "auto"` the fileName extension is considered first; ambiguous
-#' extensions are resolved using registered `sniff` handlers and priorities.
+#' Selects a reader from the runtime registry. Readers may return `rdmlType`
+#' directly or `rdmlImportData`, which is built automatically.
 #'
-#' @param fileName Input file path.
-#' @param showProgress Show import progress.
+#' @param fileName Input file.
+#' @param showProgress Show importer progress.
 #' @param conditionsSep Optional Roche condition separator retained for
-#'   compatibility with the original importer.
+#' compatibility.
 #' @param cluster Reserved for compatibility.
-#' @param format Registered format name/alias/extension or `"auto"`.
-#' @param loss Lossy-conversion policy: `"warn"`, `"error"`, or `"allow"`.
-#' @param ... Additional arguments forwarded to the selected reader.
-#' @return An `rdmlType` object.
+#' @param format Registered name/alias/extension or `"auto"`.
+#' @param loss Loss policy: `"warn"`, `"error"`, or `"allow"`.
+#' @param ... Format-specific arguments. RDES supports `companionFile`,
+#' `expId`, `runId`, and `strict`.
+#' @return `rdmlType`.
+#' @seealso `rdmlWrite`, `rdmlFormats`, `rdmlValidate`
 #' @export
 rdmlRead <- function(
     fileName,
@@ -1480,18 +1478,17 @@ rdmlRead <- function(
 }
 
 
-#' Write an `rdmlType` using the registered format for a file extension
+#' Write an RDML object through the file-format registry
 #'
-#' Native RDML (`.rdml`/`.rdm`) and plain RDML XML (`.xml`) writers are
-#' registered by default.  Additional writers may be supplied by user modules.
-#'
-#' @param x `rdmlType` object.
-#' @param fileName Destination file.
-#' @param format Registered format name/alias/extension or `"auto"`.
+#' @param x `rdmlType`.
+#' @param fileName Destination path.
+#' @param format Registered name/alias/extension or `"auto"`.
 #' @param overwrite Replace an existing destination.
-#' @param loss Lossy-conversion policy: `"warn"`, `"error"`, or `"allow"`.
-#' @param ... Additional arguments forwarded to the selected writer.
-#' @return Writer-specific result, usually the destination path invisibly.
+#' @param loss Loss policy: `"warn"`, `"error"`, or `"allow"`.
+#' @param ... Format-specific arguments. RDES supports `expId`, `runId`, and
+#' `rdesType = "auto"`, `"adp"`, `"mdp"`, or `"both"`.
+#' @return Writer-specific result, normally an output path invisibly.
+#' @seealso `rdmlRead`, `rdmlFormats`, `rdmlLossRecord`
 #' @export
 rdmlWrite <- function(
     x,
@@ -1549,20 +1546,17 @@ rdmlWrite <- function(
 
 # Public helper for third-party importers ----------------------------------
 
-#' Build an RDML object from fluorescence and description tables
-#'
-#' Convenience helper for third-party import modules.  It creates a minimal
-#' `rdmlType` and delegates population of experiments/runs/reactions/data to
-#' `setFData()`.
+#' Create an RDML object from fluorescence and metadata tables
 #'
 #' @param fdata Fluorescence table accepted by `setFData()`.
-#' @param description Description table accepted by `setFData()`.
+#' @param description CamelCase metadata table accepted by `setFData()`.
 #' @param fdataType `"adp"` or `"mdp"`.
-#' @param publisher Optional importer/device publisher identifier.
-#' @param serialNumber Identifier placed in the top-level RDML metadata.
-#' @param version RDML version.
-#' @param ... Additional arguments forwarded to `setFData()`.
-#' @return An `rdmlType`.
+#' @param publisher Optional publisher/importer identifier.
+#' @param serialNumber Top-level serial number.
+#' @param version RDML version string.
+#' @param ... Additional arguments forwarded to `rdmlBuildImport()`.
+#' @return `rdmlType`.
+#' @seealso `setFData`, `rdmlImportData`
 #' @export
 rdmlFromFData <- function(
     fdata,
@@ -1640,20 +1634,15 @@ rdmlFromFData <- function(
 }
 
 
-#' Load a user RDML format module
+#' Load file-format handlers from an R module
 #'
-#' The module file must define `rdmlModule()`.  The function may return one
-#' format specification (a list accepted by `rdmlRegisterFormat()`) or a list
-#' of such specifications.
+#' The module defines `rdmlModule()` (legacy `rdml_module()` is also accepted)
+#' and returns one or more specifications accepted by `rdmlRegisterFormat()`.
 #'
-#' Modules are sourced into an isolated environment whose parent is the RDML7
-#' package namespace, so module functions can use the package API without
-#' polluting the global environment.
-#'
-#' @param path Path to an R module file.
-#' @param overwrite Allow the module to replace an existing format with the
-#'   same name.
-#' @return Character vector of registered format names, invisibly.
+#' @param path Module R file.
+#' @param overwrite Allow replacement of an existing format.
+#' @return Registered format names invisibly.
+#' @seealso `rdmlRegisterFormat`, `rdmlFormats`
 #' @export
 rdmlLoadModule <- function(
     path,

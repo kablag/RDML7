@@ -1,11 +1,13 @@
-#' Get fluorescence data from a dataType object
+#' Extract fluorescence from one data element
 #'
-#' @param x dataType object.
-#' @param dpType "adp" for amplification or "mdp" for melting data.
-#' @return data.table containing the stored curve columns. Amplification data
-#'   retain an optional `tmp` column when present in `dpAmpCurveType@fpoints`.
+#' @param x `dataType`.
+#' @param dpType `"adp"` or `"mdp"`.
+#' @param ... Reserved for method compatibility.
+#' @return Amplification output contains `cyc`, optional `tmp`, and `fluor`;
+#' melting output contains `tmp` and `fluor`. Missing curves return an empty
+#' table with the appropriate columns.
+#' @rdname getFData
 #' @export
-#' @include generics.R rdml-utils.R
 S7::method(getFData, dataType) <- function(x, dpType = "adp", ...) {
   checkmate::assertChoice(dpType, c("adp", "mdp"))
 
@@ -67,13 +69,18 @@ S7::method(getFData, dataType) <- function(x, dpType = "adp", ...) {
 }
 
 
-#' Get fluorescence data from rdmlType
+#' Extract fluorescence from an RDML object
 #'
-#' @param x rdmlType object.
-#' @param request Output from asTable(x). If omitted, asTable(x) is used.
-#' @param dpType "adp" or "mdp".
-#' @param longTable If TRUE, return long form joined to request metadata.
-#' @return data.table.
+#' @param x `rdmlType`.
+#' @param request Table produced by `asTable()`. If omitted, `asTable(x)` is
+#' used.
+#' @param dpType `"adp"` or `"mdp"`.
+#' @param longTable Return long form joined to request metadata instead of
+#' wide form.
+#' @param ... Reserved for method compatibility.
+#' @return A `data.table`. Long output preserves every requested metadata row;
+#' if the selected curve is absent, coordinate/fluorescence values are `NA`.
+#' @rdname getFData
 #' @export
 S7::method(getFData, rdmlType) <- function(
     x,

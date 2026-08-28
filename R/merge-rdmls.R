@@ -1,17 +1,13 @@
-#' Merge rdmlType objects
+#' Merge multiple RDML objects
 #'
-#' The first object is the metadata base. Top-level keyed metadata absent from
-#' the base are appended from later objects. Experiments, runs, reacts, and
-#' react data are merged recursively by their schema keys, so adding a second
-#' target to an existing reaction no longer replaces the first target.
+#' The first object is the metadata base. Experiments, runs, reactions, and
+#' target data are merged recursively by schema key.
 #'
-#' @param toMerge List of rdmlType objects.
-#' @param dataConflict How to resolve the same targetId occurring in the same
-#'   experiment/run/react in more than one object: `incoming`, `base`, or
-#'   `error`.
-#' @return rdmlType.
+#' @param toMerge Non-empty list of `rdmlType` objects.
+#' @param dataConflict Conflict policy: `"incoming"`, `"base"`, or `"error"`.
+#' @return Merged `rdmlType`.
+#' @seealso `rdmlRead`, `rdmlWrite`
 #' @export
-#' @include rdml-utils.R
 mergeRdmls <- function(
     toMerge,
     dataConflict = c("incoming", "base", "error")) {

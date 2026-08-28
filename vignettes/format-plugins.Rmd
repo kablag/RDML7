@@ -1,0 +1,129 @@
+---
+title: "Writing RDML file-format plugins"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Writing RDML file-format plugins}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", eval = FALSE)
+library(RDML)
+```
+
+## The format registry
+
+```r
+rdmlFormats()
+```
+
+A registered format may contain a reader, writer, sniffer, aliases, priority,
+capabilities, and API version.
+
+## Register a reader
+
+```r
+rdmlRegisterFormat(
+  name = "mydevice",
+  extensions = "foo",
+  apiVersion = 1L,
+  capabilities = c("adp", "basicMetadata"),
+  reader = function(fileName, ...) {
+    # return rdmlType or rdmlImportData
+  }
+)
+```
+
+## Intermediate importer objects
+
+Table-like formats should normally return `rdmlImportData`.
+
+```r
+series <- rdmlImportSeries(
+  fdataType = "adp",
+  fdata = fdata,
+  description = description
+)
+
+parsed <- rdmlImportData(
+  series = list(series),
+  publisher = "My instrument",
+  format = "mydevice"
+)
+```
+
+`rdmlRead()` calls `rdmlBuildImport()` automatically for such a result.
+
+Minimum description columns are:
+
+```text
+fdataName
+expId
+runId
+reactId
+target
+```
+
+Provide `sample`, `sampleType`, and `targetDyeId` when new metadata objects must
+be created.
+
+## Sniffers
+
+A sniffer returns confidence from 0 to 1.
+
+```r
+mySniff <- function(fileName) {
+  first <- readLines(fileName, n = 1L, warn = FALSE)
+
+  if (length(first) && startsWith(first, "MYDEVICE")) {
+    return(1)
+  }
+
+  0
+}
+```
+
+This permits shared extensions such as `.txt` and `.csv`.
+
+## Lossy conversions
+
+```r
+loss <- rdmlLossRecord(
+  code = "unsupportedVendorField",
+  message = "Vendor field X cannot be represented in RDML",
+  path = "run.run1",
+  details = list(field = "X")
+)
+
+parsed$losses <- list(loss)
+```
+
+The user's `loss = "warn"`, `"error"`, or `"allow"` setting controls how these
+records are signalled.
+
+## Module files
+
+A module defines `rdmlModule()` and returns one or more registry
+specifications.
+
+```r
+rdmlModule <- function() {
+  list(
+    name = "mydevice",
+    extensions = "foo",
+    reader = myReader,
+    sniff = mySniff,
+    apiVersion = 1L,
+    capabilities = c("adp", "intermediate")
+  )
+}
+```
+
+Load it with:
+
+```r
+rdmlLoadModule("mydevice-module.R")
+```
+
+The historical factory name `rdml_module()` is also accepted.

@@ -1,36 +1,46 @@
 # Public S7 generics --------------------------------------------------------
-#
-# The original package exposed these operations as mutable R6 methods
-# (obj$asTable(), obj$getFData(), ...).  rdml7 uses S7 value objects, so the
-# public API is expressed as S7 generics.
 
-#' Convert an RDML object to a description table
-#' @param x An RDML object.
+#' Build a metadata table from an RDML object
+#'
+#' @param x Object to convert.
 #' @param ... Method-specific arguments.
+#' @return A `data.table` for `rdmlType`.
+#' @seealso `getFData()`, `setFData()`
 #' @export
 asTable <- S7::new_generic("asTable", "x")
 
-#' Get fluorescence data
-#' @param x An RDML or dataType object.
+#' Extract fluorescence data
+#'
+#' @param x `dataType` or `rdmlType`.
 #' @param ... Method-specific arguments.
+#' @return A `data.table`.
+#' @seealso `asTable()`, `setFData()`
 #' @export
 getFData <- S7::new_generic("getFData", "x")
 
-#' Set fluorescence data
-#' @param x An RDML object.
+#' Add or replace fluorescence data
+#'
+#' @param x `rdmlType`.
 #' @param ... Method-specific arguments.
-#' @return A modified RDML object. Assign the result back to keep changes.
+#' @return Modified `rdmlType`; assign it back to keep changes.
+#' @seealso `rdmlFromFData()`, `asTable()`, `getFData()`
 #' @export
 setFData <- S7::new_generic("setFData", "x")
 
 #' Represent RDML structure as a dendrogram
-#' @param x An RDML object.
+#'
+#' @param x `rdmlType`.
 #' @param ... Method-specific arguments.
+#' @return Dendrogram representation invisibly.
+#' @seealso `rdmlSummary()`
 #' @export
 asDendrogram <- S7::new_generic("asDendrogram", "x")
 
-#' Serialize RDML to XML / RDML archive
-#' @param x An RDML object.
+#' Serialize an RDML object to XML
+#'
+#' @param x `rdmlType`.
 #' @param ... Method-specific arguments.
+#' @return XML text or output path invisibly.
+#' @seealso `rdmlWrite()`
 #' @export
 asXml <- S7::new_generic("asXml", "x")

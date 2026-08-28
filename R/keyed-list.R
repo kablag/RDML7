@@ -73,11 +73,15 @@
   list(value)
 }
 
-#' A list keyed by an S7 property
+#' Keyed list view used by RDML S7 objects
 #'
-#' Physical list names are intentionally not stored. `names()` is calculated
-#' from the key property of each element.
+#' Derives virtual element names from a property such as `id` or `targetId`
+#' and enables nested `$` / `[[` access without storing physical list names.
 #'
+#' @param data List of schema objects.
+#' @param key Property used as the virtual key.
+#' @return An `rdmlKeyedList` S7 object.
+#' @seealso `rdmlType`, `idType`
 #' @export
 rdmlKeyedList <- S7::new_class(
   "rdmlKeyedList",

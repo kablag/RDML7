@@ -73,10 +73,16 @@
 
 
 #' Create a structured lossy-conversion record
+#'
+#' Importers/exporters use these records for information that cannot be
+#' represented exactly in the destination model.
+#'
 #' @param code Machine-readable loss code.
 #' @param message Human-readable description.
 #' @param path Optional RDML object path.
 #' @param details Additional structured metadata.
+#' @return An `rdmlLossRecord`.
+#' @seealso `rdmlRead`, `rdmlWrite`, `rdmlImportData`
 #' @export
 rdmlLossRecord <- function(
     code,

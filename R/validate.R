@@ -1,4 +1,3 @@
-#' @include conditions.R classes-schema.R rdml-utils.R
 NULL
 
 # Semantic RDML validation --------------------------------------------------
@@ -102,17 +101,16 @@ NULL
 }
 
 
-#' Validate semantic consistency of an RDML object
+#' Semantically validate an RDML object
 #'
-#' This validation is independent from S7 property validators. It checks
-#' keyed-list uniqueness, cross-object references and fluorescence/data
-#' consistency. It does not perform XSD validation.
+#' Checks duplicate keys, dangling references, and fluorescence-curve
+#' consistency in addition to S7 property validation.
 #'
-#' @param x `rdmlType` object.
-#' @param level One of `"full"`, `"structure"`, `"references"`, or `"data"`.
-#' @param action Return issues, emit a warning, or fail when validation errors
-#'   are present.
-#' @return A `rdmlValidation` data.table.
+#' @param x `rdmlType`.
+#' @param level `"structure"`, `"references"`, `"curves"`, or `"full"`.
+#' @param action `"return"`, `"warn"`, or `"error"`.
+#' @return A `data.table` of class `rdmlValidation` describing issues.
+#' @seealso `rdmlIsValid`, `rdmlSummary`
 #' @export
 rdmlValidate <- function(
     x,
@@ -402,9 +400,12 @@ rdmlValidate <- function(
 }
 
 
-#' Test whether an RDML object has no semantic validation errors
+#' Test whether an RDML object has semantic errors
+#'
 #' @param x `rdmlType`.
 #' @param level Validation level passed to `rdmlValidate()`.
+#' @return `TRUE` if no validation issue has severity `"error"`.
+#' @seealso `rdmlValidate`
 #' @export
 rdmlIsValid <- function(x, level = "full") {
   result <- rdmlValidate(

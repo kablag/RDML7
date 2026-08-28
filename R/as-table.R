@@ -1,20 +1,19 @@
-#' Represent fields of rdmlType as a data.table
+#' Build an RDML metadata table
 #'
-#' Collections are read through rdmlKeyedList virtual keys; no physical list
-#' names are required. Expressions in `default`, `namePattern`,
-#' `addColumns`, and `...` are evaluated once per dataType element in the
-#' historical asTable evaluation environment.
+#' Each `dataType` becomes one row. Expressions in `default`, `namePattern`,
+#' `addColumns`, and `...` are evaluated in the current experiment/run/react/
+#' data context.
 #'
-#' @param x rdmlType object.
-#' @param default Named list of expressions evaluated for each dataType object.
-#' @param namePattern Expression used to generate fdataName.
-#' @param addColumns Named list of extra expressions.
-#' @param treatNullAsNa Convert NULL results to NA.
+#' @param x `rdmlType`.
+#' @param default Named list of expressions producing metadata columns.
+#' @param namePattern Expression generating unique `fdataName` values.
+#' @param addColumns Named list of additional expressions.
+#' @param treatNullAsNa Convert `NULL` expression results to `NA`.
 #' @param includeHidden Include experiments whose id starts with `.`.
 #' @param ... Additional named expressions.
-#' @return data.table.
+#' @return Keyed `data.table`, one row per `dataType`.
+#' @rdname asTable
 #' @export
-#' @include generics.R rdml-utils.R
 S7::method(asTable, rdmlType) <- function(
     x,
     default = list(

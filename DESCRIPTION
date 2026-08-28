@@ -1,14 +1,15 @@
-Package: RDML
+Package: RDML7
 Type: Package
-Title: Importing Real-Time Thermo Cycler (qPCR) Data from RDML Format Files
-Version: 1.3
+Title: Tools for Real-Time PCR (qPCR) Data and RDML Files
+Version: 1.0
 LazyData: true
 Date: 2026-08-26
 Encoding: UTF-8
-Description: Imports real-time thermo cycler (qPCR) data from Real-time PCR
-    Data Markup Language (RDML) and transforms to the appropriate formats of
-    the 'qpcR' and 'chipPCR' packages. Contains a dendrogram visualization
-    for the structure of RDML object and GUI for RDML editing.
+Description: Reads, writes, validates, converts, and manipulates quantitative PCR
+    data using Real-time PCR Data Markup Language (RDML) S7 objects. Includes
+    an extensible file-format registry, vendor/table importers, RDES import and
+    export, fluorescence-table helpers, semantic validation, and compatibility
+    wrappers for the historical RDML API.
 Authors@R: c(
     person("Konstantin A.", "Blagodatskikh",
       email = "k.blag@yandex.ru", role = c("cre", "aut")),
@@ -35,10 +36,12 @@ Imports:
     lubridate (>= 1.6.0)
 Collate:
     'generics.R'
+    'package-doc.R'
     'keyed-list.R'
     'properties.R'
     'classes-core.R'
     'classes-schema.R'
+    'schema-docs.R'
     'rdml-utils.R'
     'conditions.R'
     'xml-write.R'
@@ -62,6 +65,7 @@ Collate:
     'import-rdes.R'
     'export-rdes.R'
     'format-registry.R'
+    'legacy-docs.R'
     'compat-api.R'
     'rdml-edit.R'
 Suggests:
@@ -79,6 +83,9 @@ Suggests:
     shinythemes,
     shinyMolBio,
     V8,
-    testthat
+    testthat,
+    rmarkdown,
+    pkgdown
 Config/roxygen2/version: 8.0.0
 Config/testthat/edition: 3
+VignetteBuilder: knitr

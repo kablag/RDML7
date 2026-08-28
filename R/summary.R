@@ -1,12 +1,15 @@
-#' @include classes-schema.R rdml-utils.R
 NULL
 
 # Compact RDML summaries ----------------------------------------------------
 
 #' Summarize an RDML object
 #'
-#' @param x `rdmlType` object.
-#' @return An `rdmlSummary` object containing totals and a per-run table.
+#' Counts experiments, runs, reactions, data entries, metadata objects,
+#' amplification/melting curves, Cq values, and multi-Tm entries.
+#'
+#' @param x `rdmlType`.
+#' @return An `rdmlSummary` list containing totals and a per-run table.
+#' @seealso `rdmlValidate`, `asDendrogram`
 #' @export
 rdmlSummary <- function(x) {
   if (!S7::S7_inherits(x, rdmlType)) {

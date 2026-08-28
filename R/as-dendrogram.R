@@ -1,20 +1,14 @@
-#' Represent rdmlType structure as a dendrogram
+#' Build or plot a dendrogram of RDML content
 #'
-#' S7 port of PCRuniversum/RDML::RDML$asDendrogram().
-#' The hierarchy is:
+#' Groups entries by experiment, run, target, sample type, and fluorescence
+#' data type using the metadata produced by `asTable()`.
 #'
-#' experiment -> run -> target -> sampleType -> adp/mdp
-#'
-#' The leaf label contains the number of reactions with the corresponding
-#' fluorescence-data type, matching the behaviour of the original package.
-#'
-#' @param x A `rdmlType` object.
-#' @param plotDendrogram Logical; plot the dendrogram when `TRUE`.
-#' @param ... Reserved for future use.
-#'
+#' @param x `rdmlType`.
+#' @param plotDendrogram Plot the dendrogram when `TRUE`.
+#' @param ... Reserved for future extensions.
 #' @return A base R `dendrogram` object.
+#' @rdname asDendrogram
 #' @export
-#' @include generics.R RDML.asTable.R
 S7::method(asDendrogram, rdmlType) <- function(
     x,
     plotDendrogram = TRUE,

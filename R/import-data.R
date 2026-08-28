@@ -1,4 +1,3 @@
-#' @include properties.R conditions.R set-fdata.R rdml-utils.R
 NULL
 
 # Canonical importer intermediate representation ----------------------------
@@ -18,11 +17,14 @@ classImportFdataType <- S7::new_property(
 )
 
 
-#' One fluorescence series produced by an importer
+#' One fluorescence-series group for the importer API
+#'
+#' Intermediate representation used by table/vendor parsers.
 #'
 #' @param fdataType `"adp"` or `"mdp"`.
 #' @param fdata Wide fluorescence table accepted by `setFData()`.
-#' @param description Camel-case description table accepted by `setFData()`.
+#' @param description CamelCase description table accepted by `setFData()`.
+#' @seealso `rdmlImportData`, `rdmlBuildImport`
 #' @export
 rdmlImportSeries <- S7::new_class(
   "rdmlImportSeries",
@@ -104,20 +106,18 @@ S7::method(`$<-`, rdmlImportSeries) <- function(x, name, value) {
 
 #' Parsed importer data before construction of rdmlType
 #'
-#' Vendor readers are encouraged to return this object. `rdmlRead()` then
-#' builds the RDML tree centrally, which keeps import modules independent from
-#' the internal experiment/run/react/data hierarchy.
+#' Decouples vendor parsing from construction of the nested RDML hierarchy.
+#' `rdmlRead()` builds this representation centrally with `rdmlBuildImport()`.
 #'
 #' @param series List of `rdmlImportSeries` objects.
 #' @param publisher Optional source/device publisher.
 #' @param serialNumber Source/device serial identifier.
-#' @param version RDML version used for the constructed object.
-#' @param format Source format identifier.
-#' @param preserveReactIds If TRUE, generated pcrFormat definitions are removed
-#'   so supplied reaction/well identifiers remain literal (useful for RDES and
-#'   rotor instruments).
-#' @param metadata Additional importer metadata retained during construction.
+#' @param version RDML version for the constructed object.
+#' @param format Source-format identifier.
+#' @param preserveReactIds Preserve supplied well/reaction ids literally.
+#' @param metadata Additional importer metadata.
 #' @param losses List of `rdmlLossRecord()` objects.
+#' @seealso `rdmlImportSeries`, `rdmlBuildImport`, `rdmlRegisterFormat`
 #' @export
 rdmlImportData <- S7::new_class(
   "rdmlImportData",
@@ -214,11 +214,12 @@ S7::method(`$<-`, rdmlImportData) <- function(x, name, value) {
 
 #' Build rdmlType from canonical importer data
 #'
-#' @param importData `rdmlImportData` object.
-#' @param loss How to handle declared lossy conversions: `"warn"`, `"error"`,
-#'   or `"allow"`.
+#' @param importData `rdmlImportData`.
+#' @param loss How declared lossy conversions are handled: `"warn"`,
+#' `"error"`, or `"allow"`.
 #' @param ... Additional arguments forwarded to `setFData()`.
 #' @return `rdmlType`.
+#' @seealso `rdmlRead`, `rdmlImportData`
 #' @export
 rdmlBuildImport <- function(
     importData,

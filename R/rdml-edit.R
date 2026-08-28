@@ -1,8 +1,10 @@
-#' RDML Editor Graphical User Interface
+#' Launch the RDML editing interface
 #'
-#' Launches the bundled Shiny application for editing RDML metadata and
-#' inspecting qPCR or melting curves.
+#' Starts the optional Shiny-based editor when its GUI dependencies are
+#' installed.
 #'
+#' @return Result of launching the application, invisibly where applicable.
+#' @seealso `rdmlRead`, `rdmlWrite`
 #' @export
 rdmlEdit <- function() {
   if (!requireNamespace("shiny", quietly = TRUE)) {

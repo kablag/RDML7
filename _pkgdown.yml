@@ -1,0 +1,72 @@
+url: https://kablag.github.io/RDML7/
+
+template:
+  bootstrap: 5
+
+navbar:
+  structure:
+    left: [intro, reference, articles]
+    right: [github]
+  components:
+    articles:
+      text: Articles
+      menu:
+      - text: Main workflow
+        href: articles/RDML.html
+      - text: Creating RDML objects
+        href: articles/CreateRDML.html
+      - text: RDES import/export
+        href: articles/RDES.html
+      - text: File-format plugins
+        href: articles/format-plugins.html
+      - text: Other R packages
+        href: articles/usingRDML_with_other_R_packages.html
+    github:
+      icon: fab fa-github
+      href: https://github.com/kablag/RDML7
+
+reference:
+- title: Read and write
+  contents:
+  - rdmlRead
+  - rdmlWrite
+  - rdmlFormats
+  - rdmlDetectFormat
+
+- title: Inspect and manipulate
+  contents:
+  - asTable
+  - getFData
+  - setFData
+  - mergeRdmls
+  - asDendrogram
+  - asXml
+  - rdmlSummary
+  - rdmlValidate
+  - rdmlIsValid
+
+- title: Format registry and importer API
+  contents:
+  - rdmlRegisterFormat
+  - rdmlUnregisterFormat
+  - rdmlLoadModule
+  - rdmlFromFData
+  - rdmlImportSeries
+  - rdmlImportData
+  - rdmlBuildImport
+  - rdmlLossRecord
+
+- title: Core and schema types
+  contents:
+  - idType
+  - idReferenceType
+  - rdmlKeyedList
+  - rdml-metadata-types
+  - rdml-sample-target-types
+  - rdml-thermal-types
+  - rdml-experimental-types
+
+- title: Compatibility and UI
+  contents:
+  - legacy-api
+  - rdmlEdit

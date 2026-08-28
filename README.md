@@ -1,51 +1,96 @@
-[![published in: Bioinformatics](https://img.shields.io/badge/published%20in-Bioinformatics-ff69b4.svg?style=flat)](https://doi.org/10.1093/bioinformatics/btx528)
-[![CRAN_Status_Badge](http://www.r-pkg.org/badges/version/RDML)](https://CRAN.R-project.org/package=RDML)
-[![Downloads](https://cranlogs.r-pkg.org/badges/RDML)]( https://CRAN.R-project.org/package=RDML)
-[![Travis-CI Build Status](https://travis-ci.org/pcruniversum/RDML.svg?branch=master)](https://travis-ci.org/pcruniversum/RDML)
-[![Rdoc](http://www.rdocumentation.org/badges/version/RDML)](http://www.rdocumentation.org/packages/RDML) 
+# RDML
 
-<img src="https://raw.githubusercontent.com/pcruniversum/RDML/master/vignettes/RDML_logo.png" alt="RDML" width="100%">
+[![Published in Bioinformatics](https://img.shields.io/badge/published%20in-Bioinformatics-ff69b4.svg?style=flat)](https://doi.org/10.1093/bioinformatics/btx528)
 
-The RDML package is published in Oxford Bioinformatics: 
-Stefan Rödiger, Michał Burdukiewicz, Andrej-Nikolai Spiess, Konstantin Blagodatskikh; Enabling reproducible real-time quantitative PCR research: the RDML package, Bioinformatics, [https://doi.org/10.1093/bioinformatics/btx528](https://doi.org/10.1093/bioinformatics/btx528) (see also `citation()`).
+`RDML` is an R package for reading, manipulating, validating, converting, and
+writing quantitative PCR data. The current implementation uses S7 value
+objects, a camelCase functional API, and an extensible file-format registry.
 
-Imports qPCR data from RDML v1.1 format files ([Lefever et al. 2009](http://nar.oxfordjournals.org/content/32/5/1792.abstract?view=long&pmid=19223324)) and 
-transforms it to the appropriate format of the qpcR package (Ritz et al. 2008, 
-Spiess et al. 2008) or chipPCR package. [RDML](http://www.rdml.org/) (Real-time PCR Data Markup 
-Language) is the recommended file format element in the Minimum Information for 
-Publication of Quantitative Real-Time PCR Experiments (MIQE) guidelines ([Bustin et al. 2009](http://clinchem.aaccjnls.org/content/55/4/611.long)).
+The original RDML package is described in:
 
-# Installation
-------------
+> Stefan Rödiger, Michał Burdukiewicz, Andrej-Nikolai Spiess, Konstantin
+> Blagodatskikh. *Enabling reproducible real-time quantitative PCR research:
+> the RDML package*. Bioinformatics. https://doi.org/10.1093/bioinformatics/btx528
 
-The stable version of the `RDML` package for R is hosted on [CRAN](https://CRAN.R-project.org/package=RDML) and can be installed as any R package.
-
-You can install the latest development version of the code using the `devtools` R package.
+## Installation
 
 ```r
-# Install devtools, if you haven't already.
-install.packages("devtools")
-
-library(devtools)
-install_github("PCRuniversum/RDML")
+install.packages("remotes")
+remotes::install_github("kablag/RDML7")
 ```
 
-# Manual
+## Basic workflow
 
-The manual is available [online](https://pcruniversum.github.io/RDML/).
+```r
+library(RDML)
 
-# Examples
+x <- rdmlRead("experiment.rdml")
 
-`RDML` imports various data formats (CSV, XMLX) besides the RDML format. Provided that the raw data 
-have a defined structure (as described in the vignette) the import should be 
-done by a few clicks. The example below shows the import of amplification curve
-data, which were stored in a CSV file. The function `rdmlEdit()` was used in the 
-[RKWard IDE/GUI](https://rkward.kde.org/) for further processing. rdmlEdit may be also accessed as a web server (http://shtest.evrogen.net/rdmlEdit/). 
+rdmlSummary(x)
+rdmlValidate(x)
 
-<img src="https://raw.githubusercontent.com/pcruniversum/RDML/master/vignettes/File_import.png" alt="Data Import" width="100%">
+metadata <- asTable(x)
 
-Once imported enables `rdmlEdit()` and other functions from the `RDML` package complex 
-data visualization and processing in the R statistical computing environment.
+amp <- getFData(
+  x,
+  dpType = "adp",
+  longTable = TRUE
+)
 
-<img src="https://raw.githubusercontent.com/pcruniversum/RDML/master/vignettes/data_view.png" alt="Data View" width="100%">
+rdmlWrite(
+  x,
+  "experiment-copy.rdml"
+)
+```
 
+RDML uses value semantics:
+
+```r
+x <- setFData(
+  x,
+  fdata,
+  description,
+  fdataType = "adp"
+)
+```
+
+## Formats
+
+```r
+rdmlFormats()
+```
+
+Additional readers/writers can be registered with `rdmlRegisterFormat()` or
+loaded from module files with `rdmlLoadModule()`.
+
+## RDES
+
+RDES import and export are supported:
+
+```r
+x <- rdmlRead(
+  "run_amplification.tsv",
+  format = "rdes"
+)
+
+x <- rdmlRead(
+  "run_amplification.tsv",
+  format = "rdes",
+  companionFile = "run_melting.tsv"
+)
+
+rdmlWrite(
+  x,
+  "run.tsv",
+  format = "rdes",
+  rdesType = "both"
+)
+```
+
+See `vignette("RDES", package = "RDML")`.
+
+## Legacy compatibility
+
+Older names such as `AsTable()`, `GetFData()`, `SetFData()`, `MergeRDMLs()`,
+and `rdml_read()` remain available for dependent packages. New code should use
+the camelCase API.

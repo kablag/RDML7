@@ -1,0 +1,181 @@
+---
+title: "Importing and exporting RDES files"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Importing and exporting RDES files}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", eval = FALSE)
+library(RDML)
+```
+
+## RDES in brief
+
+RDES is the Real-time PCR Data Essential Spreadsheet Format defined by the RDML
+Consortium. It is a simpler exchange format for raw qPCR data.
+
+An RDES file:
+
+- represents one run;
+- is UTF-8 plain text;
+- uses Linux LF newlines;
+- is tab-separated even when the extension is `.csv` or `.txt`;
+- uses a dot as decimal separator;
+- starts with `Well`, `Sample`, `Sample Type`, `Target`, `Target Type`, `Dye`,
+  and either `Cq` or `Tm`;
+- stores raw fluorescence from column 8 onward;
+- stores amplification and melting curves in separate files.
+
+The preferred extension is `.tsv`; `.csv` and `.txt` are also accepted by the
+RDES specification.
+
+## Import amplification data
+
+```r
+amp <- rdmlRead(
+  "RDES_v1_0_example_amplification.tsv"
+)
+```
+
+The format can also be selected explicitly.
+
+```r
+amp <- rdmlRead(
+  "RDES_v1_0_example_amplification.tsv",
+  format = "rdes",
+  expId = "RDES",
+  runId = "run1"
+)
+```
+
+## Import melting data
+
+```r
+melt <- rdmlRead(
+  "RDES_v1_0_example_melting.tsv",
+  format = "rdes"
+)
+
+request <- asTable(melt)
+request <- request[request$mdp, ]
+
+meltData <- getFData(
+  melt,
+  request = request,
+  dpType = "mdp",
+  longTable = TRUE
+)
+```
+
+## Import an amplification/melting pair
+
+RDES stores the two curve types in independent files. Use `companionFile` to
+merge them into one RDML run.
+
+```r
+both <- rdmlRead(
+  "run_amplification.tsv",
+  format = "rdes",
+  companionFile = "run_melting.tsv",
+  expId = "exp1",
+  runId = "run1"
+)
+```
+
+## Column mapping
+
+| RDES | RDML |
+|---|---|
+| Well | reaction id / position |
+| Sample | sample id |
+| Sample Type | target-specific sample type |
+| Target | target id |
+| Target Type | `toi` / `ref` |
+| Dye | target dye id |
+| Cq | `dataType$cq` |
+| Tm | `dataType$meltTemp` / `meltTemps` |
+| cycle columns | amplification `fpoints` |
+| temperature columns | melting `fpoints` |
+
+RDES uses `unkn` when the sample type is unavailable and `toi` when the target
+type is unavailable.
+
+## Multiple Tm values
+
+RDES allows several Tm values separated by semicolons without spaces:
+
+```text
+82.9;73.6;69.8
+```
+
+The RDML package preserves the full vector in the package extension
+`meltTemps`, while `meltTemp` stores the primary/first value. RDES export can
+write all values back. Standard RDML XML has a single `meltTemp`, so exporting
+such an object to RDML can trigger a lossy-conversion warning/error.
+
+## Strict parsing
+
+```r
+x <- rdmlRead(
+  "run.tsv",
+  format = "rdes",
+  strict = TRUE
+)
+```
+
+The normal parser accepts and normalizes some practical text-file deviations;
+strict mode converts them into errors.
+
+## Export amplification or melting data
+
+```r
+rdmlWrite(
+  both,
+  "run_amplification.tsv",
+  format = "rdes",
+  expId = "exp1",
+  runId = "run1",
+  rdesType = "adp"
+)
+
+rdmlWrite(
+  both,
+  "run_melting.tsv",
+  format = "rdes",
+  expId = "exp1",
+  runId = "run1",
+  rdesType = "mdp"
+)
+```
+
+## Export both RDES files
+
+```r
+paths <- rdmlWrite(
+  both,
+  "run.tsv",
+  format = "rdes",
+  expId = "exp1",
+  runId = "run1",
+  rdesType = "both"
+)
+
+paths["amplification"]
+paths["melting"]
+```
+
+The writer creates independent `_amplification` and `_melting` files.
+
+## Raw fluorescence
+
+RDES is intended for raw fluorescence as measured by the instrument. According
+to the RDES specification, machine-background correction is acceptable, but
+baseline fluorescence correction should not be applied before RDES export.
+
+## Specification
+
+The current RDES description is published by the RDML Consortium at
+<https://rdml.org/rdes.html>.

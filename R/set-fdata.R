@@ -1,20 +1,20 @@
-#' Set fluorescence data in rdmlType
+#' Add or replace fluorescence data
 #'
-#' RDML7 is value-based (S7), unlike the original mutable R6 RDML object.
-#' Therefore the returned object must be assigned back:
-#' `rdml <- setFData(rdml, fdata, description)`.
+#' Missing experiments, runs, reactions, samples, targets, and dyes are
+#' created as needed. RDML uses value semantics, so assign the returned object.
 #'
-#' @param x rdmlType object.
-#' @param fdata Matrix/data.frame/data.table. The first column is cyc/tmp;
-#'   remaining fluorescence columns are named by description$fdataName. For
-#'   amplification data an auxiliary column named `tmp` is preserved when it is
-#'   not itself listed as a fluorescence series.
-#' @param description Table produced by asTable().
-#' @param fdataType "adp" or "mdp".
-#' @param conflict How to handle conflicting existing sample/target metadata.
-#' @return Modified rdmlType object.
+#' @param x `rdmlType`.
+#' @param fdata Matrix/data.frame/data.table. First column is `cyc` or `tmp`;
+#' remaining fluorescence columns are matched to `description$fdataName`.
+#' @param description CamelCase metadata table. Required: `fdataName`, `expId`,
+#' `runId`, `reactId`, and `target`; sample/target metadata are used when new
+#' schema objects are created.
+#' @param fdataType `"adp"` or `"mdp"`.
+#' @param conflict `"error"`, `"keep"`, or `"replace"`.
+#' @param ... Reserved for extensions.
+#' @return Modified `rdmlType`.
+#' @rdname setFData
 #' @export
-#' @include generics.R rdml-utils.R
 S7::method(setFData, rdmlType) <- function(
     x,
     fdata,
@@ -274,16 +274,66 @@ S7::method(setFData, rdmlType) <- function(
       )
     }
 
-    dataList[[targetId]] <- dataObj
-    react <- .rdmlSetPropList(react, "data", dataList)
-
-    reacts[[reactId]] <- react
-    run <- .rdmlSetPropList(run, "react", reacts)
-
-    runs[[runId]] <- run
-    experiment <- .rdmlSetPropList(experiment, "run", runs)
-
-    experiments[[expId]] <- experiment
+    dataList <- .rdmlUpsertListByKey(
+      .rdmlPropList(
+        react,
+        "data"
+      ),
+      dataObj,
+      key = "targetId"
+    )
+    
+    react <- .rdmlSetPropList(
+      react,
+      "data",
+      dataList
+    )
+    
+    
+    reactList <- .rdmlUpsertListByKey(
+      .rdmlPropList(
+        run,
+        "react"
+      ),
+      react,
+      key = "id"
+    )
+    
+    run <- .rdmlSetPropList(
+      run,
+      "react",
+      reactList
+    )
+    
+    
+    runList <- .rdmlUpsertListByKey(
+      .rdmlPropList(
+        experiment,
+        "run"
+      ),
+      run,
+      key = "id"
+    )
+    
+    experiment <- .rdmlSetPropList(
+      experiment,
+      "run",
+      runList
+    )
+    
+    
+    experimentList <- .rdmlUpsertListByKey(
+      .rdmlAsList(
+        experiments
+      ),
+      experiment,
+      key = "id"
+    )
+    
+    experiments <- rdmlKeyedList(
+      experimentList,
+      key = "id"
+    )
 
     # sample --------------------------------------------------------------
     if (nonemptyString(sampleId)) {
