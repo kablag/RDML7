@@ -6,7 +6,7 @@
     conditionsSep = NULL,
     cluster = NULL,
     format = "rdml") {
-
+  
   rdmlObj <- list(
     version = NA_character_,
     dateMade = NA_character_,
@@ -20,19 +20,19 @@
     thermalCyclingConditions = list(),
     experiment = list()
   )
-
+  
   asTableRdml <- function(rdmlObj) {
     rows <- list()
     n <- 0L
-
+    
     for (exp in rdmlObj$experiment) {
       runs <- S7::prop(exp, "run")
       if (.isSingleNa(runs) || !length(runs)) next
-
+      
       for (run in runs) {
         reacts <- S7::prop(run, "react")
         if (.isSingleNa(reacts) || !length(reacts)) next
-
+        
         for (react in reacts) {
           n <- n + 1L
           rows[[n]] <- data.frame(
@@ -43,31 +43,31 @@
         }
       }
     }
-
+    
     if (!length(rows)) {
       return(data.table::data.table(
         reactId = integer(),
         sample = character()
       ))
     }
-
+    
     data.table::as.data.table(do.call(rbind, rows))
   }
-
+  
   # Parse optional object only when the XML node exists.
   optionalNode <- function(tree, path, FUN, ns = rdmlEnv$ns) {
     node <- xml2::xml_find_first(tree, path, ns)
     if (.isXmlMissing(node)) return(NA)
     FUN(node)
   }
-
+  
   parseIdRefs <- function(tree, path) {
     .xmlNodesApply(
       xml2::xml_find_all(tree, path, rdmlEnv$ns),
       .genIdRef
     )
   }
-
+  
   parseXrefs <- function(tree, path = "rdml:xRef") {
     .xmlNodesApply(
       xml2::xml_find_all(tree, path, rdmlEnv$ns),
@@ -79,7 +79,7 @@
       }
     )
   }
-
+  
   parseAnnotations <- function(sample) {
     .xmlNodesApply(
       xml2::xml_find_all(sample, "rdml:annotation", rdmlEnv$ns),
@@ -91,32 +91,32 @@
       }
     )
   }
-
+  
   parseSampleTypes <- function(sample) {
     nodes <- xml2::xml_find_all(sample, "rdml:type", rdmlEnv$ns)
     .compact(.xmlNodesApply(nodes, function(node) {
       targetId <- xml2::xml_attr(node, "targetId")
       if (is.na(targetId)) targetId <- xml2::xml_attr(node, "target")
-
+      
       # Current sampleTargetType requires targetId. Older RDML files may
       # contain a target-independent <type>; that value cannot be represented
       # losslessly by the current S7 schema, so leave it out.
       if (is.na(targetId) || !nzchar(targetId)) return(NULL)
-
+      
       sampleTargetType(
         targetId = idReferenceType(targetId),
         sampleType = sampleTypeType(xml2::xml_text(node))
       )
     }))
   }
-
+  
   parseQuantities <- function(sample) {
     nodes <- xml2::xml_find_all(sample, "rdml:quantity", rdmlEnv$ns)
     .compact(.xmlNodesApply(nodes, function(node) {
       targetId <- xml2::xml_attr(node, "targetId")
       if (is.na(targetId)) targetId <- xml2::xml_attr(node, "target")
       if (is.na(targetId) || !nzchar(targetId)) return(NULL)
-
+      
       quantityType(
         targetId = idReferenceType(targetId),
         value = .getNumericValue(node, "rdml:value"),
@@ -124,25 +124,25 @@
       )
     }))
   }
-
+  
   parseOligo <- function(target, path) {
     node <- xml2::xml_find_first(target, path, rdmlEnv$ns)
     if (.isXmlMissing(node)) return(NA)
-
+    
     seq <- .getTextValue(node, "rdml:sequence")
     if (is.na(seq)) return(NA)
-
+    
     oligoType(
       threePrimeTag = .getTextValue(node, "rdml:threePrimeTag"),
       fivePrimeTag = .getTextValue(node, "rdml:fivePrimeTag"),
       sequence = seq
     )
   }
-
+  
   parseSequences <- function(target) {
     node <- xml2::xml_find_first(target, "rdml:sequences", rdmlEnv$ns)
     if (.isXmlMissing(node)) return(NA)
-
+    
     sequencesType(
       forwardPrimer = parseOligo(target, "rdml:sequences/rdml:forwardPrimer"),
       reversePrimer = parseOligo(target, "rdml:sequences/rdml:reversePrimer"),
@@ -151,17 +151,17 @@
       amplicon = parseOligo(target, "rdml:sequences/rdml:amplicon")
     )
   }
-
+  
   parseMeasure <- function(tree, path) {
     txt <- .getTextValue(tree, path)
     if (is.na(txt)) return(NA)
     measureType(txt)
   }
-
+  
   parseTemperature <- function(step) {
     node <- xml2::xml_find_first(step, "rdml:temperature", rdmlEnv$ns)
     if (.isXmlMissing(node)) return(NA)
-
+    
     temperatureType(
       temperature = .getNumericValue(node, "rdml:temperature"),
       duration = .getIntegerValue(node, "rdml:duration"),
@@ -171,11 +171,11 @@
       ramp = .getNumericValue(node, "rdml:ramp")
     )
   }
-
+  
   parseGradient <- function(step) {
     node <- xml2::xml_find_first(step, "rdml:gradient", rdmlEnv$ns)
     if (.isXmlMissing(node)) return(NA)
-
+    
     gradientType(
       highTemperature = .getNumericValue(node, "rdml:highTemperature"),
       lowTemperature = .getNumericValue(node, "rdml:lowTemperature"),
@@ -186,11 +186,11 @@
       ramp = .getNumericValue(node, "rdml:ramp")
     )
   }
-
+  
   parseLoop <- function(step) {
     node <- xml2::xml_find_first(step, "rdml:loop", rdmlEnv$ns)
     if (.isXmlMissing(node)) return(NA)
-
+    
     do.call(
       loopType,
       list(
@@ -199,23 +199,23 @@
       )
     )
   }
-
+  
   parsePause <- function(step) {
     node <- xml2::xml_find_first(step, "rdml:pause", rdmlEnv$ns)
     if (.isXmlMissing(node)) return(NA)
     pauseType(temperature = .getNumericValue(node, "rdml:temperature"))
   }
-
+  
   parseLidOpen <- function(step) {
     node <- xml2::xml_find_first(step, "rdml:lidOpen", rdmlEnv$ns)
     if (.isXmlMissing(node)) return(NA)
     lidOpenType()
   }
-
+  
   parseAdp <- function(data) {
     nodes <- xml2::xml_find_all(data, "rdml:adp", rdmlEnv$ns)
     if (!length(nodes)) return(NA)
-
+    
     cyc <- vapply(seq_along(nodes), function(i) {
       .getNumericValue(nodes[[i]], "rdml:cyc")
     }, numeric(1))
@@ -225,7 +225,7 @@
     tmp <- vapply(seq_along(nodes), function(i) {
       .getNumericValue(nodes[[i]], "rdml:tmp")
     }, numeric(1))
-
+    
     if (all(is.na(tmp))) {
       dpAmpCurveType(
         data.table::data.table(cyc = cyc, fluor = fluor)
@@ -236,31 +236,31 @@
       )
     }
   }
-
+  
   parseMdp <- function(data) {
     nodes <- xml2::xml_find_all(data, "rdml:mdp", rdmlEnv$ns)
     if (!length(nodes)) return(NA)
-
+    
     tmp <- vapply(seq_along(nodes), function(i) {
       .getNumericValue(nodes[[i]], "rdml:tmp")
     }, numeric(1))
     fluor <- vapply(seq_along(nodes), function(i) {
       .getNumericValue(nodes[[i]], "rdml:fluor")
     }, numeric(1))
-
+    
     dpMeltingCurveType(
       data.table::data.table(tmp = tmp, fluor = fluor)
     )
   }
-
+  
   fromRDML <- function() {
     rdmlEnv$ns <- NULL
-
+    
     dilutionsR <- NULL
     conditionsR <- NULL
     refGenesR <- NULL
     isRocheArchive <- FALSE
-
+    
     if (identical(format, "xml")) {
       rdmlDoc <- xml2::read_xml(fileName)
       rdmlEnv$ns <- xml2::xml_ns(rdmlDoc)
@@ -271,13 +271,13 @@
       uniqFolder <- tempfile("rdml-")
       dir.create(uniqFolder, recursive = TRUE)
       on.exit(unlink(uniqFolder, recursive = TRUE), add = TRUE)
-
+      
       unzippedRdml <- utils::unzip(fileName, exdir = uniqFolder)
       if (!length(unzippedRdml)) stop("RDML archive is empty")
-
+      
       isRocheArchive <- length(unzippedRdml) > 1L &&
         file.exists(file.path(uniqFolder, "rdml_data.xml"))
-
+      
       if (isRocheArchive) {
         rdmlDoc <- xml2::read_xml(file.path(uniqFolder, "rdml_data.xml"))
         dilutionsR <- .getDilutionsRoche(uniqFolder)
@@ -292,14 +292,14 @@
         }
       }
     }
-
+    
     root <- xml2::xml_root(rdmlDoc)
     rdmlObj$version <- xml2::xml_attr(root, "version")
     if (is.na(rdmlObj$version)) rdmlObj$version <- ""
-
+    
     rdmlObj$dateMade <- .getTextValue(rdmlDoc, "/rdml:rdml/rdml:dateMade")
     rdmlObj$dateUpdated <- .getTextValue(rdmlDoc, "/rdml:rdml/rdml:dateUpdated")
-
+    
     # id -------------------------------------------------------------------
     rdmlObj$id <- .xmlNodesApply(
       xml2::xml_find_all(rdmlDoc, "/rdml:rdml/rdml:id", rdmlEnv$ns),
@@ -311,10 +311,10 @@
         )
       }
     )
-
+    
     publisher <- if (length(rdmlObj$id)) rdmlObj$id[[1]]$publisher else NA_character_
     isRoche <- identical(publisher, "Roche Diagnostics")
-
+    
     # experimenter ---------------------------------------------------------
     rdmlObj$experimenter <- .xmlNodesApply(
       xml2::xml_find_all(rdmlDoc, "/rdml:rdml/rdml:experimenter", rdmlEnv$ns),
@@ -329,7 +329,7 @@
         )
       }
     )
-
+    
     # documentation --------------------------------------------------------
     rdmlObj$documentation <- .xmlNodesApply(
       xml2::xml_find_all(rdmlDoc, "/rdml:rdml/rdml:documentation", rdmlEnv$ns),
@@ -340,7 +340,7 @@
         )
       }
     )
-
+    
     # dye ------------------------------------------------------------------
     rdmlObj$dye <- .xmlNodesApply(
       xml2::xml_find_all(rdmlDoc, "/rdml:rdml/rdml:dye", rdmlEnv$ns),
@@ -353,17 +353,17 @@
         )
       }
     )
-
+    
     # sample ---------------------------------------------------------------
     rdmlObj$sample <- .compact(.xmlNodesApply(
       xml2::xml_find_all(rdmlDoc, "/rdml:rdml/rdml:sample", rdmlEnv$ns),
       function(sample) {
         id <- xml2::xml_attr(sample, "id")
         rawType <- .getTextValue(sample, "rdml:type")
-
+        
         # Roche uses ntp as an omitted/empty sample marker.
         if (identical(rawType, "ntp")) return(NULL)
-
+        
         cdnaNode <- xml2::xml_find_first(sample, "rdml:cdnaSynthesisMethod", rdmlEnv$ns)
         cdna <- if (.isXmlMissing(cdnaNode)) {
           NA
@@ -377,7 +377,7 @@
             cdnaNode,
             "rdml:primingMethod"
           )
-
+          
           cdnaSynthesisMethodType(
             enzyme = .getTextValue(cdnaNode, "rdml:enzyme"),
             primingMethod = if (is.na(primingMethod)) {
@@ -393,7 +393,7 @@
             }
           )
         }
-
+        
         templateNode <- xml2::xml_find_first(sample, "rdml:templateQuantity", rdmlEnv$ns)
         templateQuantity <- if (.isXmlMissing(templateNode)) {
           NA
@@ -403,7 +403,7 @@
             nucleotide = nucleotideType(.getTextValue(templateNode, "rdml:nucleotide"))
           )
         }
-
+        
         sampleType(
           id = idType(id),
           description = .getTextValue(sample, "rdml:description"),
@@ -419,7 +419,7 @@
         )
       }
     ))
-
+    
     # target ---------------------------------------------------------------
     rdmlObj$target <- .xmlNodesApply(
       xml2::xml_find_all(rdmlDoc, "/rdml:rdml/rdml:target", rdmlEnv$ns),
@@ -428,7 +428,7 @@
         if (isRoche && grepl("@", targetId, fixed = TRUE)) {
           targetId <- sub("^.*@", "", targetId)
         }
-
+        
         dyeNode <- xml2::xml_find_first(target, "rdml:dyeId", rdmlEnv$ns)
         dyeId <- if (.isXmlMissing(dyeNode)) {
           stop("target '", targetId, "' has no dyeId")
@@ -436,7 +436,7 @@
           idAttr <- xml2::xml_attr(dyeNode, "id")
           if (!is.na(idAttr)) idReferenceType(idAttr) else idReferenceType(xml2::xml_text(dyeNode))
         }
-
+        
         commercialNode <- xml2::xml_find_first(target, "rdml:commercialAssay", rdmlEnv$ns)
         commercial <- if (.isXmlMissing(commercialNode)) {
           NA
@@ -446,7 +446,7 @@
             orderNumber = .getTextValue(commercialNode, "rdml:orderNumber")
           )
         }
-
+        
         targetType(
           id = idType(targetId),
           description = .getTextValue(target, "rdml:description"),
@@ -464,7 +464,7 @@
         )
       }
     )
-
+    
     # thermalCyclingConditions ---------------------------------------------
     rdmlObj$thermalCyclingConditions <- .xmlNodesApply(
       xml2::xml_find_all(
@@ -487,7 +487,7 @@
             )
           }
         )
-
+        
         thermalCyclingConditionsType(
           id = .genId(tcc),
           description = .getTextValue(tcc, "rdml:description"),
@@ -498,20 +498,20 @@
         )
       }
     )
-
+    
     # data -----------------------------------------------------------------
     GetData <- function(data) {
       tarNode <- xml2::xml_find_first(data, "rdml:tar", rdmlEnv$ns)
       tarId <- if (.isXmlMissing(tarNode)) NA_character_ else xml2::xml_attr(tarNode, "id")
-
+      
       if (isRoche && !is.na(tarId) && grepl("@", tarId, fixed = TRUE)) {
         tarId <- sub("^.*@", "", tarId)
       }
-
+      
       if (is.na(tarId) || !nzchar(tarId)) {
         stop("RDML data element has no target id")
       }
-
+      
       dataType(
         targetId = idReferenceType(tarId),
         cq = .getNumericValue(data, "rdml:cq"),
@@ -532,12 +532,12 @@
         quantFluor = .getNumericValue(data, "rdml:quantFluor")
       )
     }
-
+    
     GetPartitionData <- function(data) {
       tarNode <- xml2::xml_find_first(data, "rdml:tar", rdmlEnv$ns)
       tarId <- if (.isXmlMissing(tarNode)) NA_character_ else xml2::xml_attr(tarNode, "id")
       if (is.na(tarId) || !nzchar(tarId)) stop("partition data has no target id")
-
+      
       partitionDataType(
         targetId = idReferenceType(tarId),
         excluded = .getTextValue(data, "rdml:excluded"),
@@ -549,11 +549,11 @@
         conc = .getNumericValue(data, "rdml:conc")
       )
     }
-
+    
     GetPartitions <- function(react) {
       node <- xml2::xml_find_first(react, "rdml:partitions", rdmlEnv$ns)
       if (.isXmlMissing(node)) return(NA)
-
+      
       partitionsType(
         volume = .getNumericValue(node, "rdml:volume"),
         endPtTable = .getTextValue(node, "rdml:endPtTable"),
@@ -563,32 +563,32 @@
         )
       )
     }
-
+    
     # react ----------------------------------------------------------------
     GetReact <- function(
-        react,
-        pcrFormat = pcrFormatType(
-          rows = 8L,
-          columns = 12L,
-          rowLabel = labelFormatType("ABC"),
-          columnLabel = labelFormatType("123")
-        )) {
+    react,
+    pcrFormat = pcrFormatType(
+      rows = 8L,
+      columns = 12L,
+      rowLabel = labelFormatType("ABC"),
+      columnLabel = labelFormatType("123")
+    )) {
       reactId <- xml2::xml_attr(react, "id")
       reactIdCorrected <- suppressWarnings(base::as.integer(reactId))
       if (is.na(reactIdCorrected)) {
         reactIdCorrected <- .fromPositionToId(reactId, pcrFormat)
       }
-
+      
       sampleNode <- xml2::xml_find_first(react, "rdml:sample", rdmlEnv$ns)
       if (.isXmlMissing(sampleNode)) stop("react '", reactId, "' has no sample")
       sampleId <- xml2::xml_attr(sampleNode, "id")
-
+      
       if (isRoche) {
         sampleObj <- .listGetByKey(rdmlObj$sample, sampleId, "id")
         if (is.null(sampleObj)) return(NULL)
         sampleId <- sampleObj$description
       }
-
+      
       reactType(
         id = idType(as.character(reactIdCorrected)),
         sample = idReferenceType(sampleId),
@@ -602,11 +602,11 @@
         }
       )
     }
-
+    
     # run ------------------------------------------------------------------
     GetRun <- function(run) {
       runId <- xml2::xml_attr(run, "id")
-
+      
       pcrFormat <- {
         pcrFormatStr <- .getTextValue(run, "rdml:pcrFormat")
         if (!is.na(pcrFormatStr) && grepl("well", pcrFormatStr, ignore.case = TRUE)) {
@@ -645,9 +645,9 @@
           }
         }
       }
-
+      
       if (showProgress) cat(sprintf("\n\trun: %s\n", runId))
-
+      
       softwareNode <- xml2::xml_find_first(run, "rdml:dataCollectionSoftware", rdmlEnv$ns)
       software <- if (.isXmlMissing(softwareNode)) {
         NA
@@ -660,17 +660,17 @@
           error = function(e) NA
         )
       }
-
+      
       cqText <- .getTextValue(run, "rdml:cqDetectionMethod")
       cqMethod <- if (is.na(cqText)) {
         NA
       } else {
         tryCatch(cqDetectionMethodType(cqText), error = function(e) NA)
       }
-
+      
       tccNode <- xml2::xml_find_first(run, "rdml:thermalCyclingConditions", rdmlEnv$ns)
       tccRef <- if (.isXmlMissing(tccNode)) NA else .genIdRef(tccNode)
-
+      
       runType(
         id = idType(runId),
         description = .getTextValue(run, "rdml:description"),
@@ -689,12 +689,12 @@
         ))
       )
     }
-
+    
     # experiment -----------------------------------------------------------
     GetExperiment <- function(experiment) {
       experimentId <- xml2::xml_attr(experiment, "id")
       if (showProgress) cat(sprintf("\nLoading experiment: %s", experimentId))
-
+      
       experimentType(
         id = idType(experimentId),
         description = .getTextValue(experiment, "rdml:description"),
@@ -705,12 +705,12 @@
         )
       )
     }
-
+    
     rdmlObj$experiment <- .xmlNodesApply(
       xml2::xml_find_all(rdmlDoc, "/rdml:rdml/rdml:experiment", rdmlEnv$ns),
       GetExperiment
     )
-
+    
     # Combine CFX96 runs to one. Work on ordinary list properties so that
     # no physical list names are required at any stage.
     if (
@@ -719,20 +719,20 @@
     ) {
       exp1 <- rdmlObj$experiment[[1]]
       runs <- S7::prop(exp1, "run")
-
+      
       if (is.list(runs) && length(runs) > 1L) {
         if (showProgress) cat("\nCombining Bio-Rad runs\n")
         firstRun <- runs[[1]]
         firstReacts <- S7::prop(firstRun, "react")
-
+        
         for (runI in 2:length(runs)) {
           currentRun <- runs[[runI]]
           currentReacts <- S7::prop(currentRun, "react")
-
+          
           for (react in currentReacts) {
             reactId <- .getId(react)
             existing <- .listGetByKey(firstReacts, reactId, "id")
-
+            
             if (is.null(existing)) {
               firstReacts <- .listSetByKey(firstReacts, reactId, react, "id")
             } else {
@@ -745,14 +745,14 @@
             }
           }
         }
-
+        
         S7::prop(firstRun, "react") <- firstReacts
         S7::prop(firstRun, "id") <- idType("Combined Run")
         S7::prop(exp1, "run") <- list(firstRun)
         rdmlObj$experiment[[1]] <- exp1
       }
     }
-
+    
     # Roche LC96 post-processing ------------------------------------------
     if (isRoche) {
       # Rename sample ids to descriptions. Lists stay physically unnamed;
@@ -760,13 +760,13 @@
       for (i in seq_along(rdmlObj$sample)) {
         sampleObj <- rdmlObj$sample[[i]]
         desc <- S7::prop(sampleObj, "description")
-
+        
         if (!is.na(desc) && nzchar(desc)) {
           S7::prop(sampleObj, "id") <- idType(desc)
           rdmlObj$sample[[i]] <- sampleObj
         }
       }
-
+      
       # Add Roche reference-gene flags.
       if (!is.null(refGenesR) && length(refGenesR) != 0L && !.isSingleNa(refGenesR)) {
         ns <- xml2::xml_ns_rename(xml2::xml_ns(refGenesR), d3 = "rel")
@@ -782,43 +782,227 @@
           }
         }
       }
-
+      
       # Add Roche quantities using the target-aware quantityType schema.
+      # Add Roche quantities using the target-aware quantityType schema.
+      #
+      # Roche calculated_data.xml groups dilution-series information by dye
+      # (FAM, Hex, Texas Red, Cy5), but quantityType requires targetId.
+      # Resolve the actual target for each reaction through:
+      #
+      #   react -> data -> target -> dye
+      #
+      # The same sample can also occur in several technical replicate wells.
+      # Therefore quantities must be upserted by targetId rather than appended.
+      
       if (is.list(dilutionsR) && length(dilutionsR)) {
-        tbl <- asTableRdml(rdmlObj)
-        data.table::setkey(tbl, reactId)
-
-        for (targetId in names(dilutionsR)) {
-          for (rId in names(dilutionsR[[targetId]])) {
-            sampleName <- tbl[reactId == base::as.integer(rId), sample][1]
-            if (is.na(sampleName)) next
-
-            sampleObj <- .listGetByKey(rdmlObj$sample, sampleName, "id")
-            if (is.null(sampleObj)) next
-
-            quantities <- S7::prop(sampleObj, "quantity")
-            if (.isSingleNa(quantities)) quantities <- list()
-            quantities[[length(quantities) + 1L]] <- quantityType(
-              targetId = idReferenceType(targetId),
-              value = unname(dilutionsR[[targetId]][rId]),
-              unit = quantityUnitType("other")
+        
+        findRocheSampleTarget <- function(
+    reactId,
+    dyeId) {
+          
+          reactId <- as.character(
+            reactId
+          )
+          
+          for (experimentObj in rdmlObj$experiment) {
+            
+            runs <- S7::prop(
+              experimentObj,
+              "run"
             )
-            S7::prop(sampleObj, "quantity") <- quantities
-            rdmlObj$sample <- .listSetByKey(rdmlObj$sample, sampleName, sampleObj, "id")
+            
+            if (
+              .isSingleNa(runs) ||
+              !length(runs)
+            ) {
+              next
+            }
+            
+            for (runObj in runs) {
+              
+              reacts <- S7::prop(
+                runObj,
+                "react"
+              )
+              
+              if (
+                .isSingleNa(reacts) ||
+                !length(reacts)
+              ) {
+                next
+              }
+              
+              reactObj <- .listGetByKey(
+                reacts,
+                reactId,
+                "id"
+              )
+              
+              if (is.null(reactObj)) {
+                next
+              }
+              
+              sampleName <- .rdmlIdChr(
+                S7::prop(
+                  reactObj,
+                  "sample"
+                )
+              )
+              
+              dataList <- S7::prop(
+                reactObj,
+                "data"
+              )
+              
+              if (
+                .isSingleNa(dataList) ||
+                !length(dataList)
+              ) {
+                next
+              }
+              
+              for (dataObj in dataList) {
+                
+                targetId <- .rdmlIdChr(
+                  S7::prop(
+                    dataObj,
+                    "targetId"
+                  )
+                )
+                
+                if (is.na(targetId)) {
+                  next
+                }
+                
+                targetObj <- .listGetByKey(
+                  rdmlObj$target,
+                  targetId,
+                  "id"
+                )
+                
+                if (is.null(targetObj)) {
+                  next
+                }
+                
+                targetDyeId <- .rdmlIdChr(
+                  S7::prop(
+                    targetObj,
+                    "dyeId"
+                  )
+                )
+                
+                if (
+                  !is.na(targetDyeId) &&
+                  identical(
+                    targetDyeId,
+                    dyeId
+                  )
+                ) {
+                  return(
+                    list(
+                      sample = sampleName,
+                      targetId = targetId
+                    )
+                  )
+                }
+              }
+            }
+          }
+          
+          NULL
+        }
+        
+        
+        for (dyeId in names(dilutionsR)) {
+          
+          dyeDilutions <- dilutionsR[[dyeId]]
+          
+          for (rId in names(dyeDilutions)) {
+            
+            mapping <- findRocheSampleTarget(
+              reactId = rId,
+              dyeId = dyeId
+            )
+            
+            if (is.null(mapping)) {
+              next
+            }
+            
+            sampleName <- mapping$sample
+            targetId <- mapping$targetId
+            
+            if (
+              is.na(sampleName) ||
+              is.na(targetId)
+            ) {
+              next
+            }
+            
+            sampleObj <- .listGetByKey(
+              rdmlObj$sample,
+              sampleName,
+              "id"
+            )
+            
+            if (is.null(sampleObj)) {
+              next
+            }
+            
+            quantities <- S7::prop(
+              sampleObj,
+              "quantity"
+            )
+            
+            if (.isSingleNa(quantities)) {
+              quantities <- list()
+            }
+            
+            quantityObj <- quantityType(
+              targetId = idReferenceType(
+                targetId
+              ),
+              value = unname(
+                dyeDilutions[
+                  rId
+                ]
+              ),
+              unit = quantityUnitType(
+                "other"
+              )
+            )
+            
+            quantities <- .rdmlUpsertListByKey(
+              quantities,
+              quantityObj,
+              key = "targetId"
+            )
+            
+            S7::prop(
+              sampleObj,
+              "quantity"
+            ) <- quantities
+            
+            rdmlObj$sample <- .listSetByKey(
+              rdmlObj$sample,
+              sampleName,
+              sampleObj,
+              "id"
+            )
           }
         }
       }
-
+      
       # Roche-derived conditions are kept separate for now. Native RDML
       # <annotation> elements are imported above; mapping Roche condition
       # metadata into annotations is intentionally deferred to a vendor-specific
       # cleanup pass so this refactor does not change import semantics.
       invisible(conditionsR)
     }
-
+    
     rdmlObj
   }
-
+  
   rdmlObj <- fromRDML()
   do.call(rdmlType, rdmlObj)
 }
