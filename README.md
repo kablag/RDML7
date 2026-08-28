@@ -22,7 +22,7 @@ remotes::install_github("kablag/RDML7")
 ## Basic workflow
 
 ```r
-library(RDML)
+library(RDML7)
 
 x <- rdmlRead("experiment.rdml")
 
