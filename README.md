@@ -1,8 +1,8 @@
-# RDML
+# RDML7
 
 [![Published in Bioinformatics](https://img.shields.io/badge/published%20in-Bioinformatics-ff69b4.svg?style=flat)](https://doi.org/10.1093/bioinformatics/btx528)
 
-`RDML` is an R package for reading, manipulating, validating, converting, and
+`RDML7` is an R package for reading, manipulating, validating, converting, and
 writing quantitative PCR data. The current implementation uses S7 value
 objects, a camelCase functional API, and an extensible file-format registry.
 
