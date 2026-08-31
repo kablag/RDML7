@@ -32,8 +32,6 @@ S7::method(asTable, rdmlType) <- function(
       mdp = .rdmlPresent(data$mdp)
     ),
     namePattern = paste(
-      .rdmlIdChr(experiment$id),
-      .rdmlIdChr(run$id),
       .rdmlReactPosition(react, run$pcrFormat),
       .rdmlIdChr(react$sample),
       .rdmlSampleType(

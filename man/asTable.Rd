@@ -16,8 +16,7 @@ asTable(
     .rdmlTargetDye(target, .rdmlIdChr(data$targetId)), sampleType =
     .rdmlSampleType(sample[[.rdmlIdChr(react$sample)]], .rdmlIdChr(data$targetId)), adp =
     .rdmlPresent(data$adp), mdp = .rdmlPresent(data$mdp)),
-  namePattern = paste(.rdmlIdChr(experiment$id), .rdmlIdChr(run$id),
-    .rdmlReactPosition(react, run$pcrFormat), .rdmlIdChr(react$sample),
+  namePattern = paste(.rdmlReactPosition(react, run$pcrFormat), .rdmlIdChr(react$sample),
     .rdmlSampleType(sample[[.rdmlIdChr(react$sample)]], .rdmlIdChr(data$targetId)),
     .rdmlIdChr(data$targetId), sep = "_"),
   addColumns = list(),

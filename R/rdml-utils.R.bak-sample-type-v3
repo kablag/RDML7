@@ -312,63 +312,43 @@
 .rdmlSampleType <- function(
     sample,
     target_id) {
-
+  
   if (
     is.null(sample) ||
     .rdmlIsMissing(sample)
   ) {
-    return(NA_character_)
+    return(
+      NA_character_
+    )
   }
-
+  
   types <- .rdmlPropList(
     sample,
     "type"
   )
-
+  
   if (!length(types)) {
-    return(NA_character_)
-  }
-
-  specificPos <- NA_integer_
-  globalPos <- NA_integer_
-
-  for (i in seq_along(types)) {
-    typeTarget <- S7::prop(
-      types[[i]],
-      "targetId"
+    return(
+      NA_character_
     )
-
-    if (.rdmlIsMissing(typeTarget)) {
-      if (is.na(globalPos)) {
-        globalPos <- i
-      }
-      next
-    }
-
-    typeTargetId <- .rdmlIdChr(
-      typeTarget
-    )
-
-    if (
-      !is.na(target_id) &&
-      !is.na(typeTargetId) &&
-      identical(typeTargetId, target_id)
-    ) {
-      specificPos <- i
-      break
-    }
   }
-
-  pos <- if (!is.na(specificPos)) {
-    specificPos
-  } else {
-    globalPos
-  }
-
+  
+  type_keys <- .getKeys(
+    types,
+    "targetId"
+  )
+  
+  pos <- match(
+    target_id,
+    type_keys
+  )
+  
   if (is.na(pos)) {
-    return(NA_character_)
+    return(
+      NA_character_
+    )
   }
-
+  
   .rdmlEnumChr(
     S7::prop(
       types[[pos]],
@@ -376,6 +356,7 @@
     )
   )
 }
+
 
 .rdmlTargetDye <- function(
     targets,

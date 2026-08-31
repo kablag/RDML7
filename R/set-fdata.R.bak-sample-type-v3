@@ -351,20 +351,9 @@ S7::method(setFData, rdmlType) <- function(
           targetId = idReferenceType(targetId),
           sampleType = sampleTypeType(sampleType)
         )
-        sampleTypes <- .rdmlUpsertListByKey(
-          .rdmlPropList(
-            sampleObj,
-            "type"
-          ),
-          st,
-          key = "targetId"
-        )
-
-        sampleObj <- .rdmlSetPropList(
-          sampleObj,
-          "type",
-          sampleTypes
-        )
+        sampleTypes <- .rdmlPropKeyed(sampleObj, "type")
+        sampleTypes[[targetId]] <- st
+        sampleObj <- .rdmlSetPropList(sampleObj, "type", sampleTypes)
       }
 
       if ("quantity" %in% names(row)) {

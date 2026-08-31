@@ -296,50 +296,20 @@ NULL
     )
   }
 
-  # sampleType$type can be target-independent:
-  #
-  #   <type>unkn</type>
-  #
-  # or target-specific:
-  #
-  #   <type targetId="ACTB">unkn</type>
+  # sampleType$type is represented as:
+  # <type targetId="...">unkn</type>
   if (S7::S7_inherits(x, sampleTargetType)) {
-    targetId <- S7::prop(
-      x,
-      "targetId"
-    )
-
-    sampleTypeValue <- .rdmlEnumChr(
-      S7::prop(
-        x,
-        "sampleType"
-      )
-    )
-
-    if (.rdmlIsMissing(targetId)) {
-      return(
-        sprintf(
-          "<%s>%s</%s>",
-          nodeName,
-          .rdmlXmlEscape(sampleTypeValue),
-          nodeName
-        )
-      )
-    }
-
     return(
       sprintf(
         '<%s targetId="%s">%s</%s>',
         nodeName,
-        .rdmlXmlEscape(
-          .rdmlIdChr(targetId),
-          TRUE
-        ),
-        .rdmlXmlEscape(sampleTypeValue),
+        .rdmlXmlEscape(.rdmlIdChr(x$targetId), TRUE),
+        .rdmlXmlEscape(.rdmlEnumChr(x$sampleType)),
         nodeName
       )
     )
   }
+
   # quantity has a targetId attribute plus value/unit children.
   if (S7::S7_inherits(x, quantityType)) {
     body <- c(

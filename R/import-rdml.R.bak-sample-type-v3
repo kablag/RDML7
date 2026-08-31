@@ -93,55 +93,23 @@
   }
   
   parseSampleTypes <- function(sample) {
-    nodes <- xml2::xml_find_all(
-      sample,
-      "rdml:type",
-      rdmlEnv$ns
-    )
-
-    .compact(.xmlNodesApply(
-      nodes,
-      function(node) {
-        targetId <- xml2::xml_attr(
-          node,
-          "targetId"
-        )
-
-        if (is.na(targetId)) {
-          targetId <- xml2::xml_attr(
-            node,
-            "target"
-          )
-        }
-
-        # RDML permits both:
-        #
-        #   <type>std</type>
-        #
-        # and:
-        #
-        #   <type targetId="ACTB">std</type>
-        #
-        # A missing targetId is therefore preserved as a global sample
-        # role rather than discarded or duplicated for every target.
-        targetRef <- if (
-          is.na(targetId) ||
-          !nzchar(targetId)
-        ) {
-          NA
-        } else {
-          idReferenceType(targetId)
-        }
-
-        sampleTargetType(
-          targetId = targetRef,
-          sampleType = sampleTypeType(
-            xml2::xml_text(node)
-          )
-        )
-      }
-    ))
+    nodes <- xml2::xml_find_all(sample, "rdml:type", rdmlEnv$ns)
+    .compact(.xmlNodesApply(nodes, function(node) {
+      targetId <- xml2::xml_attr(node, "targetId")
+      if (is.na(targetId)) targetId <- xml2::xml_attr(node, "target")
+      
+      # Current sampleTargetType requires targetId. Older RDML files may
+      # contain a target-independent <type>; that value cannot be represented
+      # losslessly by the current S7 schema, so leave it out.
+      if (is.na(targetId) || !nzchar(targetId)) return(NULL)
+      
+      sampleTargetType(
+        targetId = idReferenceType(targetId),
+        sampleType = sampleTypeType(xml2::xml_text(node))
+      )
+    }))
   }
+  
   parseQuantities <- function(sample) {
     nodes <- xml2::xml_find_all(sample, "rdml:quantity", rdmlEnv$ns)
     .compact(.xmlNodesApply(nodes, function(node) {
@@ -293,6 +261,12 @@
     refGenesR <- NULL
     isRocheArchive <- FALSE
     
+    # RDML 1.0/1.1 may store one target-independent sample <type>, e.g.
+    # <type>std</type>. The current schema stores sample type per target.
+    # Preserve these values temporarily and expand them after reactions have
+    # been parsed, when the actual targets used by each sample are known.
+    legacySampleTypes <- list()
+    
     if (identical(format, "xml")) {
       rdmlDoc <- xml2::read_xml(fileName)
       rdmlEnv$ns <- xml2::xml_ns(rdmlDoc)
@@ -396,6 +370,33 @@
       function(sample) {
         id <- xml2::xml_attr(sample, "id")
         rawType <- .getTextValue(sample, "rdml:type")
+        
+        # Older RDML versions can store a target-independent sample type:
+        #
+        #   <type>std</type>
+        #
+        # Keep it temporarily. After experiments/reactions have been parsed,
+        # expand it to sampleTargetType objects for the targets actually used
+        # by this sample.
+        typeNodes <- xml2::xml_find_all(
+          sample,
+          "rdml:type",
+          rdmlEnv$ns
+        )
+        
+        for (typeNode in typeNodes) {
+          typeTargetId <- xml2::xml_attr(typeNode, "targetId")
+          if (is.na(typeTargetId)) {
+            typeTargetId <- xml2::xml_attr(typeNode, "target")
+          }
+          
+          if (is.na(typeTargetId) || !nzchar(typeTargetId)) {
+            legacyType <- trimws(xml2::xml_text(typeNode))
+            if (nzchar(legacyType)) {
+              legacySampleTypes[[id]] <- legacyType
+            }
+          }
+        }
         
         # Roche uses ntp as an omitted/empty sample marker.
         if (identical(rawType, "ntp")) return(NULL)
@@ -786,6 +787,129 @@
         S7::prop(firstRun, "id") <- idType("Combined Run")
         S7::prop(exp1, "run") <- list(firstRun)
         rdmlObj$experiment[[1]] <- exp1
+      }
+    }
+    
+    # Expand target-independent sample types from older RDML versions -------
+    #
+    # RDML 1.0/1.1 may contain:
+    #
+    #   <sample id="...">
+    #     <type>std</type>
+    #   </sample>
+    #
+    # The current S7 schema stores sample type per target. Apply the legacy
+    # type to each target that is actually measured for that sample. Explicit
+    # target-specific types imported by parseSampleTypes() are preserved.
+    
+    if (length(legacySampleTypes)) {
+      
+      getSampleTargetIds <- function(sampleId) {
+        targetIds <- character()
+        
+        for (experimentObj in rdmlObj$experiment) {
+          runs <- S7::prop(experimentObj, "run")
+          
+          if (.isSingleNa(runs) || !length(runs)) {
+            next
+          }
+          
+          for (runObj in runs) {
+            reacts <- S7::prop(runObj, "react")
+            
+            if (.isSingleNa(reacts) || !length(reacts)) {
+              next
+            }
+            
+            for (reactObj in reacts) {
+              reactSampleId <- .rdmlIdChr(
+                S7::prop(reactObj, "sample")
+              )
+              
+              if (
+                is.na(reactSampleId) ||
+                !identical(reactSampleId, sampleId)
+              ) {
+                next
+              }
+              
+              dataList <- S7::prop(reactObj, "data")
+              
+              if (.isSingleNa(dataList) || !length(dataList)) {
+                next
+              }
+              
+              for (dataObj in dataList) {
+                targetId <- .rdmlIdChr(
+                  S7::prop(dataObj, "targetId")
+                )
+                
+                if (!is.na(targetId)) {
+                  targetIds <- c(targetIds, targetId)
+                }
+              }
+            }
+          }
+        }
+        
+        unique(targetIds)
+      }
+      
+      for (i in seq_along(rdmlObj$sample)) {
+        sampleObj <- rdmlObj$sample[[i]]
+        
+        sampleId <- .rdmlIdChr(
+          S7::prop(sampleObj, "id")
+        )
+        
+        legacyType <- legacySampleTypes[[sampleId]]
+        
+        if (is.null(legacyType)) {
+          next
+        }
+        
+        # Roche GetReact() replaces the UUID sample reference with the
+        # human-readable sample description before this pass. Other importers
+        # retain the original sample id.
+        reactionSampleId <- sampleId
+        
+        if (isRoche) {
+          description <- S7::prop(sampleObj, "description")
+          
+          if (!is.na(description) && nzchar(description)) {
+            reactionSampleId <- description
+          }
+        }
+        
+        targetIds <- getSampleTargetIds(
+          reactionSampleId
+        )
+        
+        if (!length(targetIds)) {
+          next
+        }
+        
+        types <- S7::prop(sampleObj, "type")
+        
+        if (.isSingleNa(types) || !length(types)) {
+          types <- list()
+        }
+        
+        for (targetId in targetIds) {
+          sampleTarget <- sampleTargetType(
+            targetId = idReferenceType(targetId),
+            sampleType = sampleTypeType(legacyType)
+          )
+          
+          types <- .rdmlUpsertListByKey(
+            types,
+            sampleTarget,
+            key = "targetId"
+          )
+        }
+        
+        S7::prop(sampleObj, "type") <- types
+        rdmlObj$sample[[i]] <- sampleObj
       }
     }
     
