@@ -103,4 +103,24 @@ test_that("rdmlImportData dollar access and build work", {
       adp |>
       .rdmlPresent()
   )
+  
+  expect_identical(
+    x$version,
+    "1.3"
+  )
+  
+  expect_error(
+    x$version <- "1.2",
+    "read-only"
+  )
+  
+  xml <- asXml(x)
+  
+  expect_true(
+    grepl(
+      'version="1.3"',
+      xml,
+      fixed = TRUE
+    )
+  )
 })

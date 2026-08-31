@@ -112,7 +112,6 @@ S7::method(`$<-`, rdmlImportSeries) <- function(x, name, value) {
 #' @param series List of `rdmlImportSeries` objects.
 #' @param publisher Optional source/device publisher.
 #' @param serialNumber Source/device serial identifier.
-#' @param version RDML version for the constructed object.
 #' @param format Source-format identifier.
 #' @param preserveReactIds Preserve supplied well/reaction ids literally.
 #' @param metadata Additional importer metadata.
@@ -125,7 +124,6 @@ rdmlImportData <- S7::new_class(
     series = .testImportSeriesList,
     publisher = classCharacterNaNonemptySingle,
     serialNumber = classCharacterNonemptySingle,
-    version = classCharacterNonemptySingle,
     format = classCharacterNaNonemptySingle,
     preserveReactIds = classFlag,
     metadata = S7::new_property(S7::class_list, default = list()),
@@ -135,7 +133,6 @@ rdmlImportData <- S7::new_class(
       series,
       publisher = NA_character_,
       serialNumber = "1",
-      version = "1.2",
       format = NA_character_,
       preserveReactIds = FALSE,
       metadata = list(),
@@ -146,7 +143,6 @@ rdmlImportData <- S7::new_class(
       series = series,
       publisher = publisher,
       serialNumber = serialNumber,
-      version = version,
       format = format,
       preserveReactIds = preserveReactIds,
       metadata = metadata,
@@ -246,8 +242,6 @@ rdmlBuildImport <- function(
     publisher = publisher,
     serialNumber = S7::prop(importData, "serialNumber")
   )
-
-  S7::prop(x, "version") <- S7::prop(importData, "version")
 
   for (series in S7::prop(importData, "series")) {
     x <- setFData(

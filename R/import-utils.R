@@ -141,7 +141,6 @@ rdmlEnv <- new.env(parent = emptyenv())
   }
 
   rdmlType(
-    version = "1.2",
     dateMade = NA_character_,
     dateUpdated = NA_character_,
     id = ids,

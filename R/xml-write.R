@@ -418,7 +418,6 @@ NULL
 
   if (S7::S7_inherits(x, rdmlType)) {
     version <- x$version
-    if (.rdmlIsMissing(version)) version <- "1.2"
     attributes <- paste0(
       ' xmlns="http://www.rdml.org" version="',
       .rdmlXmlEscape(version, TRUE),

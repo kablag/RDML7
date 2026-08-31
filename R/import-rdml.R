@@ -8,7 +8,6 @@
     format = "rdml") {
   
   rdmlObj <- list(
-    version = NA_character_,
     dateMade = NA_character_,
     dateUpdated = NA_character_,
     id = list(),
@@ -324,10 +323,6 @@
         }
       }
     }
-    
-    root <- xml2::xml_root(rdmlDoc)
-    rdmlObj$version <- xml2::xml_attr(root, "version")
-    if (is.na(rdmlObj$version)) rdmlObj$version <- ""
     
     rdmlObj$dateMade <- .getTextValue(rdmlDoc, "/rdml:rdml/rdml:dateMade")
     rdmlObj$dateUpdated <- .getTextValue(rdmlDoc, "/rdml:rdml/rdml:dateUpdated")

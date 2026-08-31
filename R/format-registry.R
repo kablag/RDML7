@@ -1553,7 +1553,6 @@ rdmlWrite <- function(
 #' @param fdataType `"adp"` or `"mdp"`.
 #' @param publisher Optional publisher/importer identifier.
 #' @param serialNumber Top-level serial number.
-#' @param version RDML version string.
 #' @param ... Additional arguments forwarded to `rdmlBuildImport()`.
 #' @return `rdmlType`.
 #' @seealso `setFData`, `rdmlImportData`
@@ -1564,7 +1563,6 @@ rdmlFromFData <- function(
     fdataType = "adp",
     publisher = NULL,
     serialNumber = "1",
-    version = "1.2",
     ...) {
 
   checkmate::assertChoice(
@@ -1574,8 +1572,6 @@ rdmlFromFData <- function(
       "mdp"
     )
   )
-
-  checkmate::assertString(version)
 
   importData <- rdmlImportData(
     series = list(
@@ -1587,7 +1583,6 @@ rdmlFromFData <- function(
     ),
     publisher = if (is.null(publisher)) NA_character_ else publisher,
     serialNumber = serialNumber,
-    version = version,
     format = "fdata"
   )
 

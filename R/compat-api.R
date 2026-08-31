@@ -538,9 +538,12 @@ rdml_from_fdata <- function(
     fdata.type = "adp",
     publisher = NULL,
     serial.number = "1",
+    # Retained for legacy API compatibility.
+    # RDML7 objects always represent RDML 1.3.
     version = "1.2",
     ...) {
-
+  
+  
   rdmlFromFData(
     fdata,
     .rdmlLegacyToCamelTable(
@@ -549,7 +552,6 @@ rdml_from_fdata <- function(
     fdataType = fdata.type,
     publisher = publisher,
     serialNumber = serial.number,
-    version = version,
     ...
   )
 }

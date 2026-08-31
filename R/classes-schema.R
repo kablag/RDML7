@@ -1317,7 +1317,7 @@ rdmlIdType <-
 #'
 #' @section Properties:
 #' \describe{
-#'   \item{`version`}{`character`. RDML format version.}
+#'   \item{`version`}{`character(1)`. RDML schema version represented by this object. Always `"1.3"` and read-only.}
 #'   \item{`dateMade`}{Date-time value or `NA`. Document creation date.}
 #'   \item{`dateUpdated`}{Date-time value or `NA`. Last update date.}
 #'   \item{`id`}{List of `rdmlIdType` objects or `NA`. Publisher identifiers.}
@@ -1338,34 +1338,22 @@ rdmlType <- S7::new_class(
   parent = rdmlBaseType,
   
   properties = list(
-    version = S7::class_character,
+    version = S7::new_property(
+      S7::class_character,
+      getter = function(self) .rdmlSchemaVersion
+    ),
     dateMade = classDateTimeNa,
     dateUpdated = classDateTimeNa,
-    
-    id =
-      .testClassNaList("rdmlIdType"),
-    
-    experimenter =
-      .testClassNaIdList("experimenterType"),
-    
-    documentation =
-      .testClassNaIdList("documentationType"),
-    
-    dye =
-      .testClassNaIdList("dyeType"),
-    
-    sample =
-      .testClassNaIdList("sampleType"),
-    
-    target =
-      .testClassNaIdList("targetType"),
-    
+    id = .testClassNaList("rdmlIdType"),
+    experimenter = .testClassNaIdList("experimenterType"),
+    documentation = .testClassNaIdList("documentationType"),
+    dye = .testClassNaIdList("dyeType"),
+    sample = .testClassNaIdList("sampleType"),
+    target = .testClassNaIdList("targetType"),
     thermalCyclingConditions =
       .testClassNaIdList(
         "thermalCyclingConditionsType"
       ),
-    
-    experiment =
-      .testClassNaIdList("experimentType")
+    experiment = .testClassNaIdList("experimentType")
   )
 )
