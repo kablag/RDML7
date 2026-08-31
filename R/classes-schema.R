@@ -1339,7 +1339,6 @@ rdmlType <- S7::new_class(
   
   properties = list(
     version = S7::new_property(
-      S7::class_character,
       getter = function(self) .rdmlSchemaVersion
     ),
     dateMade = classDateTimeNa,

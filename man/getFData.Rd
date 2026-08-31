@@ -44,8 +44,8 @@ Amplification output contains `cyc`, optional `tmp`, and `fluor`;
 melting output contains `tmp` and `fluor`. Missing curves return an empty
 table with the appropriate columns.
 
-A `data.table`. Long output preserves every requested metadata row;
-if the selected curve is absent, coordinate/fluorescence values are `NA`.
+A `data.table`. In long form, rows without the selected curve are
+retained only when `includeMissing = TRUE`.
 }
 \description{
 Extract fluorescence data

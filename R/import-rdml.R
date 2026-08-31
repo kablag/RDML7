@@ -346,17 +346,52 @@
     }
     isRoche <- identical(publisher, "Roche Diagnostics")
     
+    requiredExperimenterText <- function(node, path) {
+      value <- .getTextValue(
+        node,
+        path
+      )
+      
+      if (
+        is.na(value) ||
+        !nzchar(trimws(value))
+      ) {
+        return("Unknown")
+      }
+      
+      value
+    }
+    
     # experimenter ---------------------------------------------------------
     rdmlObj$experimenter <- .xmlNodesApply(
-      xml2::xml_find_all(rdmlDoc, "/rdml:rdml/rdml:experimenter", rdmlEnv$ns),
+      xml2::xml_find_all(
+        rdmlDoc,
+        "/rdml:rdml/rdml:experimenter",
+        rdmlEnv$ns
+      ),
       function(node) {
         experimenterType(
           id = .genId(node),
-          firstName = .getTextValue(node, "rdml:firstName"),
-          lastName = .getTextValue(node, "rdml:lastName"),
-          email = .getTextValue(node, "rdml:email"),
-          labName = .getTextValue(node, "rdml:labName"),
-          labAddress = .getTextValue(node, "rdml:labAddress")
+          firstName = requiredExperimenterText(
+            node,
+            "rdml:firstName"
+          ),
+          lastName = requiredExperimenterText(
+            node,
+            "rdml:lastName"
+          ),
+          email = .getTextValue(
+            node,
+            "rdml:email"
+          ),
+          labName = .getTextValue(
+            node,
+            "rdml:labName"
+          ),
+          labAddress = .getTextValue(
+            node,
+            "rdml:labAddress"
+          )
         )
       }
     )

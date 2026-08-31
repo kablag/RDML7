@@ -80,8 +80,8 @@ S7::method(getFData, dataType) <- function(x, dpType = "adp", ...) {
 #' @param includeMissing Keep metadata rows whose selected fluorescence
 #'   data type is absent.
 #' @param ... Reserved for method compatibility.
-#' @return A `data.table`. Long output preserves every requested metadata row;
-#' if the selected curve is absent, coordinate/fluorescence values are `NA`.
+#' @return A `data.table`. In long form, rows without the selected curve are
+#' retained only when `includeMissing = TRUE`.
 #' @rdname getFData
 #' @export
 S7::method(getFData, rdmlType) <- function(
@@ -94,6 +94,7 @@ S7::method(getFData, rdmlType) <- function(
 
   checkmate::assertChoice(dpType, c("adp", "mdp"))
   checkmate::assertFlag(longTable)
+  checkmate::assertFlag(includeMissing)
 
   if (!requireNamespace("data.table", quietly = TRUE)) {
     stop("Package 'data.table' is required", call. = FALSE)

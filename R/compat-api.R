@@ -332,6 +332,7 @@ GetFData <- function(
     request = requestCamel,
     dpType = dp.type,
     longTable = long.table,
+    includeMissing = TRUE,
     ...
   )
 
