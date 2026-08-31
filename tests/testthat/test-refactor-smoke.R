@@ -1,8 +1,14 @@
 testthat::test_that("schema uses corrected property names", {
-  x <- rdmlType(version = "1.2")
-
-  testthat::expect_true("dateUpdated" %in% names(x))
-  testthat::expect_false("dateUpadted" %in% names(x))
+  x <- rdmlType()
+  
+  testthat::expect_identical(
+    x$version,
+    "1.3"
+  )
+  
+  testthat::expect_true(
+    "dateUpdated" %in% names(x)
+  )
 
   run <- runType(
     id = idType("run1"),
@@ -73,8 +79,21 @@ testthat::test_that("sample target-aware properties are keyed", {
     )
   )
 
-  testthat::expect_identical(names(sample$type), "ACTB")
-  testthat::expect_identical(names(sample$quantity), "ACTB")
+  expect_null(
+    names(sample$type)
+  )
+  
+  expect_identical(
+    as.character(
+      sample$type[[1L]]$targetId
+    ),
+    "ACTB"
+  )
+  
+  expect_identical(
+    names(sample$quantity),
+    "ACTB"
+  )
 })
 
 

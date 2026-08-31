@@ -1,5 +1,7 @@
 # Core S7 types ------------------------------------------------------------
 
+.rdmlSchemaVersion <- "1.3"
+
 # Abstract enum base.
 rdmlEnum <- S7::new_class(
   "rdmlEnum",

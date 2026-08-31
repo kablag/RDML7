@@ -10,7 +10,6 @@ rdmlFromFData(
   fdataType = "adp",
   publisher = NULL,
   serialNumber = "1",
-  version = "1.2",
   ...
 )
 }
@@ -24,8 +23,6 @@ rdmlFromFData(
 \item{publisher}{Optional publisher/importer identifier.}
 
 \item{serialNumber}{Top-level serial number.}
-
-\item{version}{RDML version string.}
 
 \item{...}{Additional arguments forwarded to `rdmlBuildImport()`.}
 }

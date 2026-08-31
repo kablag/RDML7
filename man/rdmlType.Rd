@@ -8,7 +8,6 @@ An S7 class.
 }
 \usage{
 rdmlType(
-  version = character(0),
   dateMade = NA_character_,
   dateUpdated = NA_character_,
   id = NA,
@@ -27,7 +26,7 @@ Top-level container representing one RDML document. Its structure mirrors the RD
 \section{Properties}{
 
 \describe{
-  \item{`version`}{`character`. RDML format version.}
+  \item{`version`}{`character(1)`. RDML schema version represented by this object. Always `"1.3"` and read-only.}
   \item{`dateMade`}{Date-time value or `NA`. Document creation date.}
   \item{`dateUpdated`}{Date-time value or `NA`. Last update date.}
   \item{`id`}{List of `rdmlIdType` objects or `NA`. Publisher identifiers.}

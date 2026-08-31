@@ -12,7 +12,14 @@ getFData(x, ...)
 getFData(x, dpType = "adp", ...)
 
 ## S7 method for class <RDML7::rdmlType>
-getFData(x, request, dpType = "adp", longTable = FALSE, ...)
+getFData(
+  x,
+  request,
+  dpType = "adp",
+  longTable = FALSE,
+  includeMissing = FALSE,
+  ...
+)
 }
 \arguments{
 \item{x}{`rdmlType`.}
@@ -26,6 +33,9 @@ used.}
 
 \item{longTable}{Return long form joined to request metadata instead of
 wide form.}
+
+\item{includeMissing}{Keep metadata rows whose selected fluorescence
+data type is absent.}
 }
 \value{
 A `data.table`.

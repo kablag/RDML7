@@ -60,6 +60,18 @@ classCharacterNonemptySingle <- S7::new_property(
   }
 )
 
+classCharacterSingle <- S7::new_property(
+  S7::class_character,
+  validator = function(value) {
+    if (
+      length(value) != 1L ||
+      is.na(value)
+    ) {
+      "must be a single string"
+    }
+  }
+)
+
 classFlagNa <- S7::new_property(
   S7::class_any,
   validator = function(value) {
@@ -398,3 +410,6 @@ classPositiveIntegerNaSingle <- S7::new_property(
 
   attr(property, "rdmlElementClass")
 }
+
+
+

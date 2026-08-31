@@ -8,7 +8,6 @@ rdmlImportData(
   series,
   publisher = NA_character_,
   serialNumber = "1",
-  version = "1.2",
   format = NA_character_,
   preserveReactIds = FALSE,
   metadata = list(),
@@ -21,8 +20,6 @@ rdmlImportData(
 \item{publisher}{Optional source/device publisher.}
 
 \item{serialNumber}{Source/device serial identifier.}
-
-\item{version}{RDML version for the constructed object.}
 
 \item{format}{Source-format identifier.}
 

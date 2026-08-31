@@ -1,4 +1,4 @@
 library(testthat)
-library(RDML)
+library(RDML7)
 
-test_check("RDML")
+test_check("RDML7")

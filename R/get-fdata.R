@@ -77,6 +77,8 @@ S7::method(getFData, dataType) <- function(x, dpType = "adp", ...) {
 #' @param dpType `"adp"` or `"mdp"`.
 #' @param longTable Return long form joined to request metadata instead of
 #' wide form.
+#' @param includeMissing Keep metadata rows whose selected fluorescence
+#'   data type is absent.
 #' @param ... Reserved for method compatibility.
 #' @return A `data.table`. Long output preserves every requested metadata row;
 #' if the selected curve is absent, coordinate/fluorescence values are `NA`.
@@ -87,6 +89,7 @@ S7::method(getFData, rdmlType) <- function(
     request,
     dpType = "adp",
     longTable = FALSE,
+    includeMissing = FALSE,
     ...) {
 
   checkmate::assertChoice(dpType, c("adp", "mdp"))
@@ -177,7 +180,7 @@ S7::method(getFData, rdmlType) <- function(
         request,
         outLong,
         by = "fdataName",
-        all.x = TRUE,
+        all.x = includeMissing,
         sort = FALSE
       )
     )

@@ -11,6 +11,32 @@
       stringsAsFactors = FALSE,
       check.names = FALSE
     )
+    
+    # For old columns names
+    legacyColumns <- c(
+      "fdata.name" = "fdataName",
+      "exp.id" = "expId",
+      "run.id" = "runId",
+      "react.id" = "reactId",
+      "sample.type" = "sampleType",
+      "target.dyeId" = "targetDyeId"
+    )
+    
+    oldNames <- intersect(
+      names(legacyColumns),
+      names(descr)
+    )
+    
+    if (length(oldNames)) {
+      names(descr)[
+        match(
+          oldNames,
+          names(descr)
+        )
+      ] <- unname(
+        legacyColumns[oldNames]
+      )
+    }
 
     # Bio-Rad export layout.
     if ("Well" %in% names(descr)) {
