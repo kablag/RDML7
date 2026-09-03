@@ -122,9 +122,9 @@ rdmlImportData <- S7::new_class(
   "rdmlImportData",
   properties = list(
     series = .testImportSeriesList,
-    publisher = classCharacterNaNonemptySingle,
+    publisher = classCharacterNANonemptySingle,
     serialNumber = classCharacterNonemptySingle,
-    format = classCharacterNaNonemptySingle,
+    format = classCharacterNANonemptySingle,
     preserveReactIds = classFlag,
     metadata = S7::new_property(S7::class_list, default = list()),
     losses = S7::new_property(S7::class_list, default = list())

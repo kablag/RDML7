@@ -17,7 +17,8 @@ experimenterType(
 )
 }
 \description{
-Contact details of an experimenter associated with an RDML document or thermal cycling conditions. Inherits from `rdmlBaseType`.
+Contact details of an experimenter associated with an RDML document or
+ thermal cycling conditions. Inherits from `rdmlBaseType`.
 }
 \section{Properties}{
 

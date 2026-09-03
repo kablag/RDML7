@@ -10,7 +10,9 @@ An S7 class.
 documentationType(id = NULL, text = NA_character_)
 }
 \description{
-Reusable documentation text. Use this type when the same description or note is referenced by several samples, targets, runs, or experiments. Inherits from `rdmlBaseType`.
+Reusable documentation text. Use this type when the same description or
+ note is referenced by several samples, targets, runs, or experiments.
+ Inherits from `rdmlBaseType`.
 }
 \section{Properties}{
 

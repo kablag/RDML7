@@ -1,16 +1,16 @@
 # Property validators and property metadata ---------------------------------
 # Internal helpers used by the S7 RDML schema.
 
-.isSingleNa <- function(x) {
+.isSingleNA <- function(x) {
   length(x) == 1L &&
     is.atomic(x) &&
     isTRUE(is.na(x))
 }
 
-classDateTimeNa <- S7::new_property(
+classDateTimeNA <- S7::new_property(
   S7::class_any,
   validator = function(value) {
-    if (.isSingleNa(value)) {
+    if (.isSingleNA(value)) {
       return(NULL)
     }
 
@@ -32,7 +32,7 @@ classDateTimeNa <- S7::new_property(
   default = NA_character_
 )
 
-classCharacterNaNonemptySingle <- S7::new_property(
+classCharacterNANonemptySingle <- S7::new_property(
   S7::class_any,
   validator = function(value) {
     if (!checkmate::testString(
@@ -52,8 +52,8 @@ classCharacterNonemptySingle <- S7::new_property(
   validator = function(value) {
     if (
       length(value) != 1L ||
-      is.na(value) ||
-      !nzchar(trimws(value))
+        is.na(value) ||
+        !nzchar(trimws(value))
     ) {
       "must be a single non-empty string"
     }
@@ -72,7 +72,7 @@ classCharacterSingle <- S7::new_property(
   }
 )
 
-classFlagNa <- S7::new_property(
+classFlagNA <- S7::new_property(
   S7::class_any,
   validator = function(value) {
     if (!checkmate::testFlag(value, na.ok = TRUE)) {
@@ -97,7 +97,7 @@ classDataTable <- S7::new_property(
   S7::class_data.frame
 )
 
-classNumberNaSingle <- S7::new_property(
+classNumberNASingle <- S7::new_property(
   S7::class_any,
   validator = function(value) {
     if (!checkmate::testNumber(value, na.ok = TRUE)) {
@@ -107,10 +107,10 @@ classNumberNaSingle <- S7::new_property(
   default = NA_real_
 )
 
-classNumberNaVector <- S7::new_property(
+classNumberNAVector <- S7::new_property(
   S7::class_any,
   validator = function(value) {
-    if (.isSingleNa(value)) {
+    if (.isSingleNA(value)) {
       return(NULL)
     }
 
@@ -150,7 +150,7 @@ classPositiveIntegerSingle <- S7::new_property(
   }
 )
 
-classIntegerNaSingle <- S7::new_property(
+classIntegerNASingle <- S7::new_property(
   S7::class_any,
   validator = function(value) {
     if (!checkmate::testInt(value, na.ok = TRUE)) {
@@ -160,7 +160,7 @@ classIntegerNaSingle <- S7::new_property(
   default = NA_integer_
 )
 
-classPositiveIntegerNaSingle <- S7::new_property(
+classPositiveIntegerNASingle <- S7::new_property(
   S7::class_any,
   validator = function(value) {
     if (!checkmate::testInt(value, lower = 0, na.ok = TRUE)) {
@@ -213,7 +213,7 @@ classPositiveIntegerNaSingle <- S7::new_property(
 }
 
 
-.testClassNa <- function(className) {
+.testClassNA <- function(className) {
   cls <- .resolveS7Class(
     className,
     envir = parent.frame()
@@ -222,7 +222,7 @@ classPositiveIntegerNaSingle <- S7::new_property(
   S7::new_property(
     S7::class_any,
     validator = function(value) {
-      if (.isSingleNa(value)) {
+      if (.isSingleNA(value)) {
         return(NULL)
       }
 
@@ -264,7 +264,7 @@ classPositiveIntegerNaSingle <- S7::new_property(
 }
 
 
-.testClassNaList <- function(className) {
+.testClassNAList <- function(className) {
   cls <- .resolveS7Class(
     className,
     envir = parent.frame()
@@ -273,7 +273,7 @@ classPositiveIntegerNaSingle <- S7::new_property(
   S7::new_property(
     S7::class_any,
     validator = function(value) {
-      if (.isSingleNa(value)) {
+      if (.isSingleNA(value)) {
         return(NULL)
       }
 
@@ -295,7 +295,7 @@ classPositiveIntegerNaSingle <- S7::new_property(
 }
 
 
-.testClassNaKeyedList <- function(className, key = "id") {
+.testClassNAKeyedList <- function(className, key = "id") {
   cls <- .resolveS7Class(
     className,
     envir = parent.frame()
@@ -304,7 +304,7 @@ classPositiveIntegerNaSingle <- S7::new_property(
   property <- S7::new_property(
     S7::class_any,
     validator = function(value) {
-      if (.isSingleNa(value)) {
+      if (.isSingleNA(value)) {
         return(NULL)
       }
 
@@ -364,8 +364,8 @@ classPositiveIntegerNaSingle <- S7::new_property(
 }
 
 
-.testClassNaIdList <- function(className) {
-  .testClassNaKeyedList(
+.testClassNAIdList <- function(className) {
+  .testClassNAKeyedList(
     className,
     key = "id"
   )
@@ -410,6 +410,3 @@ classPositiveIntegerNaSingle <- S7::new_property(
 
   attr(property, "rdmlElementClass")
 }
-
-
-

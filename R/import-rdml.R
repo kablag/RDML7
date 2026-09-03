@@ -26,11 +26,11 @@
     
     for (exp in rdmlObj$experiment) {
       runs <- S7::prop(exp, "run")
-      if (.isSingleNa(runs) || !length(runs)) next
+      if (.isSingleNA(runs) || !length(runs)) next
       
       for (run in runs) {
         reacts <- S7::prop(run, "react")
-        if (.isSingleNa(reacts) || !length(reacts)) next
+        if (.isSingleNA(reacts) || !length(reacts)) next
         
         for (react in reacts) {
           n <- n + 1L
@@ -664,7 +664,7 @@
         ),
         partitions = {
           partitions <- GetPartitions(react)
-          if (.isSingleNa(partitions)) list() else list(partitions)
+          if (.isSingleNA(partitions)) list() else list(partitions)
         }
       )
     }
@@ -804,8 +804,8 @@
             } else {
               existingData <- S7::prop(existing, "data")
               newData <- S7::prop(react, "data")
-              if (.isSingleNa(existingData)) existingData <- list()
-              if (.isSingleNa(newData)) newData <- list()
+              if (.isSingleNA(existingData)) existingData <- list()
+              if (.isSingleNA(newData)) newData <- list()
               S7::prop(existing, "data") <- c(existingData, newData)
               firstReacts <- .listSetByKey(firstReacts, reactId, existing, "id")
             }
@@ -834,7 +834,7 @@
       }
       
       # Add Roche reference-gene flags.
-      if (!is.null(refGenesR) && length(refGenesR) != 0L && !.isSingleNa(refGenesR)) {
+      if (!is.null(refGenesR) && length(refGenesR) != 0L && !.isSingleNA(refGenesR)) {
         ns <- xml2::xml_ns_rename(xml2::xml_ns(refGenesR), d3 = "rel")
         for (i in seq_along(refGenesR)) {
           refGene <- refGenesR[[i]]
@@ -871,14 +871,14 @@
           for (experimentObj in rdmlObj$experiment) {
             runs <- S7::prop(experimentObj, "run")
             
-            if (.isSingleNa(runs) || !length(runs)) {
+            if (.isSingleNA(runs) || !length(runs)) {
               next
             }
             
             for (runObj in runs) {
               reacts <- S7::prop(runObj, "react")
               
-              if (.isSingleNa(reacts) || !length(reacts)) {
+              if (.isSingleNA(reacts) || !length(reacts)) {
                 next
               }
               
@@ -901,7 +901,7 @@
                 "data"
               )
               
-              if (.isSingleNa(dataList) || !length(dataList)) {
+              if (.isSingleNA(dataList) || !length(dataList)) {
                 next
               }
               
@@ -981,7 +981,7 @@
               "quantity"
             )
             
-            if (.isSingleNa(quantities) || !length(quantities)) {
+            if (.isSingleNA(quantities) || !length(quantities)) {
               quantities <- list()
             }
             

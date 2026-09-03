@@ -94,20 +94,13 @@ rdmlKeyedList <- S7::new_class(
       stop("`x` must be a list", call. = FALSE)
     }
 
-    if (
-      length(key) != 1L ||
-      is.na(key) ||
-      !nzchar(key)
-    ) {
+    if (length(key) != 1L || is.na(key) || !nzchar(key)) {
       stop("`key` must be one non-empty string", call. = FALSE)
     }
 
     names(x) <- NULL
 
-    S7::new_object(
-      x,
-      key = key
-    )
+    S7::new_object(x, key = key)
   },
   validator = function(self) {
     x <- S7::S7_data(self)
@@ -116,10 +109,7 @@ rdmlKeyedList <- S7::new_class(
       return(NULL)
     }
 
-    keys <- .getKeys(
-      x,
-      self@key
-    )
+    keys <- .getKeys(x, self@key)
 
     errors <- character()
 
@@ -134,19 +124,13 @@ rdmlKeyedList <- S7::new_class(
     }
 
     duplicates <- unique(
-      keys[
-        duplicated(keys) &
-          !is.na(keys)
-      ]
+      keys[ duplicated(keys) & !is.na(keys)]
     )
 
     if (length(duplicates)) {
       errors <- c(
         errors,
-        paste0(
-          "duplicated ",
-          self@key,
-          ": ",
+        paste0("duplicated ", self@key, ": ",
           paste(duplicates, collapse = ", ")
         )
       )
@@ -159,10 +143,7 @@ rdmlKeyedList <- S7::new_class(
 )
 
 S7::method(names, rdmlKeyedList) <- function(x) {
-  .getKeys(
-    S7::S7_data(x),
-    x@key
-  )
+  .getKeys(S7::S7_data(x), x@key)
 }
 
 S7::method(`names<-`, rdmlKeyedList) <- function(x, value) {
@@ -177,10 +158,7 @@ S7::method(`[[`, rdmlKeyedList) <- function(x, i, ...) {
 
   if (is.character(i)) {
     if (length(i) != 1L) {
-      stop(
-        "character index must have length 1",
-        call. = FALSE
-      )
+      stop("character index must have length 1", call. = FALSE)
     }
 
     pos <- match(i, names(x))
@@ -219,10 +197,7 @@ S7::method(`[[<-`, rdmlKeyedList) <- function(x, i, ..., value) {
       )
     }
 
-    keys <- .getKeys(
-      data,
-      x@key
-    )
+    keys <- .getKeys(data, x@key)
 
     pos <- match(i, keys)
 
@@ -237,21 +212,12 @@ S7::method(`[[<-`, rdmlKeyedList) <- function(x, i, ..., value) {
 
       data[[pos]] <- NULL
 
-      return(
-        .setKeyedListData(x, data)
-      )
+      return(.setKeyedListData(x, data))
     }
 
-    valueKey <- .getKey(
-      value,
-      x@key
-    )
+    valueKey <- .getKey(value, x@key)
 
-    if (
-      length(valueKey) != 1L ||
-      is.na(valueKey) ||
-      !nzchar(valueKey)
-    ) {
+    if (length(valueKey) != 1L || is.na(valueKey) || !nzchar(valueKey)) {
       stop(
         "replacement object must have a non-empty ",
         x@key,
@@ -264,10 +230,7 @@ S7::method(`[[<-`, rdmlKeyedList) <- function(x, i, ..., value) {
       if (!identical(valueKey, i)) {
         newPos <- match(valueKey, keys)
 
-        if (
-          !is.na(newPos) &&
-          newPos != pos
-        ) {
+        if (!is.na(newPos) && newPos != pos) {
           stop(
             "Cannot rename '", i,
             "' to '", valueKey,
@@ -337,17 +300,11 @@ S7::method(`[`, rdmlKeyedList) <- function(x, i, ...) {
     }
 
     return(
-      rdmlKeyedList(
-        data[pos],
-        key = x@key
-      )
+      rdmlKeyedList(data[pos], key = x@key)
     )
   }
 
-  rdmlKeyedList(
-    data[i, ...],
-    key = x@key
-  )
+  rdmlKeyedList(data[i, ...], key = x@key)
 }
 
 S7::method(`[<-`, rdmlKeyedList) <- function(x, i, ..., value) {
@@ -372,9 +329,7 @@ S7::method(`[<-`, rdmlKeyedList) <- function(x, i, ..., value) {
 
     value <- .asReplacementList(value)
 
-    return(
-      .setKeyedListData(x, value)
-    )
+    return(.setKeyedListData(x, value))
   }
 
   # Numeric / logical indexing ----------------------------------------
@@ -386,16 +341,11 @@ S7::method(`[<-`, rdmlKeyedList) <- function(x, i, ..., value) {
       data[i] <- value
     }
 
-    return(
-      .setKeyedListData(x, data)
-    )
+    return(.setKeyedListData(x, data))
   }
 
   # Character keys ----------------------------------------------------
-  if (
-    anyNA(i) ||
-    any(i == "")
-  ) {
+  if (anyNA(i) || any(i == "")) {
     stop(
       "keys must be non-empty strings",
       call. = FALSE
@@ -420,9 +370,7 @@ S7::method(`[<-`, rdmlKeyedList) <- function(x, i, ..., value) {
 
     if (anyNA(pos)) {
       stop(
-        "Unknown ",
-        x@key,
-        ": ",
+        "Unknown ", x@key, ": ",
         paste(
           sprintf("'%s'", i[is.na(pos)]),
           collapse = ", "
@@ -433,9 +381,7 @@ S7::method(`[<-`, rdmlKeyedList) <- function(x, i, ..., value) {
 
     data <- data[-pos]
 
-    return(
-      .setKeyedListData(x, data)
-    )
+    return(.setKeyedListData(x, data))
   }
 
   # Replacement / addition --------------------------------------------
@@ -469,10 +415,7 @@ S7::method(`[<-`, rdmlKeyedList) <- function(x, i, ..., value) {
 
   for (k in seq_along(i)) {
     # Recompute because an earlier replacement may have renamed a key.
-    currentKeys <- .getKeys(
-      data,
-      x@key
-    )
+    currentKeys <- .getKeys(data, x@key)
 
     oldKey <- i[[k]]
     newKey <- valueKeys[[k]]
