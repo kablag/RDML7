@@ -35,7 +35,7 @@ RDES specification.
 ## Import amplification data
 
 ```r
-amp <- rdmlRead(
+amp <- readRDML(
   "RDES_v1_0_example_amplification.tsv"
 )
 ```
@@ -43,7 +43,7 @@ amp <- rdmlRead(
 The format can also be selected explicitly.
 
 ```r
-amp <- rdmlRead(
+amp <- readRDML(
   "RDES_v1_0_example_amplification.tsv",
   format = "rdes",
   expId = "RDES",
@@ -54,7 +54,7 @@ amp <- rdmlRead(
 ## Import melting data
 
 ```r
-melt <- rdmlRead(
+melt <- readRDML(
   "RDES_v1_0_example_melting.tsv",
   format = "rdes"
 )
@@ -76,7 +76,7 @@ RDES stores the two curve types in independent files. Use `companionFile` to
 merge them into one RDML run.
 
 ```r
-both <- rdmlRead(
+both <- readRDML(
   "run_amplification.tsv",
   format = "rdes",
   companionFile = "run_melting.tsv",
@@ -119,7 +119,7 @@ such an object to RDML can trigger a lossy-conversion warning/error.
 ## Strict parsing
 
 ```r
-x <- rdmlRead(
+x <- readRDML(
   "run.tsv",
   format = "rdes",
   strict = TRUE
@@ -132,7 +132,7 @@ strict mode converts them into errors.
 ## Export amplification or melting data
 
 ```r
-rdmlWrite(
+writeRDML(
   both,
   "run_amplification.tsv",
   format = "rdes",
@@ -141,7 +141,7 @@ rdmlWrite(
   rdesType = "adp"
 )
 
-rdmlWrite(
+writeRDML(
   both,
   "run_melting.tsv",
   format = "rdes",
@@ -154,7 +154,7 @@ rdmlWrite(
 ## Export both RDES files
 
 ```r
-paths <- rdmlWrite(
+paths <- writeRDML(
   both,
   "run.tsv",
   format = "rdes",

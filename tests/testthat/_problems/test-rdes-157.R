@@ -49,7 +49,7 @@ path <- tempfile(
       "17\ts1\tunkn\tACTB\ttoi\tEvaGreen\t\t5"
     )
   )
-x <- rdmlRead(
+x <- readRDML(
     path,
     format = "rdes",
     expId = "exp1",

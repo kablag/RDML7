@@ -50,7 +50,7 @@ test_that("RDES amplification import follows v1.0 layout", {
     "rdes"
   )
 
-  x <- rdmlRead(
+  x <- readRDML(
     fileName = path,
     format = "rdes",
     expId = "exp1",
@@ -107,7 +107,7 @@ test_that("RDES companion melting file is imported into the same run", {
     )
   )
 
-  x <- rdmlRead(
+  x <- readRDML(
     amp,
     format = "rdes",
     companionFile = melt,
@@ -149,7 +149,7 @@ test_that("RDES numeric rotor well labels are preserved", {
     )
   )
 
-  x <- rdmlRead(
+  x <- readRDML(
     path,
     format = "rdes",
     expId = "exp1",
@@ -210,7 +210,7 @@ test_that("RDES export writes exact metadata header and LF-separated TSV", {
     fileext = ".tsv"
   )
 
-  rdmlWrite(
+  writeRDML(
     x,
     out,
     format = "rdes",
@@ -307,7 +307,7 @@ test_that("RDES both export creates separate amplification and melting files", {
     fileext = ".tsv"
   )
 
-  paths <- rdmlWrite(
+  paths <- writeRDML(
     x,
     base,
     format = "rdes",
@@ -350,7 +350,7 @@ test_that("RDES multiple Tm values are retained", {
     )
   )
 
-  x <- rdmlRead(
+  x <- readRDML(
     path,
     format = "rdes",
     expId = "exp1",
@@ -401,7 +401,7 @@ test_that("official-style RDES header starting at cycle 3 imports", {
     )
   )
 
-  x <- rdmlRead(
+  x <- readRDML(
     path,
     format = "rdes",
     expId = "exp1",

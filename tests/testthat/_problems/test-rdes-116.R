@@ -59,7 +59,7 @@ melt <- tempfile(
       "A1\ts1\tunkn\tACTB\ttoi\tEvaGreen\t71.5\t100\t120\t80"
     )
   )
-x <- rdmlRead(
+x <- readRDML(
     amp,
     format = "rdes",
     companionFile = melt,

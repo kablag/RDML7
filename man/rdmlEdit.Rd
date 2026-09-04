@@ -14,5 +14,5 @@ Starts the optional Shiny-based editor when its GUI dependencies are
 installed.
 }
 \seealso{
-`rdmlRead`, `rdmlWrite`
+`readRDML`, `writeRDML`
 }

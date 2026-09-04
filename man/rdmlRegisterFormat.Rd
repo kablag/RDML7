@@ -46,5 +46,5 @@ Extension collisions are allowed. On read, sniffer confidence and then
 priority choose a handler. A reader returns `rdmlType` or `rdmlImportData`.
 }
 \seealso{
-`rdmlLoadModule`, `rdmlFormats`, `rdmlRead`
+`rdmlLoadModule`, `rdmlFormats`, `readRDML`
 }

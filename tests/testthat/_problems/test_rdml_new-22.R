@@ -17,7 +17,7 @@ files <- c(
     )
 for (file in files) {
       
-      x <- rdmlRead(
+      x <- readRDML(
         file.path(path, file),
         showProgress = FALSE,
         loss = "allow"

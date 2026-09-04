@@ -114,7 +114,7 @@ test_that("rdmlImportData dollar access and build work", {
     "read-only"
   )
   
-  xml <- asXml(x)
+  xml <- asXML(x)
   
   expect_true(
     grepl(

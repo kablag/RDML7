@@ -10,7 +10,7 @@ run. Amplification and melting data are stored in separate files.
 Single amplification or melting file:
 
 ```r
-x <- rdmlRead(
+x <- readRDML(
   "run_amplification.tsv",
   format = "rdes"
 )
@@ -19,7 +19,7 @@ x <- rdmlRead(
 Import an amplification + melting pair into the same run:
 
 ```r
-x <- rdmlRead(
+x <- readRDML(
   "run_amplification.tsv",
   format = "rdes",
   companionFile = "run_melting.tsv",
@@ -37,7 +37,7 @@ or `.txt`. The content is still tab-separated even when the extension is
 If the selected run contains only one curve type:
 
 ```r
-rdmlWrite(
+writeRDML(
   x,
   "run.tsv",
   format = "rdes"
@@ -47,7 +47,7 @@ rdmlWrite(
 Explicit amplification or melting export:
 
 ```r
-rdmlWrite(
+writeRDML(
   x,
   "run.tsv",
   format = "rdes",
@@ -60,7 +60,7 @@ rdmlWrite(
 Write both RDES files:
 
 ```r
-paths <- rdmlWrite(
+paths <- writeRDML(
   x,
   "run.tsv",
   format = "rdes",

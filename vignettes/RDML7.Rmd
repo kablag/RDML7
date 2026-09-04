@@ -1,0 +1,1185 @@
+---
+title: "Using the RDML7 package"
+author: "RDML7 authors"
+date: "`r Sys.Date()`"
+output:
+  rmarkdown::html_vignette:
+    toc: true
+    toc_depth: 3
+vignette: >
+  %\VignetteIndexEntry{Using the RDML7 package}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 7,
+  fig.height = 5
+)
+```
+
+# Introduction
+
+The **RDML7** package provides tools for importing, exporting, validating,
+inspecting, modifying, and converting quantitative PCR (qPCR) data represented
+by the Real-time PCR Data Markup Language (RDML).
+
+RDML stores both fluorescence measurements and experimental metadata in a
+structured format. The format is designed to make qPCR experiments easier to
+exchange, reproduce, and reanalyse.
+
+RDML7 is a major redesign of the original `RDML` R package described in:
+
+> Rödiger S, Burdukiewicz M, Spiess A-N, Blagodatskikh K.
+> *Enabling reproducible real-time quantitative PCR research: the RDML package.*
+> Bioinformatics 33(24), 4012–4014.
+> <https://doi.org/10.1093/bioinformatics/btx528>
+
+The original package used an R6 object model. RDML7 uses **S7 classes** and a
+primarily **functional API**. The main workflow is now:
+
+```text
+file
+  |
+  v
+readRDML()
+  |
+  v
+rdmlType
+  |
+  +---- asTable() -------- metadata / curve index
+  |
+  +---- getFData() ------- fluorescence data
+  |
+  +---- setFData() ------- add or replace fluorescence data
+  |
+  +---- rdmlSummary() ---- summary
+  |
+  +---- validateRDML() --- validation
+  |
+  +---- asDendrogram() --- hierarchy
+  |
+  +---- mergeRdmls() ----- merge RDML objects
+  |
+  +---- writeRDML() ------ RDML / XML / RDES / other registered formats
+```
+
+The old names such as `AsTable()`, `GetFData()`, `SetFData()`,
+`AsDendrogram()`, `asXML()`, and `MergeRDMLs()` are retained as compatibility
+wrappers where possible. New code should use the camelCase API.
+
+# Main changes from the original RDML package
+
+The most important changes are:
+
+1. **S7 object model** instead of R6.
+2. **Value semantics**: functions that modify an object return a modified
+   object, which should normally be assigned back.
+3. **CamelCase functional API**, for example `asTable()` and `getFData()`.
+4. **Centralised file I/O** with `readRDML()` and `writeRDML()`.
+5. **Extensible format registry** with automatic format detection.
+6. **Direct support for importer modules** through a canonical intermediate
+   representation.
+7. **Validation and summary functions** for RDML objects.
+8. **RDES import/export** in addition to RDML and vendor/table formats.
+9. A revised `asTable()` interface with documented fields and reusable
+   `{field}` name templates.
+
+A migration summary is shown below.
+
+| Original API | RDML7 API |
+|---|---|
+| `RDML$new(filename = file)` | `readRDML(file)` |
+| `RDML$new()` | `rdmlType()` |
+| `x$AsTable()` / `AsTable(x)` | `asTable(x)` |
+| `x$GetFData()` / `GetFData(x)` | `getFData(x)` |
+| `x$SetFData()` / `SetFData(x)` | `x <- setFData(x, ...)` |
+| `x$AsDendrogram()` | `asDendrogram(x)` |
+| `x$asXML()` | `asXML(x)` or `writeRDML(x, ...)` |
+| `MergeRDMLs(...)` | `mergeRDMLs(...)` |
+| file-specific constructor logic | `readRDML()` + format registry |
+
+# Loading RDML7
+
+```{r load}
+library(RDML7)
+```
+
+The package contains example RDML files that can be used throughout this
+vignette.
+
+```{r example-file}
+filename <- system.file(
+  "extdata",
+  "lc96_bACTXY.rdml",
+  package = "RDML7"
+)
+
+filename
+```
+
+# Reading files
+
+## `readRDML()`
+
+Use `readRDML()` as the main entry point for file import.
+
+```{r read-rdml}
+lc96 <- readRDML(filename)
+lc96
+```
+
+The default format selection is automatic. If a format is ambiguous, it can be
+specified explicitly.
+
+```{r explicit-format, eval=FALSE}
+lc96 <- readRDML(
+  filename,
+  format = "rdml"
+)
+```
+
+This replaces the old pattern:
+
+```r
+# Original RDML package
+# lc96 <- RDML$new(filename = filename)
+```
+
+## Discovering available file formats
+
+The set of available formats is no longer hard-coded into the user-facing
+import function. It is stored in a registry.
+
+```{r formats}
+formats <- rdmlFormats()
+formats
+```
+
+`rdmlFormats()` reports, among other things, the registered format name,
+extensions, aliases, whether reading/writing/sniffing is available, the
+priority, API version, capabilities, and whether the handler is built in.
+
+To see which reader or writer would be selected for a particular path:
+
+```{r detect-format}
+rdmlDetectFormat(
+  filename,
+  operation = "read"
+)
+```
+
+RDML7 first uses the extension and, when necessary, registered format sniffers.
+If several handlers remain equally suitable, use `format =` explicitly.
+
+The repository includes readers for RDML/XML and several vendor or table
+formats. The exact supported set should be queried with `rdmlFormats()` rather
+than assumed from a fixed list.
+
+# RDML7 object structure
+
+RDML7 mirrors the hierarchy of the RDML schema. The principal top-level fields
+include:
+
+- `dateMade`
+- `dateUpdated`
+- `id`
+- `experimenter`
+- `documentation`
+- `dye`
+- `sample`
+- `target`
+- `thermalCyclingConditions`
+- `experiment`
+
+The important hierarchy containing fluorescence data is approximately:
+
+```text
+rdmlType
+  `-- experiment
+       `-- run
+            `-- react
+                 `-- data
+                      |-- adp   amplification data points
+                      `-- mdp   melting data points
+```
+
+## S7 property access
+
+RDML7 schema objects are S7 objects. Use `@` to access their properties.
+
+```{r s7-access}
+lc96@version
+
+names(lc96@experiment)
+
+experiment <- lc96@experiment[[1]]
+experiment@id@id
+```
+
+Collections such as experiments, runs, samples, and targets are keyed by their
+RDML identifiers. This makes it possible to inspect identifiers first and then
+select an element.
+
+```{r keyed-lists}
+names(lc96@experiment)
+
+experiment <- lc96@experiment[[1]]
+
+names(experiment@run)
+```
+
+For routine data analysis, direct traversal of the full hierarchy is usually
+unnecessary. `asTable()` and `getFData()` provide a flatter interface.
+
+# Summarising and validating RDML data
+
+## `rdmlSummary()`
+
+Use `rdmlSummary()` for a compact overview of an RDML object.
+
+```{r summary, eval=FALSE}
+rdmlSummary(lc96)
+```
+
+This is preferable to manually counting nested experiments, runs, reactions,
+targets, and curve types.
+
+## `validateRDML()` and `rdmlIsValid()`
+
+RDML7 provides validation functions in addition to S7 property validators.
+
+```{r validate, eval=FALSE}
+validation <- validateRDML(lc96)
+validation
+
+rdmlIsValid(lc96)
+```
+
+Use validation before exporting data or after programmatically modifying a
+large RDML object.
+
+# Visualising the hierarchy
+
+`asDendrogram()` creates a dendrogram representation of the experiment
+structure.
+
+```{r dendrogram, eval=FALSE}
+asDendrogram(lc96)
+```
+
+This is the RDML7 replacement for the old `x$AsDendrogram()` method.
+
+# Creating a table representation with `asTable()`
+
+`asTable()` creates one metadata row per RDML `dataType`. This table is the
+main bridge between the hierarchical RDML object and ordinary tabular R
+workflows.
+
+```{r as-table}
+tbl <- asTable(lc96)
+
+head(tbl)
+```
+
+The standard scalar fields are:
+
+- `fdataName` — unique name used to identify a fluorescence series;
+- `expId` — experiment identifier;
+- `runId` — run identifier;
+- `reactId` — reaction identifier;
+- `position` — plate/tube position;
+- `sample` — sample identifier;
+- `target` — target identifier;
+- `targetDyeId` — dye associated with the target;
+- `sampleType` — sample type;
+- `adp` — amplification data are present;
+- `mdp` — melting data are present.
+
+The camelCase names replace the old `fdata.name`, `exp.id`, `run.id`,
+`react.id`, `sample.type`, and `target.dyeId` columns.
+
+## Selecting standard columns
+
+The revised interface uses `columns` to select built-in output columns.
+
+```{r as-table-columns}
+tbl_small <- asTable(
+  lc96,
+  columns = c(
+    "expId",
+    "runId",
+    "position",
+    "sample",
+    "sampleType",
+    "target"
+  )
+)
+
+head(tbl_small)
+```
+
+Without `columns`, all built-in columns are returned.
+
+## `namePattern` templates
+
+`fdataName` must identify a fluorescence series. RDML7 supports readable
+`{field}` templates:
+
+```{r as-table-pattern}
+tbl <- asTable(
+  lc96,
+  namePattern =
+    "{expId}_{runId}_{position}_{sample}_{sampleType}_{target}"
+)
+
+head(tbl$fdataName)
+```
+
+Available built-in template fields are:
+
+```text
+{expId}
+{runId}
+{reactId}
+{position}
+{sample}
+{target}
+{targetDyeId}
+{sampleType}
+{adp}
+{mdp}
+```
+
+Custom columns supplied through `...` are also available to `namePattern`.
+
+Including `expId` and `runId` is recommended when an object may contain more
+than one experiment or run. It substantially reduces accidental duplicate
+`fdataName` values.
+
+## Adding custom columns
+
+Custom columns no longer need a separate `addColumns` argument. Supply a named
+expression directly through `...`.
+
+```{r custom-column}
+tbl <- asTable(
+  lc96,
+  columns = c(
+    "expId",
+    "runId",
+    "position",
+    "sample",
+    "target"
+  ),
+  sampleTarget = paste(
+    sample,
+    target,
+    sep = ":"
+  )
+)
+
+head(tbl)
+```
+
+The ready-to-use scalar fields available in custom expressions are:
+
+```text
+expId, runId, reactId, position, sample, target,
+targetDyeId, sampleType, adp, mdp
+```
+
+### Advanced custom columns
+
+For metadata not exposed as a built-in scalar field, `...` also provides the
+current structured RDML objects:
+
+```text
+experiment
+run
+react
+data
+samples
+targets
+dateMade
+dateUpdated
+id
+experimenter
+documentation
+dye
+thermalCyclingConditions
+```
+
+These objects are intended for advanced extraction. Because they are
+structured S7/RDML objects, they are not inserted directly into
+`namePattern`.
+
+For example, a scalar property can be extracted from the current `data`
+object and then used as a template field:
+
+```{r custom-s7-column, eval=FALSE}
+tbl <- asTable(
+  lc96,
+  cq = S7::prop(data, "cq"),
+  namePattern =
+    "{expId}_{runId}_{position}_{sample}_{target}_{cq}"
+)
+```
+
+Once `cq` is created as a scalar custom column, `{cq}` becomes available in
+`namePattern`.
+
+This design means users do **not** need to know internal helper functions such
+as `.rdmlIdChr()`, `.rdmlReactPosition()`, or `.rdmlSampleType()` merely to
+construct an `fdataName`.
+
+## Example: deriving concentration from a sample name
+
+User metadata can also be derived from existing scalar fields. For example,
+if a concentration is encoded as a separate underscore-delimited component
+of the sample name:
+
+```{r concentration-column, eval=FALSE}
+concValues <- c(
+  "500", "50", "10", "5", "1",
+  "0.5", "0.1", "0.01"
+)
+
+tbl <- asTable(
+  lc96,
+  concentration = {
+    parts <- strsplit(
+      sample,
+      "_",
+      fixed = TRUE
+    )[[1]]
+
+    value <- parts[
+      parts %in% concValues
+    ]
+
+    if (length(value)) {
+      as.numeric(value[[1]])
+    } else {
+      NA_real_
+    }
+  }
+)
+```
+
+This approach avoids falsely extracting a number that is only part of another
+identifier.
+
+## Legacy `default` and `addColumns`
+
+`default` and `addColumns` may be retained for compatibility with older code,
+but new code should normally use:
+
+```text
+columns + named expressions in ...
+```
+
+This gives `asTable()` a single, predictable column-selection model.
+
+# Getting fluorescence data
+
+Fluorescence data are stored separately from the flattened metadata table.
+Use `getFData()` to extract them.
+
+## Amplification data (`adp`)
+
+```{r get-adp}
+request <- asTable(lc96)
+
+amp <- getFData(
+  lc96,
+  request = request,
+  dpType = "adp"
+)
+
+head(amp)
+```
+
+For amplification data, the wide table uses `cyc` as its primary coordinate.
+If cycle temperatures are present, `tmp` may also be available.
+
+## Melting data (`mdp`)
+
+```{r get-mdp}
+melt <- getFData(
+  lc96,
+  request = request,
+  dpType = "mdp"
+)
+
+head(melt)
+```
+
+For melting data, the coordinate is `tmp`.
+
+## Long-table output
+
+For plotting and grouped statistical analysis, use `longTable = TRUE`.
+
+```{r get-long}
+ampLong <- getFData(
+  lc96,
+  request = request,
+  dpType = "adp",
+  longTable = TRUE
+)
+
+head(ampLong)
+```
+
+The long representation combines fluorescence points with the metadata from
+the request table.
+
+## Filtering curves before extraction
+
+Because `request` is an ordinary table, it can be filtered before calling
+`getFData()`.
+
+```{r filtering}
+stdRequest <- request[
+  request$sampleType == "std",
+]
+
+stdAmp <- getFData(
+  lc96,
+  request = stdRequest,
+  dpType = "adp",
+  longTable = TRUE
+)
+
+head(stdAmp)
+```
+
+This replaces the original workflow in which `AsTable()` output was passed to
+`GetFData()`.
+
+## Plotting with ggplot2
+
+```{r plot-curves, eval=FALSE}
+library(ggplot2)
+
+ggplot(
+  stdAmp,
+  aes(
+    x = cyc,
+    y = fluor,
+    group = fdataName,
+    colour = target
+  )
+) +
+  geom_line()
+```
+
+# Adding or replacing fluorescence data
+
+RDML7 uses **value semantics**. `setFData()` returns the modified object, so
+assign it back:
+
+```r
+x <- setFData(x, ...)
+```
+
+Do not rely on the in-place mutation semantics of the old R6 implementation.
+
+`setFData()` accepts:
+
+- a wide fluorescence table;
+- a description table;
+- `fdataType = "adp"` or `"mdp"`;
+- `conflict = "error"`, `"keep"`, or `"replace"`.
+
+The fluorescence table has a first coordinate column (`cyc` or `tmp`) and one
+column per fluorescence series. The series names must match
+`description$fdataName`.
+
+# Creating an RDML object from tables
+
+A minimal RDML object can be created with `rdmlType()` and populated with
+`setFData()`.
+
+```{r create-from-tables}
+fdata <- data.frame(
+  cyc = 1:6,
+  c1 = c(10, 11, 13, 18, 35, 80),
+  c2 = c(9, 10, 12, 16, 29, 65)
+)
+
+description <- data.frame(
+  fdataName = c("c1", "c2"),
+  expId = c("exp1", "exp1"),
+  runId = c("run1", "run1"),
+  reactId = c("1", "2"),
+  sample = c("sample1", "sample2"),
+  sampleType = c("unkn", "unkn"),
+  target = c("gene1", "gene1"),
+  targetDyeId = c("FAM", "FAM"),
+  stringsAsFactors = FALSE
+)
+
+sim <- rdmlType()
+
+sim <- setFData(
+  sim,
+  fdata = fdata,
+  description = description,
+  fdataType = "adp"
+)
+
+asTable(sim)
+```
+
+The required description columns are:
+
+```text
+fdataName
+expId
+runId
+reactId
+target
+```
+
+Sample and target metadata are used when new schema objects are created.
+Missing experiments, runs, reactions, samples, targets, and dyes are created
+as needed.
+
+For conflicting existing data:
+
+```{r set-conflicts, eval=FALSE}
+sim <- setFData(
+  sim,
+  fdata,
+  description,
+  fdataType = "adp",
+  conflict = "replace"
+)
+```
+
+The conflict policies are:
+
+- `"error"` — stop on a conflict;
+- `"keep"` — keep existing data;
+- `"replace"` — replace existing data.
+
+# Importing vendor and table data
+
+File import is now handled by `readRDML()` and the format registry.
+
+For example:
+
+```{r vendor-import, eval=FALSE}
+x <- readRDML("instrument-export-file")
+```
+
+If automatic detection is ambiguous:
+
+```{r vendor-import-explicit, eval=FALSE}
+x <- readRDML(
+  "instrument-export-file",
+  format = "registered-format-name"
+)
+```
+
+Always use:
+
+```{r show-formats-again}
+rdmlFormats()
+```
+
+to inspect the format names actually registered in the installed version of
+RDML7.
+
+The source tree includes importers for RDML/XML, RDES, ABI, Roche,
+Rotor-Gene, DTprime, FQD, CSV, Excel/table data, and other supported input
+families. The registry is the authoritative runtime list.
+
+# RDES import and export
+
+RDML7 includes RDES support. The example data installed with the package
+include amplification and melting RDES TSV files.
+
+```{r rdes-files}
+rdesAmp <- system.file(
+  "extdata",
+  "RDES_v1_0_example_amplification.tsv",
+  package = "RDML7"
+)
+
+rdesMelt <- system.file(
+  "extdata",
+  "RDES_v1_0_example_melting.tsv",
+  package = "RDML7"
+)
+
+c(rdesAmp, rdesMelt)
+```
+
+Import uses the same generic entry point:
+
+```{r read-rdes, eval=FALSE}
+rdes <- readRDML(rdesAmp)
+```
+
+Export is likewise routed through `writeRDML()` according to the requested
+output format.
+
+# Merging RDML objects
+
+Use `mergeRdmls()` to combine RDML objects.
+
+```{r merge, eval=FALSE}
+file1 <- system.file(
+  "extdata",
+  "lc96_bACTXY.rdml",
+  package = "RDML7"
+)
+
+file2 <- system.file(
+  "extdata",
+  "stepone_std.rdml",
+  package = "RDML7"
+)
+
+base <- readRDML(file1)
+incoming <- readRDML(file2)
+
+merged <- mergeRDMLs(
+  base,
+  incoming,
+  dataConflict = "error"
+)
+```
+
+`dataConflict` controls what happens when equivalent data locations contain
+different values:
+
+- `"incoming"` — use the value from the incoming object;
+- `"base"` — preserve the value already present in the base object;
+- `"error"` — stop rather than resolve the conflict silently.
+
+For merging independent files, `"error"` is useful while developing a
+pipeline because unexpected ID collisions become visible immediately.
+
+A directory of files can be processed in a loop:
+
+```{r merge-directory, eval=FALSE}
+files <- dir(
+  "path/to/files",
+  full.names = TRUE
+)
+
+merged <- rdmlType()
+
+for (file in files) {
+  current <- readRDML(file)
+
+  merged <- mergeRDMLs(
+    merged,
+    current,
+    dataConflict = "error"
+  )
+}
+```
+
+If experiment identifiers are not unique between input files, rename them
+before merging.
+
+# Serialising and writing RDML
+
+## `asXML()`
+
+Use `asXML()` when the XML representation itself is needed:
+
+```{r as-xml, eval=FALSE}
+xml <- asXML(lc96)
+
+cat(
+  substr(
+    xml,
+    1,
+    500
+  )
+)
+```
+
+## `writeRDML()`
+
+Use `writeRDML()` for normal file output:
+
+```{r write-rdml, eval=FALSE}
+writeRDML(
+  lc96,
+  "lc96-copy.rdml",
+  overwrite = TRUE
+)
+```
+
+For RDML archives, the package writes the XML payload as
+`rdml_data.xml` inside the archive.
+
+The writer is selected through the same registry used by `readRDML()`.
+
+# Validation before export
+
+A useful export workflow is:
+
+```{r export-workflow, eval=FALSE}
+validation <- validateRDML(lc96)
+
+if (rdmlIsValid(lc96)) {
+  writeRDML(
+    lc96,
+    "validated.rdml",
+    overwrite = TRUE
+  )
+}
+```
+
+# Extending the file-format registry
+
+One of the major additions in RDML7 is a public plugin API for file formats.
+
+## Registering a custom format
+
+A format can provide:
+
+- file extensions;
+- a reader;
+- a writer;
+- a sniffer;
+- aliases;
+- priority;
+- API version;
+- capabilities.
+
+The public registration function is:
+
+```{r register-format-form, eval=FALSE}
+rdmlRegisterFormat(
+  name,
+  extensions = character(),
+  reader = NULL,
+  writer = NULL,
+  sniff = NULL,
+  aliases = character(),
+  priority = 0L,
+  apiVersion = 1L,
+  capabilities = character(),
+  overwrite = FALSE
+)
+```
+
+For example, a third-party package could register a reader:
+
+```{r register-format-example, eval=FALSE}
+myReader <- function(fileName, ...) {
+  # Parse the external format and return either:
+  #   1. an rdmlType object, or
+  #   2. an rdmlImportData object.
+}
+
+mySniffer <- function(fileName) {
+  # Return a confidence score between 0 and 1.
+  0
+}
+
+rdmlRegisterFormat(
+  name = "myformat",
+  extensions = "myqpcr",
+  reader = myReader,
+  sniff = mySniffer,
+  aliases = "my-device",
+  priority = 10L
+)
+```
+
+The new format then participates in normal dispatch:
+
+```{r custom-format-dispatch, eval=FALSE}
+readRDML("experiment.myqpcr")
+```
+
+To remove a third-party format:
+
+```{r unregister-format, eval=FALSE}
+rdmlUnregisterFormat("myformat")
+```
+
+Built-in handlers are protected from accidental removal.
+
+# Canonical importer API
+
+RDML7 separates **parsing a vendor file** from **constructing the RDML
+hierarchy**.
+
+Plugin authors can represent parsed data with:
+
+- `rdmlImportSeries`;
+- `rdmlImportData`;
+- `rdmlBuildImport()`.
+
+An `rdmlImportSeries` contains:
+
+- `fdataType` (`"adp"` or `"mdp"`);
+- a wide fluorescence table accepted by `setFData()`;
+- a CamelCase description table accepted by `setFData()`.
+
+`rdmlImportData` groups one or more such series and can contain publisher,
+serial number, source format, metadata, and declared conversion losses.
+
+The central builder then constructs `rdmlType`:
+
+```{r canonical-importer, eval=FALSE}
+series <- rdmlImportSeries(
+  fdataType = "adp",
+  fdata = fdata,
+  description = description
+)
+
+parsed <- rdmlImportData(
+  series = list(series),
+  publisher = "Example vendor",
+  serialNumber = "12345",
+  format = "myformat"
+)
+
+x <- rdmlBuildImport(parsed)
+```
+
+This architecture keeps vendor parsers independent from the nested S7 schema
+construction.
+
+# Loss-aware conversions
+
+Different external formats do not necessarily represent every RDML feature.
+The importer/exporter API can describe known information loss using
+`rdmlLossRecord()`.
+
+When developing a format plugin, declare known lossy transformations rather
+than silently discarding unsupported information.
+
+This allows higher-level I/O code to decide whether loss should produce a
+warning, an error, or be explicitly allowed.
+
+# `rdmlEdit()`
+
+`rdmlEdit()` remains available as an editing interface.
+
+```{r rdml-edit, eval=FALSE}
+rdmlEdit(lc96)
+```
+
+For reproducible analyses, scripted operations with `asTable()`,
+`getFData()`, `setFData()`, and the S7 object model should remain the primary
+workflow, while an editor is useful for interactive inspection and manual
+changes.
+
+# Working with external analysis packages
+
+RDML7 intentionally keeps fluorescence extraction separate from downstream
+qPCR analysis. Once curves have been obtained with `getFData()`, they can be
+passed to other R packages.
+
+For example:
+
+```{r downstream, eval=FALSE}
+curves <- getFData(
+  lc96,
+  dpType = "adp",
+  longTable = FALSE
+)
+
+# The first column contains cycle coordinates.
+cycles <- curves[[1]]
+
+# Remaining columns contain fluorescence series and can be passed to
+# modelling, preprocessing, Cq estimation, or visualisation code.
+```
+
+This separation allows RDML7 to focus on data interchange, metadata,
+validation, conversion, and object manipulation while specialised packages
+perform curve analysis.
+
+# Recommended workflow
+
+For most analyses, the following pattern is sufficient:
+
+```{r workflow, eval=FALSE}
+library(RDML7)
+
+# 1. Import
+x <- readRDML("experiment.rdml")
+
+# 2. Inspect and validate
+rdmlSummary(x)
+validateRDML(x)
+
+# 3. Build the curve index / metadata table
+meta <- asTable(
+  x,
+  namePattern =
+    "{expId}_{runId}_{position}_{sample}_{sampleType}_{target}"
+)
+
+# 4. Select curves
+selected <- meta[
+  meta$sampleType == "std" &
+    meta$adp,
+]
+
+# 5. Extract fluorescence
+amp <- getFData(
+  x,
+  request = selected,
+  dpType = "adp",
+  longTable = TRUE
+)
+
+# 6. Analyse or modify data
+# ...
+
+# 7. Write a new RDML file if needed
+writeRDML(
+  x,
+  "experiment-processed.rdml",
+  overwrite = TRUE
+)
+```
+
+# Legacy API compatibility
+
+Legacy wrappers are exported to ease migration of existing analysis scripts.
+
+Examples include:
+
+```text
+AsTable        -> asTable
+GetFData       -> getFData
+SetFData       -> setFData
+AsDendrogram   -> asDendrogram
+asXML          -> asXML
+MergeRDMLs     -> mergeRdmls
+```
+
+Some old dotted argument names are also translated by compatibility code to
+their CamelCase equivalents, for example:
+
+```text
+show.progress   -> showProgress
+conditions.sep  -> conditionsSep
+fdata.type      -> fdataType
+serial.number   -> serialNumber
+name.pattern    -> namePattern
+long.table      -> longTable
+sample.type     -> sampleType
+target.dyeId    -> targetDyeId
+dp.type         -> dpType
+plot.dendrogram -> plotDendrogram
+data.conflict   -> dataConflict
+```
+
+Compatibility wrappers are intended to keep old scripts usable. New code and
+new documentation should use the canonical names.
+
+# Function overview
+
+The following groups summarise the most important public RDML7 functionality.
+
+## Core object and schema
+
+```text
+rdmlType()
+idType()
+idReferenceType()
+experimentType()
+runType()
+reactType()
+dataType()
+sampleType()
+targetType()
+dyeType()
+thermalCyclingConditionsType()
+...
+```
+
+## File I/O
+
+```text
+readRDML()
+writeRDML()
+asXML()
+rdmlDetectFormat()
+rdmlFormats()
+```
+
+## Metadata and fluorescence
+
+```text
+asTable()
+getFData()
+setFData()
+rdmlFromFData()
+```
+
+## Inspection and validation
+
+```text
+rdmlSummary()
+validateRDML()
+rdmlIsValid()
+asDendrogram()
+```
+
+## Manipulation
+
+```text
+mergeRdmls()
+rdmlEdit()
+```
+
+## Extensible import/export
+
+```text
+rdmlRegisterFormat()
+rdmlUnregisterFormat()
+rdmlLoadModule()
+rdmlImportSeries()
+rdmlImportData()
+rdmlBuildImport()
+rdmlLossRecord()
+```
+
+# Summary
+
+RDML7 keeps the main ideas of the original RDML package—structured qPCR
+metadata, fluorescence extraction, table-based filtering, creation of RDML
+objects from user data, and interoperability with other R analysis
+packages—but substantially changes the implementation and public API.
+
+The central concepts for new code are:
+
+1. read files with `readRDML()`;
+2. treat `rdmlType` and nested schema elements as S7 objects;
+3. use `asTable()` as the metadata/curve index;
+4. use `{field}` templates for readable and documented `fdataName` generation;
+5. add custom `asTable()` columns directly through `...`;
+6. use `getFData()` and `setFData()` for fluorescence;
+7. remember that modification uses value semantics;
+8. validate with `validateRDML()` / `rdmlIsValid()`;
+9. write through `writeRDML()`;
+10. discover and extend formats through the format registry.
+
+For the current runtime list of supported file handlers, always prefer:
+
+```r
+rdmlFormats()
+```
+
+over a hard-coded list in analysis code.

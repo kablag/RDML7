@@ -1333,7 +1333,7 @@ rdmlIdType <-
 #'   \item{`experiment`}{Experiment-id-keyed list of `experimentType` objects or `NA`.}
 #' }
 #'
-#' @seealso `rdmlRead`, `rdmlWrite`, `asTable`, `getFData`, `rdmlValidate`
+#' @seealso `readRDML`, `writeRDML`, `asTable`, `getFData`, `validateRDML`
 #' @export
 
 rdmlType <- S7::new_class(

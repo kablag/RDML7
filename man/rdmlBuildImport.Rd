@@ -21,5 +21,5 @@ rdmlBuildImport(importData, loss = c("warn", "error", "allow"), ...)
 Build rdmlType from canonical importer data
 }
 \seealso{
-`rdmlRead`, `rdmlImportData`
+`readRDML`, `rdmlImportData`
 }

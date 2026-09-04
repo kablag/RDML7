@@ -1,17 +1,17 @@
 ---
-title: "Using the RDML package"
+title: "Using the RDML7 package"
 author: "Konstantin A. Blagodatskikh, Michał Burdukiewicz, Stefan Rödiger, Andrej-Nikolai Spiess"
 date: "`r Sys.Date()`"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{Using the RDML package}
+  %\VignetteIndexEntry{Using the RDML7 package}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>", eval = FALSE)
-library(RDML)
+library(RDML7)
 ```
 
 ## Overview
@@ -21,31 +21,32 @@ It reads qPCR data, exposes the RDML hierarchy for programmatic editing, provide
 tabular fluorescence interfaces, validates semantic consistency, and writes
 RDML/RDES and other registered formats.
 
-```r
-x <- rdmlRead("experiment.rdml")
+```{r}
+x <- system.file("extdata/stepone_std.rdml", package="RDML7") |> 
+  readRDML()
 
 rdmlSummary(x)
-rdmlValidate(x)
+validateRDML(x)
 
 metadata <- asTable(x)
 amp <- getFData(x, dpType = "adp", longTable = TRUE)
 
-rdmlWrite(x, "experiment-copy.rdml")
+writeRDML(x, "experiment-copy.rdml")
 ```
 
 Functions that modify an object return a new S7 value:
 
-```r
+```{r}
 x <- setFData(x, fdata, description)
 ```
 
 ## Reading files
 
-`rdmlRead()` dispatches through the runtime format registry.
+`readRDML()` dispatches through the runtime format registry.
 
 ```r
 rdmlFormats()
-x <- rdmlRead("experiment.rdml")
+x <- readRDML("experiment.rdml")
 ```
 
 Use `rdmlDetectFormat()` to inspect selection without performing the import.
@@ -80,17 +81,17 @@ x$experiment$exp1$run$run1$react$A1$data$ACTB
 
 ```r
 rdmlSummary(x)
-issues <- rdmlValidate(x)
+issues <- validateRDML(x)
 rdmlIsValid(x)
 ```
 
 Validation can focus on structure, references, curves, or the full object:
 
 ```r
-rdmlValidate(x, level = "structure")
-rdmlValidate(x, level = "references")
-rdmlValidate(x, level = "curves")
-rdmlValidate(x, level = "full")
+validateRDML(x, level = "structure")
+validateRDML(x, level = "references")
+validateRDML(x, level = "curves")
+validateRDML(x, level = "full")
 ```
 
 ## Metadata tables
@@ -203,16 +204,16 @@ Experiments, runs, reactions, and target-specific data are merged by schema key.
 ## Writing
 
 ```r
-rdmlWrite(x, "result.rdml")
-rdmlWrite(x, "result.xml")
+writeRDML(x, "result.rdml")
+writeRDML(x, "result.xml")
 ```
 
 Known lossy conversions are controlled with:
 
 ```r
-rdmlWrite(x, "result.rdml", loss = "warn")
-rdmlWrite(x, "result.rdml", loss = "error")
-rdmlWrite(x, "result.rdml", loss = "allow")
+writeRDML(x, "result.rdml", loss = "warn")
+writeRDML(x, "result.rdml", loss = "error")
+writeRDML(x, "result.rdml", loss = "allow")
 ```
 
 ## Legacy API
@@ -223,7 +224,6 @@ Compatibility wrappers remain exported for packages using the old API:
 AsTable(x)
 GetFData(x, long.table = TRUE)
 SetFData(x, fdata, legacyDescription, fdata.type = "adp")
-rdml_read("experiment.rdml")
 ```
 
 New code should prefer the camelCase functions.

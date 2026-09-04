@@ -48,5 +48,5 @@ layouts, digital-PCR partitions, and the top-level RDML document.
 }
 
 \seealso{
-`rdmlRead`, `asTable`, `getFData`, `rdmlValidate`
+`readRDML`, `asTable`, `getFData`, `validateRDML`
 }

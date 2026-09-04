@@ -62,7 +62,7 @@ test_that("custom extension readers can be registered", {
     name
   )
 
-  obj <- rdmlRead(path)
+  obj <- readRDML(path)
 
   expect_true(
     S7::S7_inherits(
@@ -108,7 +108,7 @@ test_that("custom writers are dispatched by extension", {
     fileext = ".dummyout"
   )
 
-  rdmlWrite(
+  writeRDML(
     obj,
     path
   )

@@ -6,16 +6,8 @@
 \alias{GetFData}
 \alias{SetFData}
 \alias{AsDendrogram}
-\alias{AsXML}
+\alias{asXML}
 \alias{MergeRDMLs}
-\alias{rdml_read}
-\alias{rdml_write}
-\alias{rdml_formats}
-\alias{rdml_register_format}
-\alias{rdml_unregister_format}
-\alias{rdml_detect_format}
-\alias{rdml_load_module}
-\alias{rdml_from_fdata}
 \title{Legacy API compatibility wrappers}
 \usage{
 AsTable(
@@ -49,48 +41,7 @@ SetFData(
 
 AsDendrogram(x, plot.dendrogram = TRUE, ...)
 
-AsXML(x, file.name)
-
 MergeRDMLs(to.merge, data.conflict = c("incoming", "base", "error"))
-
-rdml_read(
-  filename,
-  show.progress = TRUE,
-  conditions.sep = NULL,
-  cluster = NULL,
-  format = "auto",
-  loss = c("warn", "error", "allow"),
-  ...
-)
-
-rdml_write(
-  x,
-  filename,
-  format = "auto",
-  overwrite = FALSE,
-  loss = c("warn", "error", "allow"),
-  ...
-)
-
-rdml_formats()
-
-rdml_register_format(...)
-
-rdml_unregister_format(...)
-
-rdml_detect_format(filename, operation = c("read", "write"))
-
-rdml_load_module(path, overwrite = FALSE)
-
-rdml_from_fdata(
-  fdata,
-  description,
-  fdata.type = "adp",
-  publisher = NULL,
-  serial.number = "1",
-  version = "1.2",
-  ...
-)
 }
 \description{
 These functions preserve public names, dotted argument names, and (where
@@ -104,16 +55,8 @@ Legacy \tab Canonical \cr
 `GetFData()` \tab `getFData()` \cr
 `SetFData()` \tab `setFData()` \cr
 `AsDendrogram()` \tab `asDendrogram()` \cr
-`AsXML()` \tab `asXml()` \cr
+`asXML()` \tab `asXML()` \cr
 `MergeRDMLs()` \tab `mergeRdmls()` \cr
-`rdml_read()` \tab `rdmlRead()` \cr
-`rdml_write()` \tab `rdmlWrite()` \cr
-`rdml_formats()` \tab `rdmlFormats()` \cr
-`rdml_register_format()` \tab `rdmlRegisterFormat()` \cr
-`rdml_unregister_format()` \tab `rdmlUnregisterFormat()` \cr
-`rdml_detect_format()` \tab `rdmlDetectFormat()` \cr
-`rdml_load_module()` \tab `rdmlLoadModule()` \cr
-`rdml_from_fdata()` \tab `rdmlFromFData()` \cr
 }
 
 Legacy `AsTable()` returns names such as `fdata.name`, `exp.id`, `run.id`,

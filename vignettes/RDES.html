@@ -365,11 +365,11 @@ data.</p>
 </div>
 <div id="import-amplification-data" class="section level2">
 <h2>Import amplification data</h2>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a>amp <span class="ot">&lt;-</span> <span class="fu">rdmlRead</span>(</span>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a>amp <span class="ot">&lt;-</span> <span class="fu">readRDML</span>(</span>
 <span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a>  <span class="st">&quot;RDES_v1_0_example_amplification.tsv&quot;</span></span>
 <span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a>)</span></code></pre></div>
 <p>The format can also be selected explicitly.</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>amp <span class="ot">&lt;-</span> <span class="fu">rdmlRead</span>(</span>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>amp <span class="ot">&lt;-</span> <span class="fu">readRDML</span>(</span>
 <span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a>  <span class="st">&quot;RDES_v1_0_example_amplification.tsv&quot;</span>,</span>
 <span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>  <span class="at">format =</span> <span class="st">&quot;rdes&quot;</span>,</span>
 <span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a>  <span class="at">expId =</span> <span class="st">&quot;RDES&quot;</span>,</span>
@@ -378,7 +378,7 @@ data.</p>
 </div>
 <div id="import-melting-data" class="section level2">
 <h2>Import melting data</h2>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>melt <span class="ot">&lt;-</span> <span class="fu">rdmlRead</span>(</span>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a>melt <span class="ot">&lt;-</span> <span class="fu">readRDML</span>(</span>
 <span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>  <span class="st">&quot;RDES_v1_0_example_melting.tsv&quot;</span>,</span>
 <span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>  <span class="at">format =</span> <span class="st">&quot;rdes&quot;</span></span>
 <span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>)</span>
@@ -397,7 +397,7 @@ data.</p>
 <h2>Import an amplification/melting pair</h2>
 <p>RDES stores the two curve types in independent files. Use
 <code>companionFile</code> to merge them into one RDML run.</p>
-<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>both <span class="ot">&lt;-</span> <span class="fu">rdmlRead</span>(</span>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a>both <span class="ot">&lt;-</span> <span class="fu">readRDML</span>(</span>
 <span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>  <span class="st">&quot;run_amplification.tsv&quot;</span>,</span>
 <span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>  <span class="at">format =</span> <span class="st">&quot;rdes&quot;</span>,</span>
 <span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>  <span class="at">companionFile =</span> <span class="st">&quot;run_melting.tsv&quot;</span>,</span>
@@ -473,7 +473,7 @@ to RDML can trigger a lossy-conversion warning/error.</p>
 </div>
 <div id="strict-parsing" class="section level2">
 <h2>Strict parsing</h2>
-<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>x <span class="ot">&lt;-</span> <span class="fu">rdmlRead</span>(</span>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>x <span class="ot">&lt;-</span> <span class="fu">readRDML</span>(</span>
 <span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>  <span class="st">&quot;run.tsv&quot;</span>,</span>
 <span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>  <span class="at">format =</span> <span class="st">&quot;rdes&quot;</span>,</span>
 <span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>  <span class="at">strict =</span> <span class="cn">TRUE</span></span>
@@ -483,7 +483,7 @@ deviations; strict mode converts them into errors.</p>
 </div>
 <div id="export-amplification-or-melting-data" class="section level2">
 <h2>Export amplification or melting data</h2>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="fu">rdmlWrite</span>(</span>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="fu">writeRDML</span>(</span>
 <span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>  both,</span>
 <span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>  <span class="st">&quot;run_amplification.tsv&quot;</span>,</span>
 <span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>  <span class="at">format =</span> <span class="st">&quot;rdes&quot;</span>,</span>
@@ -492,7 +492,7 @@ deviations; strict mode converts them into errors.</p>
 <span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a>  <span class="at">rdesType =</span> <span class="st">&quot;adp&quot;</span></span>
 <span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a>)</span>
 <span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a></span>
-<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a><span class="fu">rdmlWrite</span>(</span>
+<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a><span class="fu">writeRDML</span>(</span>
 <span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a>  both,</span>
 <span id="cb7-12"><a href="#cb7-12" tabindex="-1"></a>  <span class="st">&quot;run_melting.tsv&quot;</span>,</span>
 <span id="cb7-13"><a href="#cb7-13" tabindex="-1"></a>  <span class="at">format =</span> <span class="st">&quot;rdes&quot;</span>,</span>
@@ -503,7 +503,7 @@ deviations; strict mode converts them into errors.</p>
 </div>
 <div id="export-both-rdes-files" class="section level2">
 <h2>Export both RDES files</h2>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>paths <span class="ot">&lt;-</span> <span class="fu">rdmlWrite</span>(</span>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>paths <span class="ot">&lt;-</span> <span class="fu">writeRDML</span>(</span>
 <span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>  both,</span>
 <span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a>  <span class="st">&quot;run.tsv&quot;</span>,</span>
 <span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a>  <span class="at">format =</span> <span class="st">&quot;rdes&quot;</span>,</span>

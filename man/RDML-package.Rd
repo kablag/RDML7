@@ -17,12 +17,12 @@ modify an object return a new `rdmlType` that should be assigned back.
 
 A typical workflow is:
 
-1. Read a file with `rdmlRead()`.
-2. Inspect it with `rdmlSummary()` and `rdmlValidate()`.
+1. Read a file with `readRDML()`.
+2. Inspect it with `rdmlSummary()` and `validateRDML()`.
 3. Build a metadata table with `asTable()`.
 4. Extract curves with `getFData()`.
 5. Modify or add curves with `setFData()`.
-6. Export with `rdmlWrite()`.
+6. Export with `writeRDML()`.
 
 Use `rdmlFormats()` to list registered file formats and their capabilities.
 }
@@ -56,14 +56,14 @@ amplification and melting data stored in separate files. See
 
 \section{Legacy API}{
 
-Historical names such as `AsTable()`, `GetFData()`, `SetFData()`,
-`MergeRDMLs()`, and `rdml_read()` remain available as compatibility
+Historical names such as `AsTable()`, `GetFData()`, `SetFData()` and
+`MergeRDMLs()` remain available as compatibility
 wrappers. New code should use the camelCase API.
 }
 
 \seealso{
-`rdmlRead()`, `rdmlWrite()`, `asTable()`, `getFData()`, `setFData()`,
-`rdmlValidate()`, `rdmlSummary()`, `rdmlFormats()`
+`readRDML()`, `writeRDML()`, `asTable()`, `getFData()`, `setFData()`,
+`validateRDML()`, `rdmlSummary()`, `rdmlFormats()`
 }
 \author{
 \strong{Maintainer}: Konstantin A. Blagodatskikh \email{k.blag@yandex.ru}

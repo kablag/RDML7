@@ -18,5 +18,5 @@ Registered format name.
 Detect the format handler selected for a path
 }
 \seealso{
-`rdmlFormats`, `rdmlRead`, `rdmlWrite`
+`rdmlFormats`, `readRDML`, `writeRDML`
 }

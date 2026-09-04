@@ -124,6 +124,6 @@ x <- setFData(
 ## Validate and write
 
 ```r
-rdmlValidate(x, action = "error")
-rdmlWrite(x, "created.rdml")
+validateRDML(x, action = "error")
+writeRDML(x, "created.rdml")
 ```

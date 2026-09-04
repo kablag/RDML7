@@ -255,7 +255,7 @@ NULL
 #' @param capabilities Character vector of supported features.
 #' @param overwrite Replace an existing format of the same name.
 #' @return Registered format specification invisibly.
-#' @seealso `rdmlLoadModule`, `rdmlFormats`, `rdmlRead`
+#' @seealso `rdmlLoadModule`, `rdmlFormats`, `readRDML`
 #' @export
 rdmlRegisterFormat <- function(
     name,
@@ -662,7 +662,7 @@ rdmlFormats <- function() {
 #' @param fileName File path.
 #' @param operation `"read"` or `"write"`.
 #' @return Registered format name.
-#' @seealso `rdmlFormats`, `rdmlRead`, `rdmlWrite`
+#' @seealso `rdmlFormats`, `readRDML`, `writeRDML`
 #' @export
 rdmlDetectFormat <- function(
     fileName,
@@ -801,7 +801,7 @@ rdmlDetectFormat <- function(
     )
   }
 
-  tree <- asXml(x, loss = "allow")
+  tree <- asXML(x, loss = "allow")
 
   writeLines(
     enc2utf8(tree),
@@ -829,7 +829,7 @@ rdmlDetectFormat <- function(
     )
   }
 
-  tree <- asXml(x, loss = "allow")
+  tree <- asXML(x, loss = "allow")
 
   tmpdir <- tempfile("rdml-write-")
 
@@ -1403,9 +1403,9 @@ rdmlDetectFormat <- function(
 #' @param ... Format-specific arguments. RDES supports `companionFile`,
 #' `expId`, `runId`, and `strict`.
 #' @return `rdmlType`.
-#' @seealso `rdmlWrite`, `rdmlFormats`, `rdmlValidate`
+#' @seealso `writeRDML`, `rdmlFormats`, `validateRDML`
 #' @export
-rdmlRead <- function(
+readRDML <- function(
     fileName,
     showProgress = TRUE,
     conditionsSep = NULL,
@@ -1488,9 +1488,9 @@ rdmlRead <- function(
 #' @param ... Format-specific arguments. RDES supports `expId`, `runId`, and
 #' `rdesType = "auto"`, `"adp"`, `"mdp"`, or `"both"`.
 #' @return Writer-specific result, normally an output path invisibly.
-#' @seealso `rdmlRead`, `rdmlFormats`, `rdmlLossRecord`
+#' @seealso `readRDML`, `rdmlFormats`, `rdmlLossRecord`
 #' @export
-rdmlWrite <- function(
+writeRDML <- function(
     x,
     fileName,
     format = "auto",

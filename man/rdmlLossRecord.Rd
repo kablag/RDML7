@@ -23,5 +23,5 @@ Importers/exporters use these records for information that cannot be
 represented exactly in the destination model.
 }
 \seealso{
-`rdmlRead`, `rdmlWrite`, `rdmlImportData`
+`readRDML`, `writeRDML`, `rdmlImportData`
 }

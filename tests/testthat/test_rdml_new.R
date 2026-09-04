@@ -15,7 +15,7 @@ testthat::test_that(
     
     for (file in files) {
       
-      x <- rdmlRead(
+      x <- readRDML(
         file.path(path, file),
         showProgress = FALSE,
         loss = "allow"
@@ -50,7 +50,7 @@ testthat::test_that(
       package = "RDML7"
     )
     
-    x <- rdmlRead(
+    x <- readRDML(
       filename,
       showProgress = FALSE,
       loss = "allow"
@@ -82,7 +82,7 @@ testthat::test_that(
       package = "RDML7"
     )
     
-    x <- rdmlRead(
+    x <- readRDML(
       filename,
       showProgress = FALSE,
       loss = "allow"
@@ -114,7 +114,7 @@ testthat::test_that(
       package = "RDML7"
     )
     
-    x <- rdmlRead(
+    x <- readRDML(
       filename,
       showProgress = FALSE,
       loss = "allow"

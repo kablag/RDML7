@@ -12,7 +12,7 @@ filename <- system.file(
       "table.xlsx",
       package = "RDML7"
     )
-x <- rdmlRead(
+x <- readRDML(
       filename,
       showProgress = FALSE,
       loss = "allow"

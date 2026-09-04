@@ -126,7 +126,7 @@
 <li>
 <strong>SetFData()</strong> – sets fluorescence data to an RDML object;</li>
 <li>
-<strong>AsXML()</strong> – saves an RDML object as an RDML<sub>v.</sub>1.2 file.</li>
+<strong>asXML()</strong> – saves an RDML object as an RDML<sub>v.</sub>1.2 file.</li>
 </ul>
 </div>
 </div>
@@ -472,8 +472,8 @@
 <div id="saving-rdml-object-as-rdml-file" class="section level3">
 <h3 class="hasAnchor">
 <a href="#saving-rdml-object-as-rdml-file" class="anchor"></a>Saving <strong>RDML</strong> object as RDML file</h3>
-<p>To save <strong>RDML</strong> objects in RDML file v1.2 format, we can use the <code>$AsXML()</code> method where the <code>file.name</code> argument is the name of new RDML file. Without <code>file.name</code> given, the function returns an XML tree.</p>
-<p><code>lc96$AsXML("lc96.rdml")</code></p>
+<p>To save <strong>RDML</strong> objects in RDML file v1.2 format, we can use the <code>$asXML()</code> method where the <code>file.name</code> argument is the name of new RDML file. Without <code>file.name</code> given, the function returns an XML tree.</p>
+<p><code>lc96$asXML("lc96.rdml")</code></p>
 <p>One can use <a href="https://sourceforge.net/projects/qpcr-ninja/">RDML-ninja</a> or the <a href="http://rdml.org/tools.php?validator">RDML validator</a> from the RMDL consortium to validate RDML files created by the <strong>RDML</strong> package.</p>
 </div>
 <div id="creating-custom-functions" class="section level3">
@@ -972,10 +972,10 @@
 <div id="export-to-file" class="section level2">
 <h2 class="hasAnchor">
 <a href="#export-to-file" class="anchor"></a>Export to file</h2>
-<p>To save our <strong>RDML</strong> object as file we can use <code>$AsXML()</code> method with file name as argument:</p>
-<p><code>video.scan$AsXML("filename.RDML")</code></p>
+<p>To save our <strong>RDML</strong> object as file we can use <code>$asXML()</code> method with file name as argument:</p>
+<p><code>video.scan$asXML("filename.RDML")</code></p>
 <p><em>Note that currently due to limits of <code>XML</code> package it is rather slow operation!!!</em></p>
-<p>A XML files can be compressed to save space. The <strong>RMDL</strong> package uses the <code><a href="https://rdrr.io/r/utils/zip.html">zip()</a></code> function from the <strong>utils</strong> package with default values to compress the RDML file. Therefore, the compression mode depends on the operating system. The <strong>RDML</strong> function <code>AsXML()</code> without an argument returns one string, which contains the XML data. This can be used to compress it with any other compression algorithm.</p>
+<p>A XML files can be compressed to save space. The <strong>RMDL</strong> package uses the <code><a href="https://rdrr.io/r/utils/zip.html">zip()</a></code> function from the <strong>utils</strong> package with default values to compress the RDML file. Therefore, the compression mode depends on the operating system. The <strong>RDML</strong> function <code>asXML()</code> without an argument returns one string, which contains the XML data. This can be used to compress it with any other compression algorithm.</p>
 </div>
 <div id="benchmark-of-the-rdml-generation" class="section level2">
 <h2 class="hasAnchor">

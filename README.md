@@ -24,10 +24,10 @@ remotes::install_github("kablag/RDML7")
 ```r
 library(RDML7)
 
-x <- rdmlRead("experiment.rdml")
+x <- readRDML("experiment.rdml")
 
 rdmlSummary(x)
-rdmlValidate(x)
+validateRDML(x)
 
 metadata <- asTable(x)
 
@@ -37,7 +37,7 @@ amp <- getFData(
   longTable = TRUE
 )
 
-rdmlWrite(
+writeRDML(
   x,
   "experiment-copy.rdml"
 )
@@ -68,18 +68,18 @@ loaded from module files with `rdmlLoadModule()`.
 RDES import and export are supported:
 
 ```r
-x <- rdmlRead(
+x <- readRDML(
   "run_amplification.tsv",
   format = "rdes"
 )
 
-x <- rdmlRead(
+x <- readRDML(
   "run_amplification.tsv",
   format = "rdes",
   companionFile = "run_melting.tsv"
 )
 
-rdmlWrite(
+writeRDML(
   x,
   "run.tsv",
   format = "rdes",
@@ -91,6 +91,6 @@ See `vignette("RDES", package = "RDML")`.
 
 ## Legacy compatibility
 
-Older names such as `AsTable()`, `GetFData()`, `SetFData()`, `MergeRDMLs()`,
-and `rdml_read()` remain available for dependent packages. New code should use
+Older names such as `AsTable()`, `GetFData()`, `SetFData()` and `MergeRDMLs()`,
+remain available for dependent packages. New code should use
 the camelCase API.

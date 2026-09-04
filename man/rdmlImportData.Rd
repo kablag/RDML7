@@ -31,7 +31,7 @@ rdmlImportData(
 }
 \description{
 Decouples vendor parsing from construction of the nested RDML hierarchy.
-`rdmlRead()` builds this representation centrally with `rdmlBuildImport()`.
+`readRDML()` builds this representation centrally with `rdmlBuildImport()`.
 }
 \seealso{
 `rdmlImportSeries`, `rdmlBuildImport`, `rdmlRegisterFormat`

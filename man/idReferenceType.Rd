@@ -11,5 +11,5 @@ Extends `idType` for references between RDML elements, for example sample,
 target, dye, documentation, and thermal-program references.
 }
 \seealso{
-`idType`, `rdmlValidate`
+`idType`, `validateRDML`
 }

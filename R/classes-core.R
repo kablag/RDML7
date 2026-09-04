@@ -96,7 +96,7 @@ classId <- S7::new_property(
 #' Extends `idType` for references between RDML elements, for example sample,
 #' target, dye, documentation, and thermal-program references.
 #'
-#' @seealso `idType`, `rdmlValidate`
+#' @seealso `idType`, `validateRDML`
 #' @export
 idReferenceType <- S7::new_class(
   "idReferenceType",

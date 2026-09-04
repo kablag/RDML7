@@ -107,7 +107,7 @@ S7::method(`$<-`, rdmlImportSeries) <- function(x, name, value) {
 #' Parsed importer data before construction of rdmlType
 #'
 #' Decouples vendor parsing from construction of the nested RDML hierarchy.
-#' `rdmlRead()` builds this representation centrally with `rdmlBuildImport()`.
+#' `readRDML()` builds this representation centrally with `rdmlBuildImport()`.
 #'
 #' @param series List of `rdmlImportSeries` objects.
 #' @param publisher Optional source/device publisher.
@@ -215,7 +215,7 @@ S7::method(`$<-`, rdmlImportData) <- function(x, name, value) {
 #' `"error"`, or `"allow"`.
 #' @param ... Additional arguments forwarded to `setFData()`.
 #' @return `rdmlType`.
-#' @seealso `rdmlRead`, `rdmlImportData`
+#' @seealso `readRDML`, `rdmlImportData`
 #' @export
 rdmlBuildImport <- function(
     importData,

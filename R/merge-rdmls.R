@@ -6,9 +6,9 @@
 #' @param toMerge Non-empty list of `rdmlType` objects.
 #' @param dataConflict Conflict policy: `"incoming"`, `"base"`, or `"error"`.
 #' @return Merged `rdmlType`.
-#' @seealso `rdmlRead`, `rdmlWrite`
+#' @seealso `readRDML`, `writeRDML`
 #' @export
-mergeRdmls <- function(
+mergeRDMLs <- function(
     toMerge,
     dataConflict = c("incoming", "base", "error")) {
 
@@ -30,7 +30,7 @@ mergeRdmls <- function(
   baseRDML <- toMerge[[1L]]
   if (length(toMerge) == 1L) return(baseRDML)
 
-  mergeRdmlIds <- function(base, incoming) {
+  mergeRDMLIds <- function(base, incoming) {
     base <- .rdmlAsList(base)
     incoming <- .rdmlAsList(incoming)
 
@@ -177,7 +177,7 @@ mergeRdmls <- function(
   }
 
   for (rdml in toMerge[-1L]) {
-    S7::prop(baseRDML, "id") <- mergeRdmlIds(
+    S7::prop(baseRDML, "id") <- mergeRDMLIds(
       S7::prop(baseRDML, "id"),
       S7::prop(rdml, "id")
     )

@@ -28,8 +28,8 @@ navbar:
 reference:
 - title: Read and write
   contents:
-  - rdmlRead
-  - rdmlWrite
+  - readRDML
+  - writeRDML
   - rdmlFormats
   - rdmlDetectFormat
 
@@ -40,9 +40,9 @@ reference:
   - setFData
   - mergeRdmls
   - asDendrogram
-  - asXml
+  - asXML
   - rdmlSummary
-  - rdmlValidate
+  - validateRDML
   - rdmlIsValid
 
 - title: Format registry and importer API

@@ -1,7 +1,7 @@
 NULL
 
 # XML serialization --------------------------------------------------------
-# Single serializer for S7 RDML objects. Legacy XML serializer removed; asXml() is the single writer.
+# Single serializer for S7 RDML objects. Legacy XML serializer removed; asXML() is the single writer.
 
 .rdmlXmlValue <- function(value, nodeName) {
 
@@ -521,9 +521,9 @@ NULL
 #' @param loss Loss policy for package data that cannot be represented in
 #' standard RDML XML: `"warn"`, `"error"`, or `"allow"`.
 #' @return XML text, invisibly when a file is written.
-#' @rdname asXml
+#' @rdname asXML
 #' @export
-S7::method(asXml, rdmlType) <- function(
+S7::method(asXML, rdmlType) <- function(
     x,
     fileName,
     loss = c("warn", "error", "allow")) {

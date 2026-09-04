@@ -61,7 +61,7 @@ row <- paste(
       paste0(row, "\t")
     )
   )
-x <- rdmlRead(
+x <- readRDML(
     path,
     format = "rdes",
     expId = "exp1",

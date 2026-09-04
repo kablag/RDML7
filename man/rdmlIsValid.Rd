@@ -9,7 +9,7 @@ rdmlIsValid(x, level = "full")
 \arguments{
 \item{x}{`rdmlType`.}
 
-\item{level}{Validation level passed to `rdmlValidate()`.}
+\item{level}{Validation level passed to `validateRDML()`.}
 }
 \value{
 `TRUE` if no validation issue has severity `"error"`.
@@ -18,5 +18,5 @@ rdmlIsValid(x, level = "full")
 Test whether an RDML object has semantic errors
 }
 \seealso{
-`rdmlValidate`
+`validateRDML`
 }

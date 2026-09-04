@@ -41,5 +41,5 @@ Top-level container representing one RDML document. Its structure mirrors the RD
 }
 
 \seealso{
-`rdmlRead`, `rdmlWrite`, `asTable`, `getFData`, `rdmlValidate`
+`readRDML`, `writeRDML`, `asTable`, `getFData`, `validateRDML`
 }

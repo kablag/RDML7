@@ -5,7 +5,7 @@ knitr::opts_chunk$set(collapse = TRUE, comment = "#>", warning = FALSE, message 
 # Load the RDML package and use its functions to `extract` the required data
 library(RDML7)
 filename <- system.file("extdata/stepone_std.rdml", package="RDML7")
-raw_data <- rdmlRead(filename)
+raw_data <- readRDML(filename)
 
 ## -----------------------------------------------------------------------------
 raw_data$target[["RNase P"]]$amplificationEfficiency

@@ -53,7 +53,7 @@ parsed <- rdmlImportData(
 )
 ```
 
-`rdmlRead()` calls `rdmlBuildImport()` automatically for such a result.
+`readRDML()` calls `rdmlBuildImport()` automatically for such a result.
 
 Minimum description columns are:
 

@@ -413,10 +413,10 @@
 <div id="export-to-file" class="section level2">
 <h2 class="hasAnchor">
 <a href="#export-to-file" class="anchor"></a>Export to file</h2>
-<p>To save our <strong>RDML</strong> object as file we can use <code>$AsXML()</code> method with file name as argument:</p>
-<p><code>video.scan$AsXML("filename.RDML")</code></p>
+<p>To save our <strong>RDML</strong> object as file we can use <code>$asXML()</code> method with file name as argument:</p>
+<p><code>video.scan$asXML("filename.RDML")</code></p>
 <p><em>Note that currently due to limits of <code>XML</code> package it is rather slow operation!!!</em></p>
-<p>A XML files can be compressed to save space. The <strong>RMDL</strong> package uses the <code><a href="https://rdrr.io/r/utils/zip.html">zip()</a></code> function from the <strong>utils</strong> package with default values to compress the RDML file. Therefore, the compression mode depends on the operating system. The <strong>RDML</strong> function <code>AsXML()</code> without an argument returns one string, which contains the XML data. This can be used to compress it with any other compression algorithm.</p>
+<p>A XML files can be compressed to save space. The <strong>RMDL</strong> package uses the <code><a href="https://rdrr.io/r/utils/zip.html">zip()</a></code> function from the <strong>utils</strong> package with default values to compress the RDML file. Therefore, the compression mode depends on the operating system. The <strong>RDML</strong> function <code>asXML()</code> without an argument returns one string, which contains the XML data. This can be used to compress it with any other compression algorithm.</p>
 </div>
 <div id="benchmark-of-the-rdml-generation" class="section level2">
 <h2 class="hasAnchor">

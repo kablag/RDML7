@@ -4,7 +4,7 @@
 #' installed.
 #'
 #' @return Result of launching the application, invisibly where applicable.
-#' @seealso `rdmlRead`, `rdmlWrite`
+#' @seealso `readRDML`, `writeRDML`
 #' @export
 rdmlEdit <- function() {
   if (!requireNamespace("shiny", quietly = TRUE)) {

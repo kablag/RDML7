@@ -82,7 +82,7 @@
 #' @param path Optional RDML object path.
 #' @param details Additional structured metadata.
 #' @return An `rdmlLossRecord`.
-#' @seealso `rdmlRead`, `rdmlWrite`, `rdmlImportData`
+#' @seealso `readRDML`, `writeRDML`, `rdmlImportData`
 #' @export
 rdmlLossRecord <- function(
     code,

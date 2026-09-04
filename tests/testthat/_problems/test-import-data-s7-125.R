@@ -68,7 +68,7 @@ expect_error(
     x$version <- "1.2",
     "read-only"
   )
-xml <- asXml(x)
+xml <- asXML(x)
 expect_true(
     grepl(
       'version="1.3"',

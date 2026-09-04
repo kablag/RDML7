@@ -353,24 +353,24 @@ functional camelCase API. It reads qPCR data, exposes the RDML hierarchy
 for programmatic editing, provides tabular fluorescence interfaces,
 validates semantic consistency, and writes RDML/RDES and other
 registered formats.</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a>x <span class="ot">&lt;-</span> <span class="fu">rdmlRead</span>(<span class="st">&quot;experiment.rdml&quot;</span>)</span>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a>x <span class="ot">&lt;-</span> <span class="fu">readRDML</span>(<span class="st">&quot;experiment.rdml&quot;</span>)</span>
 <span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a></span>
 <span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a><span class="fu">rdmlSummary</span>(x)</span>
-<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a><span class="fu">rdmlValidate</span>(x)</span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a><span class="fu">validateRDML</span>(x)</span>
 <span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a></span>
 <span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a>metadata <span class="ot">&lt;-</span> <span class="fu">asTable</span>(x)</span>
 <span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a>amp <span class="ot">&lt;-</span> <span class="fu">getFData</span>(x, <span class="at">dpType =</span> <span class="st">&quot;adp&quot;</span>, <span class="at">longTable =</span> <span class="cn">TRUE</span>)</span>
 <span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a></span>
-<span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a><span class="fu">rdmlWrite</span>(x, <span class="st">&quot;experiment-copy.rdml&quot;</span>)</span></code></pre></div>
+<span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a><span class="fu">writeRDML</span>(x, <span class="st">&quot;experiment-copy.rdml&quot;</span>)</span></code></pre></div>
 <p>Functions that modify an object return a new S7 value:</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>x <span class="ot">&lt;-</span> <span class="fu">setFData</span>(x, fdata, description)</span></code></pre></div>
 </div>
 <div id="reading-files" class="section level2">
 <h2>Reading files</h2>
-<p><code>rdmlRead()</code> dispatches through the runtime format
+<p><code>readRDML()</code> dispatches through the runtime format
 registry.</p>
 <div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="fu">rdmlFormats</span>()</span>
-<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>x <span class="ot">&lt;-</span> <span class="fu">rdmlRead</span>(<span class="st">&quot;experiment.rdml&quot;</span>)</span></code></pre></div>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>x <span class="ot">&lt;-</span> <span class="fu">readRDML</span>(<span class="st">&quot;experiment.rdml&quot;</span>)</span></code></pre></div>
 <p>Use <code>rdmlDetectFormat()</code> to inspect selection without
 performing the import.</p>
 <div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="fu">rdmlDetectFormat</span>(<span class="st">&quot;run.r96&quot;</span>)</span>
@@ -393,14 +393,14 @@ performing the import.</p>
 <div id="summary-and-validation" class="section level2">
 <h2>Summary and validation</h2>
 <div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="fu">rdmlSummary</span>(x)</span>
-<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>issues <span class="ot">&lt;-</span> <span class="fu">rdmlValidate</span>(x)</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>issues <span class="ot">&lt;-</span> <span class="fu">validateRDML</span>(x)</span>
 <span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a><span class="fu">rdmlIsValid</span>(x)</span></code></pre></div>
 <p>Validation can focus on structure, references, curves, or the full
 object:</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="fu">rdmlValidate</span>(x, <span class="at">level =</span> <span class="st">&quot;structure&quot;</span>)</span>
-<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a><span class="fu">rdmlValidate</span>(x, <span class="at">level =</span> <span class="st">&quot;references&quot;</span>)</span>
-<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a><span class="fu">rdmlValidate</span>(x, <span class="at">level =</span> <span class="st">&quot;curves&quot;</span>)</span>
-<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a><span class="fu">rdmlValidate</span>(x, <span class="at">level =</span> <span class="st">&quot;full&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="fu">validateRDML</span>(x, <span class="at">level =</span> <span class="st">&quot;structure&quot;</span>)</span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a><span class="fu">validateRDML</span>(x, <span class="at">level =</span> <span class="st">&quot;references&quot;</span>)</span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a><span class="fu">validateRDML</span>(x, <span class="at">level =</span> <span class="st">&quot;curves&quot;</span>)</span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a><span class="fu">validateRDML</span>(x, <span class="at">level =</span> <span class="st">&quot;full&quot;</span>)</span></code></pre></div>
 </div>
 <div id="metadata-tables" class="section level2">
 <h2>Metadata tables</h2>
@@ -491,12 +491,12 @@ schema key.</p>
 </div>
 <div id="writing" class="section level2">
 <h2>Writing</h2>
-<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a><span class="fu">rdmlWrite</span>(x, <span class="st">&quot;result.rdml&quot;</span>)</span>
-<span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a><span class="fu">rdmlWrite</span>(x, <span class="st">&quot;result.xml&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a><span class="fu">writeRDML</span>(x, <span class="st">&quot;result.rdml&quot;</span>)</span>
+<span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a><span class="fu">writeRDML</span>(x, <span class="st">&quot;result.xml&quot;</span>)</span></code></pre></div>
 <p>Known lossy conversions are controlled with:</p>
-<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a><span class="fu">rdmlWrite</span>(x, <span class="st">&quot;result.rdml&quot;</span>, <span class="at">loss =</span> <span class="st">&quot;warn&quot;</span>)</span>
-<span id="cb17-2"><a href="#cb17-2" tabindex="-1"></a><span class="fu">rdmlWrite</span>(x, <span class="st">&quot;result.rdml&quot;</span>, <span class="at">loss =</span> <span class="st">&quot;error&quot;</span>)</span>
-<span id="cb17-3"><a href="#cb17-3" tabindex="-1"></a><span class="fu">rdmlWrite</span>(x, <span class="st">&quot;result.rdml&quot;</span>, <span class="at">loss =</span> <span class="st">&quot;allow&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a><span class="fu">writeRDML</span>(x, <span class="st">&quot;result.rdml&quot;</span>, <span class="at">loss =</span> <span class="st">&quot;warn&quot;</span>)</span>
+<span id="cb17-2"><a href="#cb17-2" tabindex="-1"></a><span class="fu">writeRDML</span>(x, <span class="st">&quot;result.rdml&quot;</span>, <span class="at">loss =</span> <span class="st">&quot;error&quot;</span>)</span>
+<span id="cb17-3"><a href="#cb17-3" tabindex="-1"></a><span class="fu">writeRDML</span>(x, <span class="st">&quot;result.rdml&quot;</span>, <span class="at">loss =</span> <span class="st">&quot;allow&quot;</span>)</span></code></pre></div>
 </div>
 <div id="legacy-api" class="section level2">
 <h2>Legacy API</h2>

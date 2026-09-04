@@ -41,6 +41,6 @@ asDendrogram <- S7::new_generic("asDendrogram", "x")
 #' @param x `rdmlType`.
 #' @param ... Method-specific arguments.
 #' @return XML text or output path invisibly.
-#' @seealso `rdmlWrite()`
+#' @seealso `writeRDML()`
 #' @export
-asXml <- S7::new_generic("asXml", "x")
+asXML <- S7::new_generic("asXML", "x")

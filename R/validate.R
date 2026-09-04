@@ -112,7 +112,7 @@ NULL
 #' @return A `data.table` of class `rdmlValidation` describing issues.
 #' @seealso `rdmlIsValid`, `rdmlSummary`
 #' @export
-rdmlValidate <- function(
+validateRDML <- function(
     x,
     level = c("full", "structure", "references", "data"),
     action = c("return", "warn", "error")) {
@@ -403,12 +403,12 @@ rdmlValidate <- function(
 #' Test whether an RDML object has semantic errors
 #'
 #' @param x `rdmlType`.
-#' @param level Validation level passed to `rdmlValidate()`.
+#' @param level Validation level passed to `validateRDML()`.
 #' @return `TRUE` if no validation issue has severity `"error"`.
-#' @seealso `rdmlValidate`
+#' @seealso `validateRDML`
 #' @export
 rdmlIsValid <- function(x, level = "full") {
-  result <- rdmlValidate(
+  result <- validateRDML(
     x,
     level = level,
     action = "return"

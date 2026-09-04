@@ -1,185 +1,283 @@
-NULL
+# summary.R ----------------------------------------------------------------
+# summary() method for rdmlType
+#
+# This replaces the separate rdmlSummary() public API with a method for
+# summary(). `totalMultiTm` is intentionally not calculated or returned.
 
-# Compact RDML summaries ----------------------------------------------------
-
-#' Summarize an RDML object
-#'
-#' Counts experiments, runs, reactions, data entries, metadata objects,
-#' amplification/melting curves, Cq values, and multi-Tm entries.
-#'
-#' @param x `rdmlType`.
-#' @return An `rdmlSummary` list containing totals and a per-run table.
-#' @seealso `rdmlValidate`, `asDendrogram`
-#' @export
-rdmlSummary <- function(x) {
-  if (!S7::S7_inherits(x, rdmlType)) {
-    .rdmlAbort(
-      code = "invalidObject",
-      message = "`x` must be an rdmlType object"
-    )
-  }
-
-  experiments <- .rdmlPropList(x, "experiment")
-  runRows <- list()
-  runI <- 0L
+.rdmlSummaryCounts <- function(object) {
+  experiments <- .rdmlPropList(
+    object,
+    "experiment"
+  )
 
   totalRuns <- 0L
   totalReacts <- 0L
   totalData <- 0L
   totalAdp <- 0L
   totalMdp <- 0L
-  totalCq <- 0L
-  totalMultiTm <- 0L
 
   for (experiment in experiments) {
-    expId <- .rdmlIdChr(experiment$id)
+    runs <- .rdmlPropList(
+      experiment,
+      "run"
+    )
 
-    for (run in .rdmlPropList(experiment, "run")) {
-      runId <- .rdmlIdChr(run$id)
-      reacts <- .rdmlPropList(run, "react")
-      dataList <- unlist(
-        lapply(reacts, function(react) .rdmlPropList(react, "data")),
-        recursive = FALSE
+    totalRuns <- totalRuns + length(runs)
+
+    for (run in runs) {
+      reacts <- .rdmlPropList(
+        run,
+        "react"
       )
 
-      targetIds <- unique(vapply(
-        dataList,
-        function(dataObj) .rdmlIdChr(dataObj$targetId),
-        character(1)
-      ))
-
-      nAdp <- sum(vapply(
-        dataList,
-        function(dataObj) .rdmlPresent(dataObj$adp),
-        logical(1)
-      ))
-
-      nMdp <- sum(vapply(
-        dataList,
-        function(dataObj) .rdmlPresent(dataObj$mdp),
-        logical(1)
-      ))
-
-      nCq <- sum(vapply(
-        dataList,
-        function(dataObj) .rdmlPresent(dataObj$cq),
-        logical(1)
-      ))
-
-      nMultiTm <- sum(vapply(
-        dataList,
-        function(dataObj) {
-          .rdmlPresent(dataObj$meltTemps) && length(dataObj$meltTemps) > 1L
-        },
-        logical(1)
-      ))
-
-      runI <- runI + 1L
-      runRows[[runI]] <- data.table::data.table(
-        expId = expId,
-        runId = runId,
-        reacts = length(reacts),
-        targets = length(targetIds),
-        data = length(dataList),
-        adp = nAdp,
-        mdp = nMdp,
-        cq = nCq,
-        multiTm = nMultiTm
-      )
-
-      totalRuns <- totalRuns + 1L
       totalReacts <- totalReacts + length(reacts)
-      totalData <- totalData + length(dataList)
-      totalAdp <- totalAdp + nAdp
-      totalMdp <- totalMdp + nMdp
-      totalCq <- totalCq + nCq
-      totalMultiTm <- totalMultiTm + nMultiTm
+
+      for (react in reacts) {
+        data <- .rdmlPropList(
+          react,
+          "data"
+        )
+
+        totalData <- totalData + length(data)
+
+        for (datum in data) {
+          totalAdp <- totalAdp + as.integer(
+            .rdmlPresent(
+              S7::prop(
+                datum,
+                "adp"
+              )
+            )
+          )
+
+          totalMdp <- totalMdp + as.integer(
+            .rdmlPresent(
+              S7::prop(
+                datum,
+                "mdp"
+              )
+            )
+          )
+        }
+      }
     }
   }
 
-  runs <- if (length(runRows)) {
-    data.table::rbindlist(runRows)
-  } else {
-    data.table::data.table(
-      expId = character(),
-      runId = character(),
-      reacts = integer(),
-      targets = integer(),
-      data = integer(),
-      adp = integer(),
-      mdp = integer(),
-      cq = integer(),
-      multiTm = integer()
-    )
-  }
-
-  structure(
-    list(
-      version = x$version,
-      experiments = length(experiments),
-      runs = totalRuns,
-      reacts = totalReacts,
-      data = totalData,
-      samples = length(.rdmlPropList(x, "sample")),
-      targets = length(.rdmlPropList(x, "target")),
-      dyes = length(.rdmlPropList(x, "dye")),
-      adp = totalAdp,
-      mdp = totalMdp,
-      cq = totalCq,
-      multiTm = totalMultiTm,
-      byRun = runs
+  list(
+    totalExperiments = length(experiments),
+    totalRuns = totalRuns,
+    totalReacts = totalReacts,
+    totalData = totalData,
+    totalSamples = length(
+      .rdmlPropList(
+        object,
+        "sample"
+      )
     ),
-    class = "rdmlSummary"
+    totalTargets = length(
+      .rdmlPropList(
+        object,
+        "target"
+      )
+    ),
+    totalDyes = length(
+      .rdmlPropList(
+        object,
+        "dye"
+      )
+    ),
+    totalThermalCyclingConditions = length(
+      .rdmlPropList(
+        object,
+        "thermalCyclingConditions"
+      )
+    ),
+    totalAdp = totalAdp,
+    totalMdp = totalMdp
   )
 }
 
 
-#' @export
-print.rdmlSummary <- function(x, ...) {
-  cat(sprintf("<RDML %s>\n", x$version))
-  cat(sprintf("Experiments:          %d\n", x$experiments))
-  cat(sprintf("Runs:                 %d\n", x$runs))
-  cat(sprintf("Reactions:            %d\n", x$reacts))
-  cat(sprintf("Data entries:         %d\n", x$data))
-  cat(sprintf("Samples:              %d\n", x$samples))
-  cat(sprintf("Targets:              %d\n", x$targets))
-  cat(sprintf("Dyes:                 %d\n", x$dyes))
-  cat(sprintf("Amplification curves: %d\n", x$adp))
-  cat(sprintf("Melting curves:       %d\n", x$mdp))
-  cat(sprintf("Cq values:            %d\n", x$cq))
-
-  if (x$multiTm > 0L) {
-    cat(sprintf("Multi-Tm entries:     %d\n", x$multiTm))
+.rdmlSummaryScalar <- function(x) {
+  if (.rdmlIsMissing(x)) {
+    return(NA_character_)
   }
 
-  if (nrow(x$byRun)) {
-    cat("\nBy run:\n")
-    print(
-      as.data.frame(x$byRun),
-      row.names = FALSE
+  if (
+    is.atomic(x) &&
+      length(x) == 1L
+  ) {
+    return(
+      as.character(x)
     )
   }
 
-  invisible(x)
+  if (S7::S7_inherits(x)) {
+    value <- tryCatch(
+      S7::prop(
+        x,
+        "value"
+      ),
+      error = function(e) NULL
+    )
+
+    if (
+      !is.null(value) &&
+        is.atomic(value) &&
+        length(value) == 1L
+    ) {
+      return(
+        as.character(value)
+      )
+    }
+  }
+
+  as.character(x)[1L]
 }
 
 
-S7::method(print, rdmlType) <- function(x, ...) {
-  summary <- rdmlSummary(x)
-  cat(sprintf(
-    "<RDML %s> %d experiment(s), %d run(s), %d reaction(s), %d target(s)\n",
-    summary$version,
-    summary$experiments,
-    summary$runs,
-    summary$reacts,
-    summary$targets
-  ))
-  cat(sprintf(
-    "  curves: %d amplification, %d melting; Cq: %d\n",
-    summary$adp,
-    summary$mdp,
-    summary$cq
-  ))
+#' Summarize an RDML object
+#'
+#' Provides a compact structural summary of an [rdmlType] object.
+#'
+#' `summary()` reports the RDML version and dates together with counts of
+#' experiments, runs, reactions, data elements, samples, targets, dyes,
+#' thermal cycling conditions, amplification curves (`adp`), and melting
+#' curves (`mdp`).
+#'
+#' The historical `totalMultiTm` field is no longer calculated or returned.
+#'
+#' @param object An [rdmlType] object.
+#' @param ... Additional arguments. Currently unused.
+#'
+#' @return An object of class `summary.rdmlType`.
+#'
+#' @examples
+#' \dontrun{
+#' x <- readRDML("example.rdml")
+#' summary(x)
+#' }
+S7::method(
+  summary,
+  rdmlType
+) <- function(
+    object,
+    ...) {
+
+  counts <- .rdmlSummaryCounts(
+    object
+  )
+
+  out <- c(
+    list(
+      version = .rdmlSummaryScalar(
+        S7::prop(
+          object,
+          "version"
+        )
+      ),
+      dateMade = .rdmlSummaryScalar(
+        S7::prop(
+          object,
+          "dateMade"
+        )
+      ),
+      dateUpdated = .rdmlSummaryScalar(
+        S7::prop(
+          object,
+          "dateUpdated"
+        )
+      )
+    ),
+    counts
+  )
+
+  class(out) <- c(
+    "summary.rdmlType",
+    "list"
+  )
+
+  out
+}
+
+
+#' @export
+print.summary.rdmlType <- function(
+    x,
+    ...) {
+
+  cat(
+    "RDML summary\n"
+  )
+
+  cat(
+    "  Version: ",
+    if (is.na(x$version)) {
+      "<unknown>"
+    } else {
+      x$version
+    },
+    "\n",
+    sep = ""
+  )
+
+  if (!is.na(x$dateMade)) {
+    cat(
+      "  Date made: ",
+      x$dateMade,
+      "\n",
+      sep = ""
+    )
+  }
+
+  if (!is.na(x$dateUpdated)) {
+    cat(
+      "  Date updated: ",
+      x$dateUpdated,
+      "\n",
+      sep = ""
+    )
+  }
+
+  cat(
+    "\nStructure\n",
+    "  Experiments:                ",
+    x$totalExperiments,
+    "\n",
+    "  Runs:                       ",
+    x$totalRuns,
+    "\n",
+    "  Reactions:                  ",
+    x$totalReacts,
+    "\n",
+    "  Data elements:              ",
+    x$totalData,
+    "\n",
+    "  Samples:                    ",
+    x$totalSamples,
+    "\n",
+    "  Targets:                    ",
+    x$totalTargets,
+    "\n",
+    "  Dyes:                       ",
+    x$totalDyes,
+    "\n",
+    "  Thermal cycling conditions: ",
+    x$totalThermalCyclingConditions,
+    "\n",
+    sep = ""
+  )
+
+  cat(
+    "\nFluorescence data\n",
+    "  Amplification curves (adp): ",
+    x$totalAdp,
+    "\n",
+    "  Melting curves (mdp):       ",
+    x$totalMdp,
+    "\n",
+    sep = ""
+  )
 
   invisible(x)
 }

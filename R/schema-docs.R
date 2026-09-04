@@ -115,7 +115,7 @@ NULL
 #'   \item{`rdmlType`}{Top-level RDML document.}
 #' }
 #'
-#' @seealso `rdmlRead`, `asTable`, `getFData`, `rdmlValidate`
+#' @seealso `readRDML`, `asTable`, `getFData`, `validateRDML`
 #' @name rdml-experimental-types
 #' @aliases dpAmpCurveType dpMeltingCurveType dataType partitionDataType partitionsType reactType dataCollectionSoftwareType labelFormatType pcrFormatType cqDetectionMethodType runType experimentType rdmlType
 NULL
