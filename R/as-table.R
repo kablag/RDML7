@@ -392,7 +392,8 @@
 #'
 #' The first level consists of ready-to-use scalar fields:
 #' `expId`, `runId`, `reactId`, `position`, `sample`, `target`,
-#' `targetDyeId`, `sampleType`, `adp`, and `mdp`.
+#' `targetDyeId`, `sampleType`, `adp` (logical - contains adp)
+#'  and `mdp` (logical - contains mdp).
 #'
 #' These fields may be used directly in expressions supplied through `...`
 #' and in `namePattern` templates.
