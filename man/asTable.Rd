@@ -10,35 +10,62 @@ asTable(x, ...)
 ## S7 method for class <RDML7::rdmlType>
 asTable(
   x,
-  default = list(expId = .rdmlIdChr(experiment$id), runId = .rdmlIdChr(run$id), reactId =
-    .rdmlIdChr(react$id), position = .rdmlReactPosition(react, run$pcrFormat), sample =
-    .rdmlIdChr(react$sample), target = .rdmlIdChr(data$targetId), targetDyeId =
-    .rdmlTargetDye(target, .rdmlIdChr(data$targetId)), sampleType =
-    .rdmlSampleType(sample[[.rdmlIdChr(react$sample)]], .rdmlIdChr(data$targetId)), adp =
-    .rdmlPresent(data$adp), mdp = .rdmlPresent(data$mdp)),
-  namePattern = paste(.rdmlReactPosition(react, run$pcrFormat), .rdmlIdChr(react$sample),
-    .rdmlSampleType(sample[[.rdmlIdChr(react$sample)]], .rdmlIdChr(data$targetId)),
-    .rdmlIdChr(data$targetId), sep = "_"),
-  addColumns = list(),
+  default = NULL,
+  namePattern = "{position}_{sample}_{sampleType}_{target}",
+  addColumns = NULL,
   treatNullAsNa = FALSE,
   includeHidden = FALSE,
+  columns = NULL,
   ...
 )
 }
 \arguments{
 \item{x}{`rdmlType`.}
 
-\item{...}{Additional named expressions.}
+\item{...}{Named expressions defining custom columns. Expressions are
+  evaluated once per `dataType`.
 
-\item{default}{Named list of expressions producing metadata columns.}
+  Ready-to-use scalar fields available directly in these expressions are
+  `expId`, `runId`, `reactId`, `position`, `sample`, `target`,
+  `targetDyeId`, `sampleType`, `adp`, and `mdp`.
 
-\item{namePattern}{Expression generating unique `fdataName` values.}
+  For advanced extraction, the current RDML objects are also available:
+  `experiment`, `run`, `react`, `data`, `samples`, `targets`,
+  `dateMade`, `dateUpdated`, `id`, `experimenter`, `documentation`,
+  `dye`, and `thermalCyclingConditions`.
 
-\item{addColumns}{Named list of additional expressions.}
+  Examples:
+  `short = paste(sample, target, sep = "_")`
+  or `cq = data$cq`.}
+
+\item{default}{Deprecated compatibility argument. A named list of
+expressions defining the base output columns. When supplied, `columns`
+must not be used.}
+
+\item{namePattern}{Character template or expression producing one
+  `fdataName` value per `dataType`.
+
+  In a character template, fields are inserted using `{field}` syntax.
+  Available built-in template fields are `expId`, `runId`, `reactId`,
+  `position`, `sample`, `target`, `targetDyeId`, `sampleType`, `adp`,
+  and `mdp`. Named custom columns supplied through `...` are also
+  available as template fields.
+
+  Example:
+  `"{expId}_{runId}_{position}_{sample}_{sampleType}_{target}"`.}
+
+\item{addColumns}{Deprecated compatibility argument. Named list of
+additional expressions. New code should pass named expressions in `...`.}
 
 \item{treatNullAsNa}{Convert `NULL` expression results to `NA`.}
 
 \item{includeHidden}{Include experiments whose id starts with `.`.}
+
+\item{columns}{Character vector selecting built-in output columns.
+`NULL` uses all built-in columns. Available built-in columns are
+`expId`, `runId`, `reactId`, `position`, `sample`, `target`,
+`targetDyeId`, `sampleType`, `adp`, and `mdp`.
+Custom columns supplied in `...` are appended automatically.}
 }
 \value{
 A `data.table` for `rdmlType`.
@@ -46,9 +73,41 @@ A `data.table` for `rdmlType`.
 Keyed `data.table`, one row per `dataType`.
 }
 \description{
-Each `dataType` becomes one row. Expressions in `default`, `namePattern`,
-`addColumns`, and `...` are evaluated in the current experiment/run/react/
-data context.
+Each `dataType` becomes one row.
+}
+\details{
+The recommended API uses `columns` to select built-in columns and named
+expressions in `...` to add custom columns. `namePattern` may be a string
+template such as
+`"{expId}_{position}_{sample}_{sampleType}_{target}"`.
+
+Two levels of values are available when creating table columns.
+
+The first level consists of ready-to-use scalar fields:
+`expId`, `runId`, `reactId`, `position`, `sample`, `target`,
+`targetDyeId`, `sampleType`, `adp`, and `mdp`.
+
+These fields may be used directly in expressions supplied through `...`
+and in `namePattern` templates.
+
+The second level exposes the current RDML objects for advanced custom
+extraction through `...`:
+`experiment`, `run`, `react`, `data`, `samples`, `targets`,
+`dateMade`, `dateUpdated`, `id`, `experimenter`, `documentation`,
+`dye`, and `thermalCyclingConditions`.
+
+These objects are intentionally not available as `{field}` placeholders
+in `namePattern`, because they are structured RDML/S7 objects rather than
+scalar values. Values extracted from them in a named `...` expression are
+available to `namePattern` under the custom column name.
+
+For example:
+
+`asTable(x, cq = S7::prop(data, "cq"),
+  namePattern = "{expId}_{position}_{sample}_{cq}_{target}")`
+
+`default` and `addColumns` are retained for compatibility with earlier
+versions. New code should use `columns` and `...`.
 }
 \seealso{
 `getFData()`, `setFData()`
