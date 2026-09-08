@@ -1,133 +1,37 @@
-test_that("built-in format registry is populated", {
-  fmts <- rdmlFormats()
-
-  expect_true(
-    all(
-      c(
-        "rdml",
-        "rdml-xml",
-        "dtprime",
-        "abi",
-        "rotorgene",
-        "excel",
-        "csv",
-        "fqd",
-        "roche-lc96"
-      ) %in% fmts$format
-    )
-  )
-
-  expect_true(
-    fmts[fmts$format == "rdml", "write"]
-  )
-
-  expect_false(
-    fmts[fmts$format == "dtprime", "write"]
-  )
-})
-
-
-test_that("custom extension readers can be registered", {
-  name <- "test-dummy-reader"
-
-  on.exit(
-    try(
-      rdmlUnregisterFormat(name),
-      silent = TRUE
-    ),
-    add = TRUE
-  )
-
-  rdmlRegisterFormat(
-    name = name,
-    extensions = "dummyqpcr",
-    reader = function(filename) {
-      .rdmlNewImport(
-        publisher = "dummy"
-      )
-    }
-  )
-
-  path <- tempfile(
-    fileext = ".dummyqpcr"
-  )
-
-  writeLines(
-    "dummy",
-    path
-  )
-
+test_that("rdmlRegisterFormat has the minimal public API", {
   expect_identical(
-    rdmlDetectFormat(path),
-    name
-  )
-
-  obj <- readRDML(path)
-
-  expect_true(
-    S7::S7_inherits(
-      obj,
-      rdmlType
+    names(formals(rdmlRegisterFormat)),
+    c(
+      "name",
+      "extensions",
+      "reader",
+      "writer"
     )
   )
 })
 
 
-test_that("custom writers are dispatched by extension", {
-  name <- "test-dummy-writer"
-
-  on.exit(
-    try(
-      rdmlUnregisterFormat(name),
-      silent = TRUE
-    ),
-    add = TRUE
-  )
-
-  rdmlRegisterFormat(
-    name = name,
-    extensions = "dummyout",
-    writer = function(
-        x,
-        filename,
-        ...) {
-      writeLines(
-        "ok",
-        filename
-      )
-
-      invisible(filename)
-    }
-  )
-
-  obj <- .rdmlNewImport(
-    publisher = "dummy"
-  )
-
-  path <- tempfile(
-    fileext = ".dummyout"
-  )
-
-  writeRDML(
-    obj,
-    path
-  )
-
+test_that("rdmlFormats exposes only dispatch information", {
   expect_identical(
-    readLines(path),
-    "ok"
+    names(rdmlFormats()),
+    c(
+      "format",
+      "extensions",
+      "read",
+      "write"
+    )
   )
 })
 
 
-test_that("overlapping extensions may be resolved by sniff confidence", {
-  names_to_remove <- c(
-    "test-sniff-a",
-    "test-sniff-b"
+test_that("the first registered reader is the default for an extension", {
+  namesToRemove <- c(
+    "test-first-default",
+    "test-second-default"
   )
 
   on.exit(
-    for (name in names_to_remove) {
+    for (name in namesToRemove) {
       try(
         rdmlUnregisterFormat(name),
         silent = TRUE
@@ -137,34 +41,151 @@ test_that("overlapping extensions may be resolved by sniff confidence", {
   )
 
   rdmlRegisterFormat(
-    name = "test-sniff-a",
-    extensions = "ambqpcr",
-    reader = function(filename) {
-      .rdmlNewImport("A")
-    },
-    sniff = function(filename) 0.2
+    "test-first-default",
+    extensions = "defaultqpcr",
+    reader = function(fileName, ...) rdmlType()
   )
 
   rdmlRegisterFormat(
-    name = "test-sniff-b",
-    extensions = "ambqpcr",
-    reader = function(filename) {
-      .rdmlNewImport("B")
-    },
-    sniff = function(filename) 0.9
-  )
-
-  path <- tempfile(
-    fileext = ".ambqpcr"
-  )
-
-  writeLines(
-    "x",
-    path
+    "test-second-default",
+    extensions = "defaultqpcr",
+    reader = function(fileName, ...) rdmlType()
   )
 
   expect_identical(
-    rdmlDetectFormat(path),
-    "test-sniff-b"
+    rdmlDetectFormat("x.defaultqpcr", "read"),
+    "test-first-default"
+  )
+
+  expect_identical(
+    .rdmlResolveFormat(
+      "x.defaultqpcr",
+      format = "test-second-default",
+      operation = "read"
+    )$name,
+    "test-second-default"
+  )
+})
+
+
+test_that("read and write defaults are operation-specific", {
+  namesToRemove <- c(
+    "test-reader-default",
+    "test-writer-default"
+  )
+
+  on.exit(
+    for (name in namesToRemove) {
+      try(
+        rdmlUnregisterFormat(name),
+        silent = TRUE
+      )
+    },
+    add = TRUE
+  )
+
+  rdmlRegisterFormat(
+    "test-reader-default",
+    extensions = "opqpcr",
+    reader = function(fileName, ...) rdmlType()
+  )
+
+  rdmlRegisterFormat(
+    "test-writer-default",
+    extensions = "opqpcr",
+    writer = function(x, fileName, ...) invisible(fileName)
+  )
+
+  expect_identical(
+    rdmlDetectFormat("x.opqpcr", "read"),
+    "test-reader-default"
+  )
+
+  expect_identical(
+    rdmlDetectFormat("x.opqpcr", "write"),
+    "test-writer-default"
+  )
+})
+
+
+test_that("built-in overlapping extensions have stable defaults", {
+  expect_identical(
+    rdmlDetectFormat("x.csv", "read"),
+    "csv"
+  )
+
+  expect_identical(
+    rdmlDetectFormat("x.txt", "read"),
+    "fqd"
+  )
+
+  expect_identical(
+    rdmlDetectFormat("x.tsv", "read"),
+    "rdes"
+  )
+
+  expect_identical(
+    rdmlDetectFormat("x.csv", "write"),
+    "rdes"
+  )
+
+  expect_identical(
+    rdmlDetectFormat("x.txt", "write"),
+    "rdes"
+  )
+})
+
+
+test_that("files without an extension require explicit format", {
+  expect_error(
+    rdmlDetectFormat("no-extension", "read"),
+    "without an extension"
+  )
+})
+
+
+test_that("unknown extensions fail clearly", {
+  expect_error(
+    rdmlDetectFormat("x.unknownqpcr", "read"),
+    "No registered read format"
+  )
+})
+
+
+test_that("duplicate format names are rejected", {
+  name <- "test-duplicate-name"
+
+  on.exit(
+    try(
+      rdmlUnregisterFormat(name),
+      silent = TRUE
+    ),
+    add = TRUE
+  )
+
+  rdmlRegisterFormat(
+    name,
+    extensions = "dupqpcr",
+    reader = function(fileName, ...) rdmlType()
+  )
+
+  expect_error(
+    rdmlRegisterFormat(
+      name,
+      extensions = "dup2qpcr",
+      reader = function(fileName, ...) rdmlType()
+    ),
+    "already registered"
+  )
+})
+
+
+test_that("a format must provide a reader or writer", {
+  expect_error(
+    rdmlRegisterFormat(
+      "test-empty-format",
+      extensions = "emptyqpcr"
+    ),
+    "at least one"
   )
 })

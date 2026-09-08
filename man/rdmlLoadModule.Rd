@@ -4,12 +4,10 @@
 \alias{rdmlLoadModule}
 \title{Load file-format handlers from an R module}
 \usage{
-rdmlLoadModule(path, overwrite = FALSE)
+rdmlLoadModule(path)
 }
 \arguments{
 \item{path}{Module R file.}
-
-\item{overwrite}{Allow replacement of an existing format.}
 }
 \value{
 Registered format names invisibly.
@@ -17,6 +15,8 @@ Registered format names invisibly.
 \description{
 The module defines `rdmlModule()` (legacy `rdml_module()` is also accepted)
 and returns one or more specifications accepted by `rdmlRegisterFormat()`.
+Each specification may contain only `name`, `extensions`, `reader`, and
+`writer`.
 }
 \seealso{
 `rdmlRegisterFormat`, `rdmlFormats`

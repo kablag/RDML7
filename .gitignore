@@ -4,3 +4,5 @@
 RDML.Rproj
 .DS_Store
 .vscode
+/doc/
+/Meta/

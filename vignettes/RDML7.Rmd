@@ -250,8 +250,7 @@ RDML7 provides validation (as for RDML 1.3 version) functions in addition to S7
 property validators.
 
 ```{r validate, eval=FALSE}
-validation <- validateRDML(lc96)
-validation
+validateRDML(lc96)
 
 rdmlIsValid(lc96)
 ```
@@ -364,13 +363,15 @@ Custom columns no longer need a separate `addColumns` argument. Supply a named
 expression directly through `...`.
 
 ```{r custom-column}
-tbl <- asTable(
+request <- asTable(
   lc96,
   columns = c(
     "expId",
     "runId",
     "position",
+    "reactId",
     "sample",
+    "sampleType",
     "target"
   ),
   sampleTarget = paste(
@@ -379,7 +380,7 @@ tbl <- asTable(
     sep = ":"
 ))
 
-head(tbl)
+head(request)
 ```
 
 The ready-to-use scalar fields available in custom expressions are:
@@ -462,6 +463,8 @@ tbl <- asTable(
     }
   }
 )
+
+head(tbl)
 ```
 
 This approach avoids falsely extracting a number that is only part of another
@@ -490,7 +493,7 @@ under the hood) - see later.
 
 Default data is `adp`.
 ```{r get-adp}
-amp <- getFData(lc96)
+amp <- getFData(lc96, request)
 
 head(amp)
 ```
@@ -746,6 +749,8 @@ merged <- mergeRDMLs(
   incoming,
   dataConflict = "error"
 )
+
+asDendrogram(merged)
 ```
 
 `dataConflict` controls what happens when equivalent data locations contain
@@ -761,16 +766,23 @@ pipeline because unexpected ID collisions become visible immediately.
 A directory of files can be processed in a list:
 
 ```{r merge-directory, eval=FALSE}
-files <- dir(
-  "path/to/files",
+files <- list.files(
+  system.file("extdata", package = "RDML7"),
   full.names = TRUE
 )
+
+files <- files[!file.info(files)$isdir]
 
 rdmls <- lapply(files, function(file) readRDML(file))
 merged <- mergeRDMLs(
     rdmls,
     dataConflict = "error"
   )
+
+merged <- mergeRDMLs(
+    rdmls
+  )
+asDendrogram(merged)
 ```
 
 If experiment identifiers are not unique between input files, rename them
@@ -837,12 +849,7 @@ A format can provide:
 
 - file extensions;
 - a reader;
-- a writer;
-- a sniffer;
-- aliases;
-- priority;
-- API version;
-- capabilities.
+- a writer.
 
 The public registration function is:
 
@@ -852,49 +859,231 @@ rdmlRegisterFormat(
   extensions = character(),
   reader = NULL,
   writer = NULL,
-  sniff = NULL,
-  aliases = character(),
-  priority = 0L,
-  apiVersion = 1L,
-  capabilities = character(),
-  overwrite = FALSE
 )
 ```
 
 For example, a third-party package could register a reader:
 
-```{r register-format-example, eval=FALSE}
-myReader <- function(fileName, ...) {
-  # Parse the external format and return either:
-  #   1. an rdmlType object, or
-  #   2. an rdmlImportData object.
+```{r register-format-example, eval=TRUE}
+# simple-qpcr-reader.R -----------------------------------------------------
+#
+# Example third-party reader for RDML7's minimal format registry.
+
+readSimpleQPCR <- function(fileName, ...) {
+  lines <- readLines(
+    fileName,
+    warn = FALSE,
+    encoding = "UTF-8"
+  )
+
+  section <- function(name) {
+    start <- match(
+      paste0("[", name, "]"),
+      lines
+    )
+
+    if (is.na(start)) {
+      stop(
+        "Missing [",
+        name,
+        "] section",
+        call. = FALSE
+      )
+    }
+
+    nextSections <- grep(
+      "^\\[[^]]+\\]$",
+      lines
+    )
+
+    end <- nextSections[
+      nextSections > start
+    ]
+
+    end <- if (length(end)) {
+      end[[1L]] - 1L
+    } else {
+      length(lines)
+    }
+
+    out <- lines[
+      seq.int(
+        start + 1L,
+        end
+      )
+    ]
+
+    out[nzchar(trimws(out))]
+  }
+
+  # [meta] ---------------------------------------------------------------
+  metaLines <- section("meta")
+
+  meta <- strsplit(
+    metaLines,
+    "=",
+    fixed = TRUE
+  )
+
+  meta <- stats::setNames(
+    vapply(
+      meta,
+      function(x) {
+        paste(
+          x[-1L],
+          collapse = "="
+        )
+      },
+      character(1)
+    ),
+    vapply(
+      meta,
+      `[[`,
+      character(1),
+      1L
+    )
+  )
+
+  requiredMeta <- c(
+    "experiment",
+    "run",
+    "target",
+    "dye"
+  )
+
+  missingMeta <- setdiff(
+    requiredMeta,
+    names(meta)
+  )
+
+  if (length(missingMeta)) {
+    stop(
+      "Missing metadata: ",
+      paste(
+        missingMeta,
+        collapse = ", "
+      ),
+      call. = FALSE
+    )
+  }
+
+  # [reactions] ----------------------------------------------------------
+  reactions <- utils::read.delim(
+    text = paste(
+      section("reactions"),
+      collapse = "\n"
+    ),
+    stringsAsFactors = FALSE,
+    check.names = FALSE
+  )
+
+  requiredReactions <- c(
+    "fdataName",
+    "reactId",
+    "sample",
+    "sampleType",
+    "quantity"
+  )
+
+  missingReactions <- setdiff(
+    requiredReactions,
+    names(reactions)
+  )
+
+  if (length(missingReactions)) {
+    stop(
+      "Missing reaction columns: ",
+      paste(
+        missingReactions,
+        collapse = ", "
+      ),
+      call. = FALSE
+    )
+  }
+
+  # [adp] ----------------------------------------------------------------
+  fdata <- utils::read.delim(
+    text = paste(
+      section("adp"),
+      collapse = "\n"
+    ),
+    stringsAsFactors = FALSE,
+    check.names = FALSE
+  )
+
+  if (!identical(names(fdata)[[1L]], "cyc")) {
+    stop(
+      "First [adp] column must be `cyc`",
+      call. = FALSE
+    )
+  }
+
+  missingCurves <- setdiff(
+    reactions$fdataName,
+    names(fdata)
+  )
+
+  if (length(missingCurves)) {
+    stop(
+      "Missing fluorescence columns: ",
+      paste(
+        missingCurves,
+        collapse = ", "
+      ),
+      call. = FALSE
+    )
+  }
+
+  description <- data.frame(
+    fdataName = reactions$fdataName,
+    expId = meta[["experiment"]],
+    runId = meta[["run"]],
+    reactId = as.character(
+      reactions$reactId
+    ),
+    sample = reactions$sample,
+    sampleType = reactions$sampleType,
+    target = meta[["target"]],
+    targetDyeId = meta[["dye"]],
+    quantity = as.numeric(
+      reactions$quantity
+    ),
+    stringsAsFactors = FALSE
+  )
+
+  rdmlFromFData(
+    fdata = fdata,
+    description = description,
+    fdataType = "adp",
+    publisher = "simpleqpcr"
+  )
 }
 
-mySniffer <- function(fileName) {
-  # Return a confidence score between 0 and 1.
-  0
-}
 
 rdmlRegisterFormat(
-  name = "myformat",
-  extensions = "myqpcr",
-  reader = myReader,
-  sniff = mySniffer,
-  aliases = "my-device",
-  priority = 10L
+  name = "simpleqpcr",
+  extensions = "sqpcr",
+  reader = readSimpleQPCR
 )
+
 ```
 
 The new format then participates in normal dispatch:
 
-```{r custom-format-dispatch, eval=FALSE}
-readRDML("experiment.myqpcr")
+```{r custom-format-dispatch, eval=TRUE}
+sqpcr <- system.file(
+  "extdata/sqpcr",
+  "cd53_efficiency.sqpcr",
+  package = "RDML7"
+)
+sqpcr <- readRDML(sqpcr)
+summary(sqpcr)
 ```
 
 To remove a third-party format:
 
-```{r unregister-format, eval=FALSE}
-rdmlUnregisterFormat("myformat")
+```{r unregister-format, eval=TRUE}
+rdmlUnregisterFormat("simpleqpcr")
 ```
 
 Built-in handlers are protected from accidental removal.
@@ -991,6 +1180,8 @@ cycles <- curves[[1]]
 This separation allows RDML7 to focus on data interchange, metadata,
 validation, conversion, and object manipulation while specialised packages
 perform curve analysis.
+
+See details and examples in [*Using RDML with other R packages*](usingRDML_with_other_R_packages.html) vignette.
 
 # Recommended workflow
 

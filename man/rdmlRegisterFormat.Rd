@@ -8,43 +8,28 @@ rdmlRegisterFormat(
   name,
   extensions = character(),
   reader = NULL,
-  writer = NULL,
-  sniff = NULL,
-  aliases = character(),
-  priority = 0L,
-  apiVersion = 1L,
-  capabilities = character(),
-  overwrite = FALSE
+  writer = NULL
 )
 }
 \arguments{
-\item{name}{Unique format name.}
+\item{name}{Unique format name used by `format=`.}
 
-\item{extensions}{Extensions with or without a leading dot.}
+\item{extensions}{Character vector of file extensions, with or without
+a leading dot.}
 
 \item{reader}{Reader function or `NULL`.}
 
 \item{writer}{Writer function or `NULL`.}
-
-\item{sniff}{Optional `function(fileName)` returning confidence 0..1.}
-
-\item{aliases}{Explicit aliases accepted by `format=`.}
-
-\item{priority}{Integer tie-break priority; larger values win.}
-
-\item{apiVersion}{Plugin API version (currently 1).}
-
-\item{capabilities}{Character vector of supported features.}
-
-\item{overwrite}{Replace an existing format of the same name.}
 }
 \value{
 Registered format specification invisibly.
 }
 \description{
-Extension collisions are allowed. On read, sniffer confidence and then
-priority choose a handler. A reader returns `rdmlType` or `rdmlImportData`.
+Register a named file format. Automatic dispatch uses the file extension.
+If several formats support the same extension and operation, the first
+registered matching format is used by default. Users can select another
+registered format explicitly with `format = "name"`.
 }
 \seealso{
-`rdmlLoadModule`, `rdmlFormats`, `readRDML`
+`rdmlLoadModule`, `rdmlFormats`, `rdmlRead`
 }

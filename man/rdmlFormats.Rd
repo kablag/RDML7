@@ -7,11 +7,12 @@
 rdmlFormats()
 }
 \value{
-Data frame containing extensions, aliases, reader/writer/sniffer
-availability, priority, API version, capabilities, and built-in status.
+Data frame with format name, extensions, and reader/writer
+  availability.
 }
 \description{
-List registered RDML file formats
+Formats are returned in registration order. For automatic dispatch, the
+first format supporting a given extension and operation is the default.
 }
 \seealso{
 `rdmlRegisterFormat`, `rdmlDetectFormat`

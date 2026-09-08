@@ -13,6 +13,11 @@ NULL
 # dependency while keeping vendor parsers separate.
 
 .rdmlFormatRegistry <- new.env(parent = emptyenv())
+assign(
+  ".order",
+  character(),
+  envir = .rdmlFormatRegistry
+)
 
 
 .rdmlNormalizeFormatName <- function(x, arg = "format") {
@@ -44,53 +49,32 @@ NULL
 }
 
 
-.rdmlNormalizeAliases <- function(x) {
-  if (is.null(x) || !length(x)) {
-    return(character())
-  }
-
-  if (!is.character(x) || anyNA(x)) {
-    stop("`aliases` must be a character vector without NA", call. = FALSE)
-  }
-
-  x <- tolower(trimws(x))
-  x <- x[nzchar(x)]
-
-  unique(x)
-}
-
-
-.rdmlFormatApiVersions <- 1L
-
-
-.rdmlNormalizeCapabilities <- function(x) {
-  if (is.null(x) || !length(x)) {
-    return(character())
-  }
-
-  if (!is.character(x) || anyNA(x)) {
-    stop("`capabilities` must be a character vector without NA", call. = FALSE)
-  }
-
-  unique(x[nzchar(x)])
-}
-
-
 .rdmlFormatSpecs <- function() {
-  keys <- ls(
+  order <- get(
+    ".order",
     envir = .rdmlFormatRegistry,
-    all.names = TRUE
+    inherits = FALSE
   )
 
-  if (!length(keys)) {
+  if (!length(order)) {
     return(list())
   }
 
+  order <- order[
+    vapply(
+      order,
+      exists,
+      logical(1),
+      envir = .rdmlFormatRegistry,
+      inherits = FALSE
+    )
+  ]
+
   lapply(
-    keys,
-    function(key) {
+    order,
+    function(name) {
       get(
-        key,
+        name,
         envir = .rdmlFormatRegistry,
         inherits = FALSE
       )
@@ -104,61 +88,29 @@ NULL
     extensions = character(),
     reader = NULL,
     writer = NULL,
-    sniff = NULL,
-    aliases = character(),
-    priority = 0L,
-    apiVersion = 1L,
-    capabilities = character(),
-    overwrite = FALSE,
     builtin = FALSE) {
 
   name <- .rdmlNormalizeFormatName(name, "name")
   extensions <- .rdmlNormalizeExtensions(extensions)
-  aliases <- .rdmlNormalizeAliases(aliases)
-  capabilities <- .rdmlNormalizeCapabilities(capabilities)
-  apiVersion <- as.integer(apiVersion)
-
-  if (
-    length(apiVersion) != 1L ||
-    is.na(apiVersion) ||
-    !apiVersion %in% .rdmlFormatApiVersions
-  ) {
-    stop(
-      "Unsupported format API version: ",
-      apiVersion,
-      ". Supported: ",
-      paste(.rdmlFormatApiVersions, collapse = ", "),
-      call. = FALSE
-    )
-  }
-
-  checkmate::assertFlag(overwrite)
   checkmate::assertFlag(builtin)
 
   if (
     !is.null(reader) &&
-    !is.function(reader)
+      !is.function(reader)
   ) {
     stop("`reader` must be a function or NULL", call. = FALSE)
   }
 
   if (
     !is.null(writer) &&
-    !is.function(writer)
+      !is.function(writer)
   ) {
     stop("`writer` must be a function or NULL", call. = FALSE)
   }
 
   if (
-    !is.null(sniff) &&
-    !is.function(sniff)
-  ) {
-    stop("`sniff` must be a function or NULL", call. = FALSE)
-  }
-
-  if (
     is.null(reader) &&
-    is.null(writer)
+      is.null(writer)
   ) {
     stop(
       "A format must provide at least one of `reader` or `writer`",
@@ -166,22 +118,13 @@ NULL
     )
   }
 
-  priority <- as.integer(priority)
-
   if (
-    length(priority) != 1L ||
-    is.na(priority)
+    exists(
+      name,
+      envir = .rdmlFormatRegistry,
+      inherits = FALSE
+    )
   ) {
-    stop("`priority` must be one integer", call. = FALSE)
-  }
-
-  existsName <- exists(
-    name,
-    envir = .rdmlFormatRegistry,
-    inherits = FALSE
-  )
-
-  if (existsName && !overwrite) {
     stop(
       "RDML format already registered: ",
       name,
@@ -189,43 +132,11 @@ NULL
     )
   }
 
-  # Names and aliases are explicit identifiers and therefore must remain
-  # unambiguous.  Extensions may intentionally overlap and are resolved by
-  # sniff()/priority.
-  otherSpecs <- .rdmlFormatSpecs()
-
-  if (existsName) {
-    otherSpecs <- Filter(
-      function(spec) !identical(spec$name, name),
-      otherSpecs
-    )
-  }
-
-  explicitTokens <- unique(c(name, aliases))
-
-  for (spec in otherSpecs) {
-    occupied <- unique(c(spec$name, spec$aliases))
-    conflict <- intersect(explicitTokens, occupied)
-
-    if (length(conflict)) {
-      stop(
-        "Format name/alias already registered: ",
-        paste(conflict, collapse = ", "),
-        call. = FALSE
-      )
-    }
-  }
-
   spec <- list(
     name = name,
     extensions = extensions,
-    aliases = aliases,
     reader = reader,
     writer = writer,
-    sniff = sniff,
-    priority = priority,
-    apiVersion = apiVersion,
-    capabilities = capabilities,
     builtin = builtin
   )
 
@@ -235,55 +146,50 @@ NULL
     envir = .rdmlFormatRegistry
   )
 
+  order <- get(
+    ".order",
+    envir = .rdmlFormatRegistry,
+    inherits = FALSE
+  )
+
+  assign(
+    ".order",
+    c(order, name),
+    envir = .rdmlFormatRegistry
+  )
+
   invisible(spec)
 }
 
-
 #' Register a file-format reader and/or writer
 #'
-#' Extension collisions are allowed. On read, sniffer confidence and then
-#' priority choose a handler. A reader returns `rdmlType` or `rdmlImportData`.
+#' Register a named file format. Automatic dispatch uses the file extension.
+#' If several formats support the same extension and operation, the first
+#' registered matching format is used by default. Users can select another
+#' registered format explicitly with `format = "name"`.
 #'
-#' @param name Unique format name.
-#' @param extensions Extensions with or without a leading dot.
+#' @param name Unique format name used by `format=`.
+#' @param extensions Character vector of file extensions, with or without
+#'   a leading dot.
 #' @param reader Reader function or `NULL`.
 #' @param writer Writer function or `NULL`.
-#' @param sniff Optional `function(fileName)` returning confidence 0..1.
-#' @param aliases Explicit aliases accepted by `format=`.
-#' @param priority Integer tie-break priority; larger values win.
-#' @param apiVersion Plugin API version (currently 1).
-#' @param capabilities Character vector of supported features.
-#' @param overwrite Replace an existing format of the same name.
 #' @return Registered format specification invisibly.
-#' @seealso `rdmlLoadModule`, `rdmlFormats`, `readRDML`
+#' @seealso `rdmlLoadModule`, `rdmlFormats`, `rdmlRead`
 #' @export
 rdmlRegisterFormat <- function(
     name,
     extensions = character(),
     reader = NULL,
-    writer = NULL,
-    sniff = NULL,
-    aliases = character(),
-    priority = 0L,
-    apiVersion = 1L,
-    capabilities = character(),
-    overwrite = FALSE) {
+    writer = NULL) {
 
   .rdmlRegisterFormat(
     name = name,
     extensions = extensions,
     reader = reader,
     writer = writer,
-    sniff = sniff,
-    aliases = aliases,
-    priority = priority,
-    apiVersion = apiVersion,
-    capabilities = capabilities,
-    overwrite = overwrite,
     builtin = FALSE
   )
 }
-
 
 #' Unregister a file format
 #'
@@ -330,14 +236,30 @@ rdmlUnregisterFormat <- function(name, force = FALSE) {
     envir = .rdmlFormatRegistry
   )
 
+
+  order <- get(
+    ".order",
+    envir = .rdmlFormatRegistry,
+    inherits = FALSE
+  )
+
+  assign(
+    ".order",
+    order[order != name],
+    envir = .rdmlFormatRegistry
+  )
+
   invisible(TRUE)
 }
 
 
 #' List registered RDML file formats
 #'
-#' @return Data frame containing extensions, aliases, reader/writer/sniffer
-#' availability, priority, API version, capabilities, and built-in status.
+#' Formats are returned in registration order. For automatic dispatch, the
+#' first format supporting a given extension and operation is the default.
+#'
+#' @return Data frame with format name, extensions, and reader/writer
+#'   availability.
 #' @seealso `rdmlRegisterFormat`, `rdmlDetectFormat`
 #' @export
 rdmlFormats <- function() {
@@ -348,14 +270,8 @@ rdmlFormats <- function() {
       data.frame(
         format = character(),
         extensions = character(),
-        aliases = character(),
         read = logical(),
         write = logical(),
-        sniff = logical(),
-        priority = integer(),
-        apiVersion = integer(),
-        capabilities = character(),
-        builtin = logical(),
         stringsAsFactors = FALSE
       )
     )
@@ -368,15 +284,12 @@ rdmlFormats <- function() {
       function(spec) {
         data.frame(
           format = spec$name,
-          extensions = paste(spec$extensions, collapse = ", "),
-          aliases = paste(spec$aliases, collapse = ", "),
+          extensions = paste(
+            spec$extensions,
+            collapse = ", "
+          ),
           read = !is.null(spec$reader),
           write = !is.null(spec$writer),
-          sniff = !is.null(spec$sniff),
-          priority = spec$priority,
-          apiVersion = spec$apiVersion,
-          capabilities = paste(spec$capabilities, collapse = ", "),
-          builtin = isTRUE(spec$builtin),
           stringsAsFactors = FALSE
         )
       }
@@ -384,7 +297,7 @@ rdmlFormats <- function() {
   )
 
   rownames(out) <- NULL
-  out[order(out$format), , drop = FALSE]
+  out
 }
 
 
@@ -398,238 +311,99 @@ rdmlFormats <- function() {
 }
 
 
-.rdmlSniffScore <- function(spec, fileName) {
-  if (is.null(spec$sniff)) {
-    return(0)
-  }
+.rdmlResolveExplicitFormat <- function(
+    format,
+    operation) {
 
-  score <- tryCatch(
-    spec$sniff(fileName),
-    error = function(e) 0
-  )
+  name <- .rdmlNormalizeFormatName(format, "format")
 
   if (
-    is.logical(score) &&
-    length(score) == 1L &&
-    !is.na(score)
-  ) {
-    score <- as.numeric(score)
-  }
-
-  if (
-    !is.numeric(score) ||
-    length(score) != 1L ||
-    is.na(score) ||
-    !is.finite(score)
-  ) {
-    return(0)
-  }
-
-  min(1, max(0, score))
-}
-
-
-.rdmlChooseCandidates <- function(
-    candidates,
-    fileName,
-    operation,
-    useSniff = TRUE) {
-
-  if (!length(candidates)) {
-    return(NULL)
-  }
-
-  if (length(candidates) == 1L) {
-    return(candidates[[1L]])
-  }
-
-  if (
-    identical(operation, "read") &&
-    isTRUE(useSniff)
-  ) {
-    scores <- vapply(
-      candidates,
-      .rdmlSniffScore,
-      numeric(1),
-      fileName = fileName
+    !exists(
+      name,
+      envir = .rdmlFormatRegistry,
+      inherits = FALSE
     )
-
-    bestScore <- max(scores)
-
-    if (bestScore > 0) {
-      best <- which(scores == bestScore)
-
-      if (length(best) == 1L) {
-        return(candidates[[best]])
-      }
-
-      candidates <- candidates[best]
-    }
-  }
-
-  priorities <- vapply(
-    candidates,
-    function(spec) spec$priority,
-    integer(1)
-  )
-
-  bestPriority <- max(priorities)
-  best <- which(priorities == bestPriority)
-
-  if (length(best) == 1L) {
-    return(candidates[[best]])
-  }
-
-  stop(
-    "File format is ambiguous between: ",
-    paste(
-      vapply(candidates, function(spec) spec$name, character(1)),
-      collapse = ", "
-    ),
-    ". Specify `format=` explicitly.",
-    call. = FALSE
-  )
-}
-
-
-.rdmlResolveExplicitFormat <- function(format, operation) {
-  token <- .rdmlNormalizeFormatName(format, "format")
-  tokenNoDot <- sub("^\\.", "", token)
-
-  specs <- Filter(
-    function(spec) .rdmlFormatSupports(spec, operation),
-    .rdmlFormatSpecs()
-  )
-
-  # Exact format name has highest precedence.
-  exact <- Filter(
-    function(spec) identical(spec$name, token),
-    specs
-  )
-
-  if (length(exact) == 1L) {
-    return(exact[[1L]])
-  }
-
-  alias <- Filter(
-    function(spec) token %in% spec$aliases,
-    specs
-  )
-
-  if (length(alias) == 1L) {
-    return(alias[[1L]])
-  }
-
-  extension <- Filter(
-    function(spec) tokenNoDot %in% spec$extensions,
-    specs
-  )
-
-  if (length(extension) == 1L) {
-    return(extension[[1L]])
-  }
-
-  if (length(alias) > 1L || length(extension) > 1L) {
-    choices <- unique(
-      c(
-        vapply(alias, function(spec) spec$name, character(1)),
-        vapply(extension, function(spec) spec$name, character(1))
-      )
-    )
-
+  ) {
     stop(
-      "Explicit format '",
+      "Unknown RDML format: ",
       format,
-      "' is ambiguous between: ",
-      paste(choices, collapse = ", "),
-      ". Use a registered format name.",
+      ". Registered formats: ",
+      paste(
+        vapply(
+          .rdmlFormatSpecs(),
+          function(spec) spec$name,
+          character(1)
+        ),
+        collapse = ", "
+      ),
       call. = FALSE
     )
   }
 
-  stop(
-    "Unsupported ",
-    operation,
-    " format: ",
-    format,
-    ". Registered formats: ",
-    paste(
-      vapply(specs, function(spec) spec$name, character(1)),
-      collapse = ", "
-    ),
-    call. = FALSE
+  spec <- get(
+    name,
+    envir = .rdmlFormatRegistry,
+    inherits = FALSE
   )
+
+  if (!.rdmlFormatSupports(spec, operation)) {
+    stop(
+      "Format '",
+      name,
+      "' does not support ",
+      operation,
+      call. = FALSE
+    )
+  }
+
+  spec
 }
 
 
-.rdmlResolveAutoFormat <- function(fileName, operation) {
-  specs <- Filter(
-    function(spec) .rdmlFormatSupports(spec, operation),
+.rdmlResolveAutoFormat <- function(
+    fileName,
+    operation) {
+
+  ext <- tolower(
+    tools::file_ext(fileName)
+  )
+
+  if (!nzchar(ext)) {
+    stop(
+      "Cannot determine ",
+      operation,
+      " format for a file without an extension: ",
+      fileName,
+      ". Specify `format=` explicitly.",
+      call. = FALSE
+    )
+  }
+
+  candidates <- Filter(
+    function(spec) {
+      .rdmlFormatSupports(
+        spec,
+        operation
+      ) &&
+        ext %in% spec$extensions
+    },
     .rdmlFormatSpecs()
   )
 
-  ext <- tolower(tools::file_ext(fileName))
-
-  candidates <- if (nzchar(ext)) {
-    Filter(
-      function(spec) ext %in% spec$extensions,
-      specs
-    )
-  } else {
-    list()
-  }
-
-  # Extension-first dispatch.  When no extension matches on read, sniff every
-  # readable format so extensionless or unusually named files can still work.
-  if (!length(candidates) && identical(operation, "read")) {
-    sniffable <- Filter(
-      function(spec) !is.null(spec$sniff),
-      specs
-    )
-
-    scores <- vapply(
-      sniffable,
-      .rdmlSniffScore,
-      numeric(1),
-      fileName = fileName
-    )
-
-    positive <- which(scores > 0)
-
-    if (length(positive)) {
-      candidates <- sniffable[positive]
-    }
-  }
-
-  chosen <- .rdmlChooseCandidates(
-    candidates,
-    fileName = fileName,
-    operation = operation,
-    useSniff = TRUE
-  )
-
-  if (!is.null(chosen)) {
-    return(chosen)
-  }
-
-  if (nzchar(ext)) {
+  if (!length(candidates)) {
     stop(
       "No registered ",
       operation,
       " format for extension .",
       ext,
-      ". Use `rdmlFormats()` to list available handlers or specify `format=`.",
+      ". Use `rdmlFormats()` to list available handlers or ",
+      "specify `format=` explicitly.",
       call. = FALSE
     )
   }
 
-  stop(
-    "Could not detect a registered ",
-    operation,
-    " format for file: ",
-    fileName,
-    call. = FALSE
-  )
+  # Registration order defines the default for an extension.
+  candidates[[1L]]
 }
 
 
@@ -734,52 +508,6 @@ rdmlDetectFormat <- function(
   ]
 
   do.call(fun, args)
-}
-
-
-.rdmlFormatWriteLosses <- function(x, spec) {
-  losses <- list()
-
-  if (!("multiTm" %in% spec$capabilities)) {
-    experiments <- .rdmlPropList(x, "experiment")
-
-    for (experiment in experiments) {
-      expId <- .rdmlIdChr(experiment$id)
-      for (run in .rdmlPropList(experiment, "run")) {
-        runId <- .rdmlIdChr(run$id)
-        for (react in .rdmlPropList(run, "react")) {
-          reactId <- .rdmlIdChr(react$id)
-          for (dataObj in .rdmlPropList(react, "data")) {
-            if (
-              .rdmlPresent(dataObj$meltTemps) &&
-              length(dataObj$meltTemps) > 1L
-            ) {
-              targetId <- .rdmlIdChr(dataObj$targetId)
-              losses[[length(losses) + 1L]] <- rdmlLossRecord(
-                code = "multipleTmUnsupported",
-                message = paste0(
-                  "Format '", spec$name,
-                  "' cannot represent multiple Tm values; only meltTemp is written"
-                ),
-                path = paste0(
-                  "experiment.", expId,
-                  ".run.", runId,
-                  ".react.", reactId,
-                  ".data.", targetId
-                ),
-                details = list(
-                  format = spec$name,
-                  values = dataObj$meltTemps
-                )
-              )
-            }
-          }
-        }
-      }
-    }
-  }
-
-  losses
 }
 
 
@@ -919,213 +647,6 @@ rdmlDetectFormat <- function(
 }
 
 
-# Built-in sniffers ---------------------------------------------------------
-
-.rdmlReadTextHead <- function(
-    fileName,
-    bytes = 65536L) {
-
-  size <- file.info(fileName)$size
-
-  if (
-    !length(size) ||
-    is.na(size) ||
-    size <= 0
-  ) {
-    return("")
-  }
-
-  raw <- readBin(
-    fileName,
-    what = "raw",
-    n = min(
-      as.double(bytes),
-      size
-    )
-  )
-
-  if (!length(raw)) {
-    return("")
-  }
-
-  # The sniffers only search ASCII markers, so replacing undecodable bytes is
-  # sufficient and avoids imposing a vendor encoding at registry level.
-  rawToChar(raw, multiple = FALSE)
-}
-
-
-.rdmlSniffXml <- function(fileName) {
-  txt <- tryCatch(
-    .rdmlReadTextHead(
-      fileName,
-      bytes = 32768L
-    ),
-    error = function(e) ""
-  )
-
-  if (!nzchar(txt)) {
-    return(0)
-  }
-
-  if (
-    grepl(
-      "<(?:[A-Za-z0-9_.-]+:)?rdml(?:\\s|>)",
-      txt,
-      perl = TRUE,
-      ignore.case = TRUE
-    )
-  ) {
-    return(1)
-  }
-
-  0
-}
-
-
-.rdmlSniffFqd <- function(fileName) {
-  txt <- tryCatch(
-    .rdmlReadTextHead(
-      fileName,
-      bytes = 131072L
-    ),
-    error = function(e) ""
-  )
-
-  if (!nzchar(txt)) {
-    return(0)
-  }
-
-  if (
-    length(
-      strsplit(
-        txt,
-        "Quan\\.",
-        perl = TRUE
-      )[[1L]]
-    ) >= 4L
-  ) {
-    return(1)
-  }
-
-  0
-}
-
-
-.rdmlSniffDtprime <- function(fileName) {
-  raw <- tryCatch(
-    readBin(
-      fileName,
-      what = "raw",
-      n = min(
-        file.info(fileName)$size,
-        131072L
-      )
-    ),
-    error = function(e) raw()
-  )
-
-  if (!length(raw)) {
-    return(0)
-  }
-
-  # DTprime section names are ASCII even in CP1251 files.
-  txt <- rawToChar(raw)
-
-  score <- 0
-
-  if (
-    grepl(
-      "$Information about tubes:$",
-      txt,
-      fixed = TRUE
-    )
-  ) {
-    score <- score + 0.5
-  }
-
-  if (
-    grepl(
-      "$Results of optical measurements:$",
-      txt,
-      fixed = TRUE
-    )
-  ) {
-    score <- score + 0.5
-  }
-
-  min(1, score)
-}
-
-
-.rdmlSniffRdes <- function(fileName) {
-  raw <- tryCatch(
-    readBin(
-      fileName,
-      what = "raw",
-      n = min(
-        file.info(fileName)$size,
-        32768L
-      )
-    ),
-    error = function(e) raw()
-  )
-
-  if (!length(raw)) {
-    return(0)
-  }
-
-  text <- rawToChar(raw)
-
-  if (!validUTF8(text)) {
-    return(0)
-  }
-
-  firstLine <- strsplit(
-    text,
-    "\n",
-    fixed = TRUE
-  )[[1L]][[1L]]
-
-  firstLine <- sub(
-    "\r$",
-    "",
-    firstLine
-  )
-
-  fields <- strsplit(
-    firstLine,
-    "\t",
-    fixed = TRUE
-  )[[1L]]
-
-  if (length(fields) < 8L) {
-    return(0)
-  }
-
-  if (
-    identical(
-      fields[1:6],
-      c(
-        "Well",
-        "Sample",
-        "Sample Type",
-        "Target",
-        "Target Type",
-        "Dye"
-      )
-    ) &&
-    fields[[7L]] %in% c(
-      "Cq",
-      "Tm"
-    )
-  ) {
-    return(1)
-  }
-
-  0
-}
-
-
 # Built-in format registration ---------------------------------------------
 
 .rdmlRegisterBuiltinFormats <- function() {
@@ -1133,7 +654,6 @@ rdmlDetectFormat <- function(
   .rdmlRegisterFormat(
     name = "abi",
     extensions = "eds",
-    aliases = "eds",
     reader = function(
         fileName,
         showProgress = TRUE,
@@ -1143,17 +663,12 @@ rdmlDetectFormat <- function(
         showProgress
       )
     },
-    capabilities = c("adp", "cq", "basicMetadata", "intermediate"),
     builtin = TRUE
   )
 
   .rdmlRegisterFormat(
     name = "rotorgene",
     extensions = "rex",
-    aliases = c(
-      "rotor-gene",
-      "rex"
-    ),
     reader = function(
         fileName,
         showProgress = TRUE,
@@ -1163,17 +678,12 @@ rdmlDetectFormat <- function(
         showProgress
       )
     },
-    capabilities = c("adp", "basicMetadata", "intermediate"),
     builtin = TRUE
   )
 
   .rdmlRegisterFormat(
     name = "excel",
     extensions = c(
-      "xlsx",
-      "xls"
-    ),
-    aliases = c(
       "xlsx",
       "xls"
     ),
@@ -1186,14 +696,12 @@ rdmlDetectFormat <- function(
         showProgress
       )
     },
-    capabilities = c("adp", "mdp", "basicMetadata", "intermediate"),
     builtin = TRUE
   )
 
   .rdmlRegisterFormat(
     name = "csv",
     extensions = "csv",
-    aliases = "csv",
     reader = function(
         fileName,
         showProgress = TRUE,
@@ -1203,14 +711,12 @@ rdmlDetectFormat <- function(
         showProgress
       )
     },
-    capabilities = c("adp", "mdp", "intermediate"),
     builtin = TRUE
   )
 
   .rdmlRegisterFormat(
     name = "dtprime",
     extensions = "r96",
-    aliases = "r96",
     reader = function(
         fileName,
         showProgress = TRUE,
@@ -1220,18 +726,12 @@ rdmlDetectFormat <- function(
         showProgress
       )
     },
-    sniff = .rdmlSniffDtprime,
-    capabilities = c("adp", "basicMetadata", "intermediate"),
     builtin = TRUE
   )
 
   .rdmlRegisterFormat(
     name = "fqd",
     extensions = "txt",
-    aliases = c(
-      "fqd96",
-      "txt"
-    ),
     reader = function(
         fileName,
         showProgress = TRUE,
@@ -1241,8 +741,6 @@ rdmlDetectFormat <- function(
         showProgress
       )
     },
-    sniff = .rdmlSniffFqd,
-    capabilities = c("adp", "cq", "basicMetadata", "intermediate"),
     builtin = TRUE
   )
 
@@ -1252,10 +750,6 @@ rdmlDetectFormat <- function(
       "tsv",
       "csv",
       "txt"
-    ),
-    aliases = c(
-      "rdes",
-      "tsv"
     ),
     reader = function(
         fileName,
@@ -1296,16 +790,12 @@ rdmlDetectFormat <- function(
         rdesType = rdesType
       )
     },
-    sniff = .rdmlSniffRdes,
-    priority = -10L,
-    capabilities = c("adp", "mdp", "cq", "meltTemp", "multiTm", "basicMetadata", "intermediate"),
     builtin = TRUE
   )
 
   .rdmlRegisterFormat(
     name = "rdml-xml",
     extensions = "xml",
-    aliases = "xml",
     reader = function(
         fileName,
         showProgress = TRUE,
@@ -1321,8 +811,6 @@ rdmlDetectFormat <- function(
       )
     },
     writer = .rdmlWriteXmlFile,
-    sniff = .rdmlSniffXml,
-    capabilities = c("adp", "mdp", "cq", "meltTemp", "fullMetadata"),
     builtin = TRUE
   )
 
@@ -1332,7 +820,6 @@ rdmlDetectFormat <- function(
       "rdml",
       "rdm"
     ),
-    aliases = "rdm",
     reader = function(
         fileName,
         showProgress = TRUE,
@@ -1348,7 +835,6 @@ rdmlDetectFormat <- function(
       )
     },
     writer = .rdmlWriteArchive,
-    capabilities = c("adp", "mdp", "cq", "meltTemp", "fullMetadata"),
     builtin = TRUE
   )
 
@@ -1357,10 +843,6 @@ rdmlDetectFormat <- function(
   .rdmlRegisterFormat(
     name = "roche-lc96",
     extensions = "lc96p",
-    aliases = c(
-      "lc96",
-      "lc96p"
-    ),
     reader = function(
         fileName,
         showProgress = TRUE,
@@ -1375,7 +857,6 @@ rdmlDetectFormat <- function(
         format = "rdml"
       )
     },
-    capabilities = c("adp", "mdp", "cq", "meltTemp", "fullMetadata"),
     builtin = TRUE
   )
 
@@ -1520,15 +1001,6 @@ writeRDML <- function(
     operation = "write"
   )
 
-  losses <- .rdmlFormatWriteLosses(
-    x,
-    spec
-  )
-  .rdmlSignalLosses(
-    losses,
-    loss = loss
-  )
-
   .rdmlCallHandler(
     spec$writer,
     c(
@@ -1633,18 +1105,15 @@ rdmlFromFData <- function(
 #'
 #' The module defines `rdmlModule()` (legacy `rdml_module()` is also accepted)
 #' and returns one or more specifications accepted by `rdmlRegisterFormat()`.
+#' Each specification may contain only `name`, `extensions`, `reader`, and
+#' `writer`.
 #'
 #' @param path Module R file.
-#' @param overwrite Allow replacement of an existing format.
 #' @return Registered format names invisibly.
 #' @seealso `rdmlRegisterFormat`, `rdmlFormats`
 #' @export
-rdmlLoadModule <- function(
-    path,
-    overwrite = FALSE) {
-
+rdmlLoadModule <- function(path) {
   checkmate::assertString(path)
-  checkmate::assertFlag(overwrite)
 
   if (!file.exists(path)) {
     stop(
@@ -1708,12 +1177,7 @@ rdmlLoadModule <- function(
     "name",
     "extensions",
     "reader",
-    "writer",
-    "sniff",
-    "aliases",
-    "priority",
-    "apiVersion",
-    "capabilities"
+    "writer"
   )
 
   registered <- character(
@@ -1731,12 +1195,13 @@ rdmlLoadModule <- function(
     if (length(unknown)) {
       stop(
         "Unknown field(s) in RDML module format specification: ",
-        paste(unknown, collapse = ", "),
+        paste(
+          unknown,
+          collapse = ", "
+        ),
         call. = FALSE
       )
     }
-
-    spec$overwrite <- overwrite
 
     do.call(
       rdmlRegisterFormat,

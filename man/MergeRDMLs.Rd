@@ -4,20 +4,80 @@
 \alias{mergeRDMLs}
 \title{Merge multiple RDML objects}
 \usage{
-mergeRDMLs(toMerge, dataConflict = c("incoming", "base", "error"))
+mergeRDMLs(..., dataConflict = c("incoming", "base", "error"))
 }
 \arguments{
-\item{toMerge}{Non-empty list of `rdmlType` objects.}
+\item{...}{Two or more `rdmlType` objects, or a single non-empty list of
+`rdmlType` objects.}
 
-\item{dataConflict}{Conflict policy: `"incoming"`, `"base"`, or `"error"`.}
+\item{dataConflict}{Conflict policy for duplicate target data:
+`"incoming"`, `"base"`, or `"error"`.}
 }
 \value{
 Merged `rdmlType`.
 }
 \description{
-The first object is the metadata base. Experiments, runs, reactions, and
-target data are merged recursively by schema key.
+Merge two or more [rdmlType] objects recursively.
+}
+\details{
+The **first** RDML object is used as the metadata base. Every subsequent
+object is merged into the accumulated result from left to right:
+
+`mergeRDMLs(rdml1, rdml2, rdml3)` is therefore equivalent to
+`merge(merge(rdml1, rdml2), rdml3)`.
+
+The function accepts either RDML objects as separate arguments:
+
+`mergeRDMLs(rdml1, rdml2, rdml3)`
+
+or a single list containing RDML objects:
+
+`mergeRDMLs(list(rdml1, rdml2, rdml3))`.
+
+Top-level keyed metadata (`experimenter`, `documentation`, `dye`, `sample`,
+`target`, and `thermalCyclingConditions`) keep the definition from the
+accumulated base object when the same key is present in both objects.
+
+`dataConflict` applies to duplicate target data within the same reaction:
+
+- `"incoming"`: replace base data with data from the current incoming
+  object. With multiple objects, later objects therefore have higher
+  priority.
+- `"base"`: preserve data already present in the accumulated base object.
+  With multiple objects, earlier objects therefore have higher priority.
+- `"error"`: stop at the first duplicate data target.
+}
+\examples{
+\dontrun{
+file1 <- "experiment1.rdml"
+file2 <- "experiment2.rdml"
+
+base <- readRDML(file1)
+incoming <- readRDML(file2)
+
+# Separate arguments
+merged <- mergeRDMLs(
+  base,
+  incoming,
+  dataConflict = "error"
+)
+
+# Several objects
+merged <- mergeRDMLs(
+  rdml1,
+  rdml2,
+  rdml3,
+  dataConflict = "incoming"
+)
+
+# A list is also accepted
+merged <- mergeRDMLs(
+  list(rdml1, rdml2, rdml3),
+  dataConflict = "base"
+)
+}
+
 }
 \seealso{
-`readRDML`, `writeRDML`
+[readRDML()], [writeRDML()]
 }
