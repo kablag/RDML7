@@ -20,7 +20,7 @@ description <- data.table::data.table(
     target = "ACTB",
     targetDyeId = "FAM"
   )
-series <- rdmlImportSeries(
+series <- newRDMLImportSeries(
     fdataType = "adp",
     fdata = fdata,
     description = description

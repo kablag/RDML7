@@ -1048,7 +1048,7 @@
   series <- lapply(
     parsed,
     function(item) {
-      rdmlImportSeries(
+      newRDMLImportSeries(
         fdataType = item$fdataType,
         fdata = item$fdata,
         description = item$description
@@ -1072,7 +1072,7 @@
     )
   }
 
-  rdmlImportData(
+  newRDMLImportData(
     series = series,
     publisher = "RDES",
     serialNumber = "1",

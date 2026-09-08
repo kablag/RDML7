@@ -13,13 +13,13 @@ names_to_remove <- c(
 on.exit(
     for (name in names_to_remove) {
       try(
-        rdmlUnregisterFormat(name),
+        unregisterRDMLFormat(name),
         silent = TRUE
       )
     },
     add = TRUE
   )
-rdmlRegisterFormat(
+registerRDMLFormat(
     name = "test-sniff-a",
     extensions = "ambqpcr",
     reader = function(filename) {

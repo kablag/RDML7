@@ -47,5 +47,5 @@ rdmlImportSeries(
 Intermediate representation used by table/vendor parsers.
 }
 \seealso{
-`rdmlImportData`, `rdmlBuildImport`
+`rdmlImportData`, `buildRDMLImport`
 }

@@ -1,0 +1,926 @@
+---
+title: "Writing custom RDML importers"
+author: "RDML7 authors"
+date: "`r Sys.Date()`"
+output:
+  rmarkdown::html_vignette:
+    toc: true
+    toc_depth: 3
+vignette: >
+  %\VignetteIndexEntry{Writing custom RDML importers}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+# Overview
+
+RDML7 provides two levels for writing file importers.
+
+The **simple form** is intended for formats that can be represented as one
+fluorescence table plus one metadata table:
+
+```text
+vendor file
+    |
+    v
+parser
+    |
+    +-- fdata
+    |
+    `-- description
+            |
+            v
+    buildRDMLFromFData()
+            |
+            v
+         rdmlType
+```
+
+The **complex form** is intended for formats that contain several independent
+fluorescence-series groups, for example amplification and melting data, or
+several data blocks that should be parsed first and converted to RDML in one
+central step:
+
+```text
+vendor file
+    |
+    v
+parser
+    |
+    +-- rdmlImportSeries (adp)
+    +-- rdmlImportSeries (mdp)
+    `-- ...
+            |
+            v
+       rdmlImportData
+            |
+            v
+       buildRDMLImport()
+            |
+            v
+         rdmlType
+```
+
+Both forms keep the vendor-specific parser separate from the nested RDML/S7
+schema construction.
+
+This separation is useful because a parser should primarily answer questions
+such as:
+
+- where are the fluorescence values in this file?
+- which reaction belongs to which sample?
+- which target and dye were used?
+- which run and reaction identifiers are present?
+- does the file contain amplification (`adp`), melting (`mdp`), or both?
+
+The common RDML builder then handles creation of `experimentType`, `runType`,
+`reactType`, `dataType`, `sampleType`, `targetType`, dyes, references, and
+fluorescence-point objects.
+
+# Registering a reader
+
+After a reader has been written, register it with the minimal format registry:
+
+```{r registry, eval=FALSE}
+registerRDMLFormat(
+  name = "myformat",
+  extensions = "abc",
+  reader = readMyFormat
+)
+```
+
+A format may provide a reader, a writer, or both:
+
+```r
+registerRDMLFormat(
+  name,
+  extensions = character(),
+  reader = NULL,
+  writer = NULL
+)
+```
+
+Automatic dispatch uses the file extension. A different registered format can
+be selected explicitly with `format =`.
+
+```{r explicit-format, eval=FALSE}
+x <- readRDML(
+  "experiment.abc",
+  format = "myformat"
+)
+```
+
+A reader may return either:
+
+1. a finished `rdmlType`; or
+2. an `rdmlImportData` intermediate object.
+
+When a reader returns `rdmlImportData`, `readRDML()` converts it to `rdmlType`
+with the common importer builder.
+
+# The common table contract
+
+Both simple and complex importers ultimately use the same table representation.
+
+## Fluorescence table
+
+`fdata` is a wide table. Its first column is the coordinate:
+
+- `cyc` for amplification data;
+- `tmp` for melting data.
+
+All remaining columns are fluorescence series.
+
+For example:
+
+```{r fdata-example}
+fdata <- data.frame(
+  cyc = 1:5,
+  r1 = c(100, 102, 110, 180, 650),
+  r2 = c(101, 103, 112, 190, 690)
+)
+
+fdata
+```
+
+The fluorescence column names (`r1`, `r2`) are arbitrary identifiers used to
+join the fluorescence data to the description table.
+
+## Description table
+
+The corresponding description table contains one row per fluorescence series.
+
+```{r description-example}
+description <- data.frame(
+  fdataName = c("r1", "r2"),
+  expId = c("exp1", "exp1"),
+  runId = c("run1", "run1"),
+  reactId = c("1", "2"),
+  sample = c("sample1", "sample2"),
+  sampleType = c("std", "unkn"),
+  target = c("CD53", "CD53"),
+  targetDyeId = c("FAM", "FAM"),
+  stringsAsFactors = FALSE
+)
+
+description
+```
+
+The required columns are:
+
+```text
+fdataName
+expId
+runId
+reactId
+target
+```
+
+In practice, importers commonly also provide:
+
+```text
+sample
+sampleType
+targetDyeId
+```
+
+Other supported metadata can be added when present in the source file, for
+example:
+
+```text
+targetType
+quantity
+cq
+meltTemp
+meltTemps
+```
+
+The exact optional fields accepted by the installed version of RDML7 are
+documented by `setFData()`.
+
+The key rule is:
+
+```text
+description$fdataName <-> names(fdata)[-1]
+```
+
+Each fluorescence column should have exactly one matching description row.
+
+# Simple importer
+
+## When to use the simple form
+
+Use `buildRDMLFromFData()` when the file naturally contains **one fluorescence
+series group**:
+
+- one amplification table; or
+- one melting table.
+
+This is the preferred interface for most third-party readers.
+
+Typical examples are:
+
+- a CSV export containing amplification curves;
+- a simple text export with one curve table;
+- a custom laboratory format containing one qPCR run;
+- a format that already has one row of metadata per fluorescence series.
+
+The parser only needs to produce `fdata` and `description`.
+
+## Minimal simple reader
+
+```{r simple-reader, eval=FALSE}
+readMyFormat <- function(fileName, ...) {
+
+  # Vendor-specific parsing
+  fdata <- ...
+  description <- ...
+
+  buildRDMLFromFData(
+    fdata = fdata,
+    description = description,
+    fdataType = "adp"
+  )
+}
+```
+
+The reader does **not** need to construct nested S7 objects manually.
+
+It should not need code such as:
+
+```{r avoid-schema-construction, eval=FALSE}
+# Do not do this in a normal file parser:
+experimentType(
+  run = list(
+    runType(
+      react = list(
+        reactType(
+          data = list(
+            dataType(...)
+          )
+        )
+      )
+    )
+  )
+)
+```
+
+That construction belongs to the common RDML builder.
+
+# Example: a simple text qPCR format
+
+Consider a deliberately small text format with three sections:
+
+```text
+# Simple qPCR format
+
+[meta]
+experiment=cd53_efficiency
+run=run1
+target=CD53
+dye=FAM
+
+[reactions]
+fdataName  reactId  sample       sampleType  quantity
+r1         1        CD53_1       std         1
+r2         2        CD53_0.1     std         0.1
+r3         3        CD53_0.01    std         0.01
+r4         4        CD53_0.001   std         0.001
+
+[adp]
+cyc  r1   r2   r3   r4
+1    100  100  100  100
+2    101  100  101  100
+3    103  102  101  101
+...
+```
+
+The format deliberately stores `quantity` as metadata rather than encoding it
+only in the sample name.
+
+A reader can parse these sections and then convert them to the common tables.
+
+```{r simple-text-reader, eval=FALSE}
+readSimpleQPCR <- function(fileName, ...) {
+
+  lines <- readLines(
+    fileName,
+    warn = FALSE,
+    encoding = "UTF-8"
+  )
+
+  getSection <- function(name) {
+    marker <- paste0("[", name, "]")
+    start <- match(marker, lines)
+
+    if (is.na(start)) {
+      stop(
+        "Missing section ",
+        marker,
+        call. = FALSE
+      )
+    }
+
+    sections <- grep(
+      "^\\[[^]]+\\]$",
+      lines
+    )
+
+    nextSection <- sections[
+      sections > start
+    ]
+
+    end <- if (length(nextSection)) {
+      nextSection[[1L]] - 1L
+    } else {
+      length(lines)
+    }
+
+    out <- lines[
+      seq.int(
+        start + 1L,
+        end
+      )
+    ]
+
+    out[
+      nzchar(trimws(out))
+    ]
+  }
+
+  # Metadata -------------------------------------------------------------
+  metaParts <- strsplit(
+    getSection("meta"),
+    "=",
+    fixed = TRUE
+  )
+
+  meta <- stats::setNames(
+    vapply(
+      metaParts,
+      function(x) {
+        paste(
+          x[-1L],
+          collapse = "="
+        )
+      },
+      character(1)
+    ),
+    vapply(
+      metaParts,
+      `[[`,
+      character(1),
+      1L
+    )
+  )
+
+  # Reaction metadata ----------------------------------------------------
+  reactions <- utils::read.delim(
+    text = paste(
+      getSection("reactions"),
+      collapse = "\n"
+    ),
+    stringsAsFactors = FALSE,
+    check.names = FALSE
+  )
+
+  # Amplification curves -------------------------------------------------
+  fdata <- utils::read.delim(
+    text = paste(
+      getSection("adp"),
+      collapse = "\n"
+    ),
+    stringsAsFactors = FALSE,
+    check.names = FALSE
+  )
+
+  description <- data.frame(
+    fdataName = reactions$fdataName,
+    expId = meta[["experiment"]],
+    runId = meta[["run"]],
+    reactId = as.character(
+      reactions$reactId
+    ),
+    sample = reactions$sample,
+    sampleType = reactions$sampleType,
+    target = meta[["target"]],
+    targetDyeId = meta[["dye"]],
+    quantity = as.numeric(
+      reactions$quantity
+    ),
+    stringsAsFactors = FALSE
+  )
+
+  buildRDMLFromFData(
+    fdata = fdata,
+    description = description,
+    fdataType = "adp",
+    publisher = "simpleqpcr"
+  )
+}
+```
+
+Register the reader:
+
+```{r register-simple-reader, eval=FALSE}
+registerRDMLFormat(
+  name = "simpleqpcr",
+  extensions = "sqpcr",
+  reader = readSimpleQPCR
+)
+```
+
+It can then be used through the normal RDML7 interface:
+
+```{r use-simple-reader, eval=FALSE}
+x <- readRDML(
+  "cd53_efficiency.sqpcr"
+)
+
+summary(x)
+
+asTable(x)
+
+amp <- getFData(
+  x,
+  dpType = "adp",
+  longTable = TRUE
+)
+```
+
+The parser knows nothing about the internal structure of `sampleType`,
+`quantityType`, `targetType`, `experimentType`, or `dataType`. It only maps the
+source file into the standard fluorescence and description tables.
+
+# Complex importer
+
+## When to use the complex form
+
+Use the canonical intermediate representation when a single source file
+contains **more than one independently described fluorescence-series group**.
+
+The most common case is:
+
+```text
+one source file
+    |
+    +-- amplification curves (adp)
+    |
+    `-- melting curves (mdp)
+```
+
+Other reasons include:
+
+- separate curve blocks with different coordinate systems;
+- several tables that should be validated before any RDML object is built;
+- source metadata that belongs to the import as a whole rather than to one
+  fluorescence table;
+- a parser that should preserve original reaction identifiers;
+- an importer that needs to declare conversion information centrally.
+
+In this situation it is useful to parse the complete vendor file first and
+only then construct the RDML hierarchy.
+
+# `rdmlImportSeries`
+
+One `rdmlImportSeries` represents one homogeneous fluorescence-series group.
+
+For amplification data:
+
+```{r complex-adp, eval=FALSE}
+ampSeries <- newRDMLImportSeries(
+  fdataType = "adp",
+  fdata = ampFdata,
+  description = ampDescription
+)
+```
+
+For melting data:
+
+```{r complex-mdp, eval=FALSE}
+meltSeries <- newRDMLImportSeries(
+  fdataType = "mdp",
+  fdata = meltFdata,
+  description = meltDescription
+)
+```
+
+Each series has its own:
+
+```text
+fdataType
+fdata
+description
+```
+
+This is important because `adp` and `mdp` have different coordinates and may
+contain different subsets of reactions.
+
+# `rdmlImportData`
+
+`rdmlImportData` represents the complete result of parsing one source file.
+
+```{r complex-import-data, eval=FALSE}
+parsed <- newRDMLImportData(
+  series = list(
+    ampSeries,
+    meltSeries
+  ),
+  publisher = "Example vendor",
+  serialNumber = "12345",
+  format = "myformat"
+)
+```
+
+The object groups the fluorescence-series blocks and source-level metadata
+without yet constructing the nested RDML hierarchy.
+
+This gives the parser a clean boundary:
+
+```text
+everything above rdmlImportData = vendor parsing
+everything below rdmlImportData = RDML construction
+```
+
+# Building the RDML object explicitly
+
+The parsed representation can be converted explicitly:
+
+```{r build-complex, eval=FALSE}
+x <- buildRDMLImport(
+  parsed
+)
+```
+
+The builder processes each series with the common fluorescence-data machinery
+and returns one `rdmlType`.
+
+Conceptually:
+
+```text
+rdmlImportData
+    |
+    +-- series 1 -> setFData(..., fdataType = "adp")
+    |
+    +-- series 2 -> setFData(..., fdataType = "mdp")
+    |
+    `-- ...
+            |
+            v
+         rdmlType
+```
+
+This means all complex importers use the same RDML construction rules.
+
+# Returning intermediate data directly from a reader
+
+A complex reader does not have to call `buildRDMLImport()` itself.
+
+It may return `rdmlImportData`:
+
+```{r complex-reader, eval=FALSE}
+readMyComplexFormat <- function(fileName, ...) {
+
+  # Parse the source file.
+  ampFdata <- ...
+  ampDescription <- ...
+
+  meltFdata <- ...
+  meltDescription <- ...
+
+  ampSeries <- newRDMLImportSeries(
+    fdataType = "adp",
+    fdata = ampFdata,
+    description = ampDescription
+  )
+
+  meltSeries <- newRDMLImportSeries(
+    fdataType = "mdp",
+    fdata = meltFdata,
+    description = meltDescription
+  )
+
+  newRDMLImportData(
+    series = list(
+      ampSeries,
+      meltSeries
+    ),
+    publisher = "Example vendor",
+    serialNumber = "12345",
+    format = "mycomplexformat"
+  )
+}
+```
+
+Register it normally:
+
+```{r register-complex-reader, eval=FALSE}
+registerRDMLFormat(
+  name = "mycomplexformat",
+  extensions = "mcf",
+  reader = readMyComplexFormat
+)
+```
+
+Then:
+
+```{r use-complex-reader, eval=FALSE}
+x <- readRDML(
+  "experiment.mcf"
+)
+```
+
+`readRDML()` detects that the reader returned `rdmlImportData` and runs the
+common builder before returning the final `rdmlType`.
+
+This is the preferred complex-reader pattern because the reader remains a
+pure parser.
+
+# Why not always use the complex form?
+
+The intermediate representation is useful, but it should not be required for
+simple formats.
+
+For a single amplification table, this:
+
+```{r simple-again, eval=FALSE}
+buildRDMLFromFData(
+  fdata,
+  description,
+  fdataType = "adp"
+)
+```
+
+is clearer than:
+
+```{r overengineered-simple, eval=FALSE}
+series <- newRDMLImportSeries(
+  "adp",
+  fdata,
+  description
+)
+
+parsed <- newRDMLImportData(
+  series = list(series)
+)
+
+buildRDMLImport(parsed)
+```
+
+The second form adds objects without adding information.
+
+Use the lowest-level interface that faithfully represents the source format.
+
+# Choosing between the two forms
+
+| Source format | Recommended form |
+|---|---|
+| One amplification table | `buildRDMLFromFData()` |
+| One melting table | `buildRDMLFromFData()` |
+| Simple CSV or TSV curve export | `buildRDMLFromFData()` |
+| One table plus straightforward metadata | `buildRDMLFromFData()` |
+| Amplification + melting in one file | canonical importer |
+| Several independent fluorescence blocks | canonical importer |
+| Need to parse/validate all blocks before building RDML | canonical importer |
+| Need source-level importer metadata | canonical importer |
+
+A useful rule is:
+
+> If the source can be described by one `fdata` table and one `description`
+> table, use `buildRDMLFromFData()`. If it naturally requires a list of such
+> pairs, use `rdmlImportData`.
+
+# Relationship between the two APIs
+
+The simple API is not a separate implementation.
+
+Conceptually:
+
+```text
+buildRDMLFromFData()
+        |
+        v
+newRDMLImportSeries()
+        |
+        v
+newRDMLImportData()
+        |
+        v
+buildRDMLImport()
+```
+
+In other words, the simple function is a convenience layer over the same
+canonical construction path.
+
+This is important because both simple and complex third-party importers get the
+same behavior for:
+
+- creation of experiments and runs;
+- creation of reactions;
+- sample and target references;
+- dyes;
+- sample types;
+- quantities;
+- Cq and melting metadata;
+- amplification and melting curve storage;
+- conflict handling.
+
+# Reader responsibilities
+
+A custom reader **should**:
+
+1. parse the external file;
+2. normalize identifiers to character values;
+3. construct the standard `fdata` and `description` tables;
+4. preserve meaningful source metadata;
+5. report malformed input clearly;
+6. return either `rdmlType` or `rdmlImportData`.
+
+A custom reader normally **should not**:
+
+1. manually construct the complete nested RDML hierarchy;
+2. duplicate `setFData()` logic;
+3. invent missing biological metadata;
+4. silently change sample or target identifiers;
+5. encode format detection logic inside the parser.
+
+Format selection is handled by the registry; RDML construction is handled by
+the common builder.
+
+# Validating an importer
+
+A useful development loop is:
+
+```{r importer-validation, eval=FALSE}
+registerRDMLFormat(
+  name = "myformat",
+  extensions = "abc",
+  reader = readMyFormat
+)
+
+x <- readRDML(
+  "example.abc"
+)
+
+summary(x)
+
+tbl <- asTable(x)
+tbl
+
+validateRDML(x)
+
+amp <- getFData(
+  x,
+  dpType = "adp",
+  longTable = TRUE
+)
+```
+
+For a format containing melting data, inspect those separately:
+
+```{r importer-validation-mdp, eval=FALSE}
+melt <- getFData(
+  x,
+  dpType = "mdp",
+  longTable = TRUE
+)
+```
+
+During importer development, verify at least:
+
+- number of experiments and runs;
+- reaction identifiers;
+- sample identifiers;
+- target identifiers;
+- sample types;
+- quantities, if provided;
+- dye references;
+- number of fluorescence curves;
+- number and order of curve coordinates;
+- `adp` versus `mdp` assignment.
+
+# Testing a reader
+
+A small test should verify both dispatch and biological metadata.
+
+```{r reader-test, eval=FALSE}
+test_that("myformat reader imports amplification curves", {
+
+  x <- readRDML(
+    test_path(
+      "data",
+      "example.abc"
+    )
+  )
+
+  expect_true(
+    S7::S7_inherits(
+      x,
+      rdmlType
+    )
+  )
+
+  tbl <- asTable(x)
+
+  expect_true(
+    all(tbl$adp)
+  )
+
+  expect_setequal(
+    unique(tbl$target),
+    "CD53"
+  )
+
+  amp <- getFData(
+    x,
+    dpType = "adp"
+  )
+
+  expect_gt(
+    nrow(amp),
+    0L
+  )
+})
+```
+
+For a complex reader:
+
+```{r complex-reader-test, eval=FALSE}
+test_that("complex reader imports both amplification and melting data", {
+
+  x <- readRDML(
+    test_path(
+      "data",
+      "example.mcf"
+    )
+  )
+
+  tbl <- asTable(x)
+
+  expect_true(
+    any(tbl$adp)
+  )
+
+  expect_true(
+    any(tbl$mdp)
+  )
+})
+```
+
+# Summary
+
+RDML7 intentionally provides two importer interfaces.
+
+The simple form:
+
+```r
+buildRDMLFromFData(
+  fdata,
+  description,
+  fdataType
+)
+```
+
+is the preferred choice for a source represented by one fluorescence table.
+
+The complex form:
+
+```r
+series <- newRDMLImportSeries(...)
+parsed <- newRDMLImportData(
+  series = list(...)
+)
+
+buildRDMLImport(parsed)
+```
+
+is useful when a file contains several independently described fluorescence
+groups.
+
+The format registry remains independent of both approaches:
+
+```r
+registerRDMLFormat(
+  name,
+  extensions,
+  reader,
+  writer
+)
+```
+
+This keeps the three responsibilities separate:
+
+```text
+registry       -> which reader handles this file?
+parser         -> what data are stored in this vendor format?
+RDML builder   -> how are those data represented as rdmlType?
+```
+
+That separation is the main reason the importer API exists.

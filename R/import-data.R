@@ -24,7 +24,7 @@ classImportFdataType <- S7::new_property(
 #' @param fdataType `"adp"` or `"mdp"`.
 #' @param fdata Wide fluorescence table accepted by `setFData()`.
 #' @param description CamelCase description table accepted by `setFData()`.
-#' @seealso `rdmlImportData`, `rdmlBuildImport`
+#' @seealso `rdmlImportData`, `buildRDMLImport`
 #' @export
 rdmlImportSeries <- S7::new_class(
   "rdmlImportSeries",
@@ -107,7 +107,7 @@ S7::method(`$<-`, rdmlImportSeries) <- function(x, name, value) {
 #' Parsed importer data before construction of rdmlType
 #'
 #' Decouples vendor parsing from construction of the nested RDML hierarchy.
-#' `readRDML()` builds this representation centrally with `rdmlBuildImport()`.
+#' `readRDML()` builds this representation centrally with `buildRDMLImport()`.
 #'
 #' @param series List of `rdmlImportSeries` objects.
 #' @param publisher Optional source/device publisher.
@@ -115,8 +115,8 @@ S7::method(`$<-`, rdmlImportSeries) <- function(x, name, value) {
 #' @param format Source-format identifier.
 #' @param preserveReactIds Preserve supplied well/reaction ids literally.
 #' @param metadata Additional importer metadata.
-#' @param losses List of `rdmlLossRecord()` objects.
-#' @seealso `rdmlImportSeries`, `rdmlBuildImport`, `rdmlRegisterFormat`
+#' @param losses List of `newRDMLLossRecord()` objects.
+#' @seealso `rdmlImportSeries`, `buildRDMLImport`, `registerRDMLFormat`
 #' @export
 rdmlImportData <- S7::new_class(
   "rdmlImportData",
@@ -217,7 +217,7 @@ S7::method(`$<-`, rdmlImportData) <- function(x, name, value) {
 #' @return `rdmlType`.
 #' @seealso `readRDML`, `rdmlImportData`
 #' @export
-rdmlBuildImport <- function(
+buildRDMLImport <- function(
     importData,
     loss = c("warn", "error", "allow"),
     ...) {
@@ -258,4 +258,65 @@ rdmlBuildImport <- function(
   }
 
   x
+}
+
+# Public importer constructors ----------------------------------------------
+
+#' Create an importer fluorescence-series object
+#'
+#' @param fdataType `"adp"` or `"mdp"`.
+#' @param fdata Wide fluorescence table accepted by `setFData()`.
+#' @param description Description table accepted by `setFData()`.
+#' @return `rdmlImportSeries`.
+#' @seealso [newRDMLImportData()], [buildRDMLImport()]
+#' @export
+newRDMLImportSeries <- function(
+    fdataType,
+    fdata,
+    description) {
+
+  do.call(
+    rdmlImportSeries,
+    list(
+      fdataType = fdataType,
+      fdata = fdata,
+      description = description
+    )
+  )
+}
+
+
+#' Create canonical importer data
+#'
+#' @param series List of `rdmlImportSeries` objects.
+#' @param publisher Optional source/device publisher.
+#' @param serialNumber Source/device serial identifier.
+#' @param format Source-format identifier.
+#' @param preserveReactIds Preserve supplied reaction ids literally.
+#' @param metadata Additional importer metadata.
+#' @param losses List of loss records.
+#' @return `rdmlImportData`.
+#' @seealso [newRDMLImportSeries()], [buildRDMLImport()]
+#' @export
+newRDMLImportData <- function(
+    series,
+    publisher = NA_character_,
+    serialNumber = "1",
+    format = NA_character_,
+    preserveReactIds = FALSE,
+    metadata = list(),
+    losses = list()) {
+
+  do.call(
+    rdmlImportData,
+    list(
+      series = series,
+      publisher = publisher,
+      serialNumber = serialNumber,
+      format = format,
+      preserveReactIds = preserveReactIds,
+      metadata = metadata,
+      losses = losses
+    )
+  )
 }

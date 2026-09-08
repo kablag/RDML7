@@ -484,7 +484,7 @@ NULL
             length(dataObj$meltTemps) > 1L
           ) {
             targetId <- .rdmlIdChr(dataObj$targetId)
-            losses[[length(losses) + 1L]] <- rdmlLossRecord(
+            losses[[length(losses) + 1L]] <- newRDMLLossRecord(
               code = "multipleTmUnsupported",
               message = paste0(
                 "RDML XML supports one meltTemp value; ",

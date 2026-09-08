@@ -26,7 +26,7 @@ library(RDML7)
 
 x <- readRDML("experiment.rdml")
 
-rdmlSummary(x)
+summary(x)
 validateRDML(x)
 
 metadata <- asTable(x)
@@ -57,11 +57,11 @@ x <- setFData(
 ## Formats
 
 ```r
-rdmlFormats()
+listRDMLFormats()
 ```
 
-Additional readers/writers can be registered with `rdmlRegisterFormat()` or
-loaded from module files with `rdmlLoadModule()`.
+Additional readers/writers can be registered with `registerRDMLFormat()` or
+loaded from module files with `loadRDMLModule()`.
 
 ## RDES
 

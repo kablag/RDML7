@@ -15,7 +15,7 @@ library(RDML)
 ## The format registry
 
 ```r
-rdmlFormats()
+listRDMLFormats()
 ```
 
 A registered format may contain a reader, writer, sniffer, aliases, priority,
@@ -24,7 +24,7 @@ capabilities, and API version.
 ## Register a reader
 
 ```r
-rdmlRegisterFormat(
+registerRDMLFormat(
   name = "mydevice",
   extensions = "foo",
   apiVersion = 1L,
@@ -40,20 +40,20 @@ rdmlRegisterFormat(
 Table-like formats should normally return `rdmlImportData`.
 
 ```r
-series <- rdmlImportSeries(
+series <- newRDMLImportSeries(
   fdataType = "adp",
   fdata = fdata,
   description = description
 )
 
-parsed <- rdmlImportData(
+parsed <- newRDMLImportData(
   series = list(series),
   publisher = "My instrument",
   format = "mydevice"
 )
 ```
 
-`readRDML()` calls `rdmlBuildImport()` automatically for such a result.
+`readRDML()` calls `buildRDMLImport()` automatically for such a result.
 
 Minimum description columns are:
 
@@ -89,7 +89,7 @@ This permits shared extensions such as `.txt` and `.csv`.
 ## Lossy conversions
 
 ```r
-loss <- rdmlLossRecord(
+loss <- newRDMLLossRecord(
   code = "unsupportedVendorField",
   message = "Vendor field X cannot be represented in RDML",
   path = "run.run1",
@@ -123,7 +123,7 @@ rdmlModule <- function() {
 Load it with:
 
 ```r
-rdmlLoadModule("mydevice-module.R")
+loadRDMLModule("mydevice-module.R")
 ```
 
 The historical factory name `rdml_module()` is also accepted.

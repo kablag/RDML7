@@ -100,7 +100,7 @@
     series <- list()
 
     if (!is.null(adpData)) {
-      series[[length(series) + 1L]] <- rdmlImportSeries(
+      series[[length(series) + 1L]] <- newRDMLImportSeries(
         fdataType = "adp",
         fdata = adpData,
         description = descr
@@ -108,14 +108,14 @@
     }
 
     if (!is.null(mdpData)) {
-      series[[length(series) + 1L]] <- rdmlImportSeries(
+      series[[length(series) + 1L]] <- newRDMLImportSeries(
         fdataType = "mdp",
         fdata = mdpData,
         description = descr
       )
     }
 
-    rdmlImportData(
+    newRDMLImportData(
       series = series,
       format = "excel"
     )

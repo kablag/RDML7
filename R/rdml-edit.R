@@ -6,10 +6,10 @@
 #' @return Result of launching the application, invisibly where applicable.
 #' @seealso `readRDML`, `writeRDML`
 #' @export
-rdmlEdit <- function() {
+editRDML <- function() {
   if (!requireNamespace("shiny", quietly = TRUE)) {
     stop(
-      "Package 'shiny' is required for rdmlEdit().",
+      "Package 'shiny' is required for editRDML().",
       call. = FALSE
     )
   }

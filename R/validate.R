@@ -110,7 +110,7 @@ NULL
 #' @param level `"structure"`, `"references"`, `"curves"`, or `"full"`.
 #' @param action `"return"`, `"warn"`, or `"error"`.
 #' @return A `data.table` of class `rdmlValidation` describing issues.
-#' @seealso `rdmlIsValid`, `rdmlSummary`
+#' @seealso `isValidRDML`, `rdmlSummary`
 #' @export
 validateRDML <- function(
     x,
@@ -407,7 +407,7 @@ validateRDML <- function(
 #' @return `TRUE` if no validation issue has severity `"error"`.
 #' @seealso `validateRDML`
 #' @export
-rdmlIsValid <- function(x, level = "full") {
+isValidRDML <- function(x, level = "full") {
   result <- validateRDML(
     x,
     level = level,

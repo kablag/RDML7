@@ -23,7 +23,7 @@ getFData <- S7::new_generic("getFData", "x")
 #' @param x `rdmlType`.
 #' @param ... Method-specific arguments.
 #' @return Modified `rdmlType`; assign it back to keep changes.
-#' @seealso `rdmlFromFData()`, `asTable()`, `getFData()`
+#' @seealso `buildRDMLFromFData()`, `asTable()`, `getFData()`
 #' @export
 setFData <- S7::new_generic("setFData", "x")
 
@@ -32,7 +32,7 @@ setFData <- S7::new_generic("setFData", "x")
 #' @param x `rdmlType`.
 #' @param ... Method-specific arguments.
 #' @return Dendrogram representation invisibly.
-#' @seealso `rdmlSummary()`
+#' @seealso `summary()`
 #' @export
 asDendrogram <- S7::new_generic("asDendrogram", "x")
 

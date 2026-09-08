@@ -27,12 +27,12 @@ rdmlImportData(
 
 \item{metadata}{Additional importer metadata.}
 
-\item{losses}{List of `rdmlLossRecord()` objects.}
+\item{losses}{List of `newRDMLLossRecord()` objects.}
 }
 \description{
 Decouples vendor parsing from construction of the nested RDML hierarchy.
-`readRDML()` builds this representation centrally with `rdmlBuildImport()`.
+`readRDML()` builds this representation centrally with `buildRDMLImport()`.
 }
 \seealso{
-`rdmlImportSeries`, `rdmlBuildImport`, `rdmlRegisterFormat`
+`rdmlImportSeries`, `buildRDMLImport`, `registerRDMLFormat`
 }

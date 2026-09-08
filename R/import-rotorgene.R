@@ -93,7 +93,7 @@
         fdata[[as.character(description$fdataName[[j]])]] <- mat[, j]
       }
 
-      series[[length(series) + 1L]] <- rdmlImportSeries(
+      series[[length(series) + 1L]] <- newRDMLImportSeries(
         fdataType = "adp",
         fdata = fdata,
         description = data.table::copy(description)
@@ -104,7 +104,7 @@
       stop("No usable Rotor-Gene fluorescence data found", call. = FALSE)
     }
 
-    rdmlImportData(
+    newRDMLImportData(
       series = series,
       publisher = "RotorGene",
       serialNumber = "1",

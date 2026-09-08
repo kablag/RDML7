@@ -18,13 +18,13 @@ modify an object return a new `rdmlType` that should be assigned back.
 A typical workflow is:
 
 1. Read a file with `readRDML()`.
-2. Inspect it with `rdmlSummary()` and `validateRDML()`.
+2. Inspect it with `summary()` and `validateRDML()`.
 3. Build a metadata table with `asTable()`.
 4. Extract curves with `getFData()`.
 5. Modify or add curves with `setFData()`.
 6. Export with `writeRDML()`.
 
-Use `rdmlFormats()` to list registered file formats and their capabilities.
+Use `listRDMLFormats()` to list registered file formats and their capabilities.
 }
 
 \section{Value semantics}{
@@ -41,8 +41,8 @@ rather than relying on in-place reference mutation.
 \section{File-format registry}{
 
 Built-in readers cover RDML/XML and several vendor/table formats. The
-registry is extensible through `rdmlRegisterFormat()` and
-`rdmlLoadModule()`. Third-party importers may return either an `rdmlType`
+registry is extensible through `registerRDMLFormat()` and
+`loadRDMLModule()`. Third-party importers may return either an `rdmlType`
 directly or an `rdmlImportData` intermediate representation.
 }
 
@@ -63,7 +63,7 @@ wrappers. New code should use the camelCase API.
 
 \seealso{
 `readRDML()`, `writeRDML()`, `asTable()`, `getFData()`, `setFData()`,
-`validateRDML()`, `rdmlSummary()`, `rdmlFormats()`
+`validateRDML()`, `summary()`, `listRDMLFormats()`
 }
 \author{
 \strong{Maintainer}: Konstantin A. Blagodatskikh \email{k.blag@yandex.ru}

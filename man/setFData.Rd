@@ -43,5 +43,5 @@ Missing experiments, runs, reactions, samples, targets, and dyes are
 created as needed. RDML uses value semantics, so assign the returned object.
 }
 \seealso{
-`rdmlFromFData()`, `asTable()`, `getFData()`
+`buildRDMLFromFData()`, `asTable()`, `getFData()`
 }

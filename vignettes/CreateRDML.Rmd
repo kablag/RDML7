@@ -14,7 +14,7 @@ library(RDML)
 
 ## Create an object from tables
 
-`rdmlFromFData()` is the shortest way to construct RDML data from user
+`buildRDMLFromFData()` is the shortest way to construct RDML data from user
 fluorescence.
 
 ```r
@@ -36,7 +36,7 @@ description <- data.frame(
   cq = c(21.3, 22.1)
 )
 
-x <- rdmlFromFData(
+x <- buildRDMLFromFData(
   fdata,
   description,
   fdataType = "adp",
@@ -48,7 +48,7 @@ The builder creates the minimum experiment, run, reaction, sample, target, and
 dye hierarchy.
 
 ```r
-rdmlSummary(x)
+summary(x)
 asTable(x)
 ```
 

@@ -9,13 +9,13 @@
 #' A typical workflow is:
 #'
 #' 1. Read a file with `readRDML()`.
-#' 2. Inspect it with `rdmlSummary()` and `validateRDML()`.
+#' 2. Inspect it with `summary()` and `validateRDML()`.
 #' 3. Build a metadata table with `asTable()`.
 #' 4. Extract curves with `getFData()`.
 #' 5. Modify or add curves with `setFData()`.
 #' 6. Export with `writeRDML()`.
 #'
-#' Use `rdmlFormats()` to list registered file formats and their capabilities.
+#' Use `listRDMLFormats()` to list registered file formats and their capabilities.
 #'
 #' @section Value semantics:
 #' RDML objects are S7 value objects, not mutable R6 environments. Therefore:
@@ -28,8 +28,8 @@
 #'
 #' @section File-format registry:
 #' Built-in readers cover RDML/XML and several vendor/table formats. The
-#' registry is extensible through `rdmlRegisterFormat()` and
-#' `rdmlLoadModule()`. Third-party importers may return either an `rdmlType`
+#' registry is extensible through `registerRDMLFormat()` and
+#' `loadRDMLModule()`. Third-party importers may return either an `rdmlType`
 #' directly or an `rdmlImportData` intermediate representation.
 #'
 #' @section RDES:
@@ -45,7 +45,7 @@
 #'
 #' @seealso
 #' `readRDML()`, `writeRDML()`, `asTable()`, `getFData()`, `setFData()`,
-#' `validateRDML()`, `rdmlSummary()`, `rdmlFormats()`
+#' `validateRDML()`, `summary()`, `listRDMLFormats()`
 #'
 #' @name RDML-package
 #' @aliases RDML RDML-package

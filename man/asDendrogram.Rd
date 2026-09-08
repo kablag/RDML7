@@ -27,5 +27,5 @@ Groups entries by experiment, run, target, sample type, and fluorescence
 data type using the metadata produced by `asTable()`.
 }
 \seealso{
-`rdmlSummary()`
+`summary()`
 }

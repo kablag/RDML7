@@ -25,5 +25,5 @@ Checks duplicate keys, dangling references, and fluorescence-curve
 consistency in addition to S7 property validation.
 }
 \seealso{
-`rdmlIsValid`, `rdmlSummary`
+`isValidRDML`, `rdmlSummary`
 }

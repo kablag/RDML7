@@ -9,12 +9,12 @@ attach(test_env, warn.conflicts = FALSE)
 name <- "test-dummy-reader"
 on.exit(
     try(
-      rdmlUnregisterFormat(name),
+      unregisterRDMLFormat(name),
       silent = TRUE
     ),
     add = TRUE
   )
-rdmlRegisterFormat(
+registerRDMLFormat(
     name = name,
     extensions = "dummyqpcr",
     reader = function(filename) {

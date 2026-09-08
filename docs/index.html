@@ -4,183 +4,193 @@
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 <meta charset="utf-8">
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Importing Real-Time Thermo Cycler (qPCR) Data from RDML Format Files • RDML</title>
-<!-- jquery --><script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js" integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script><!-- Bootstrap --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/css/bootstrap.min.css" integrity="sha256-bZLfwXAP04zRMK2BjiO8iu9pf4FbLqX6zitd+tIvLhE=" crossorigin="anonymous">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/twitter-bootstrap/3.4.1/js/bootstrap.min.js" integrity="sha256-nuL8/2cJ5NDSSwnKD8VqreErSWHtnEP9E7AySL+1ev4=" crossorigin="anonymous"></script><!-- bootstrap-toc --><link rel="stylesheet" href="bootstrap-toc.css">
-<script src="bootstrap-toc.js"></script><!-- Font Awesome icons --><link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/all.min.css" integrity="sha256-mmgLkCYLUQbXn0B1SRqzHar6dCnv9oZFPEC1g1cwlkk=" crossorigin="anonymous">
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.12.1/css/v4-shims.min.css" integrity="sha256-wZjR52fzng1pJHwx4aV2AO3yyTOXrcDW7jBpJtTwVxw=" crossorigin="anonymous">
-<!-- clipboard.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/clipboard.js/2.0.6/clipboard.min.js" integrity="sha256-inc5kl9MA1hkeYUt+EC3BhlIgyp/2jDIyBLS6k3UxPI=" crossorigin="anonymous"></script><!-- headroom.js --><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/headroom.min.js" integrity="sha256-AsUX4SJE1+yuDu5+mAVzJbuYNPHj/WroHuZ8Ir/CkE0=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/headroom/0.11.0/jQuery.headroom.min.js" integrity="sha256-ZX/yNShbjqsohH1k95liqY9Gd8uOiE1S4vZc+9KQ1K4=" crossorigin="anonymous"></script><!-- pkgdown --><link href="pkgdown.css" rel="stylesheet">
-<script src="pkgdown.js"></script><meta property="og:title" content="Importing Real-Time Thermo Cycler (qPCR) Data from RDML Format Files">
-<meta property="og:description" content="Imports real-time thermo cycler (qPCR) data from Real-time PCR
-    Data Markup Language (RDML) and transforms to the appropriate formats of
-    the qpcR and chipPCR packages. Contains a dendrogram visualization 
-    for the structure of RDML object and GUI for RDML editing.">
-<!-- mathjax --><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/MathJax.js" integrity="sha256-nvJJv9wWKEm88qvoQl9ekL2J+k/RWIsaSScxxlsrv8k=" crossorigin="anonymous"></script><script src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.5/config/TeX-AMS-MML_HTMLorMML.js" integrity="sha256-84DKXVJXs0/F8OTMzX4UR909+jtl4G7SPypPavF+GfA=" crossorigin="anonymous"></script><!--[if lt IE 9]>
-<script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
-<script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
-<![endif]-->
+<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<title>Tools for Real-Time PCR (qPCR) Data and RDML Files • RDML7</title>
+<script src="deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+<link href="deps/bootstrap-5.3.8/bootstrap.min.css" rel="stylesheet">
+<script src="deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
+<link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
+<script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Tools for Real-Time PCR (qPCR) Data and RDML Files">
+<meta name="description" content="Reads, writes, validates, converts, and manipulates quantitative PCR data using Real-time PCR Data Markup Language (RDML) S7 objects. Includes an extensible file-format registry, vendor/table importers, RDES import and export, fluorescence-table helpers, semantic validation, and compatibility wrappers for the historical RDML API.">
+<meta property="og:description" content="Reads, writes, validates, converts, and manipulates quantitative PCR data using Real-time PCR Data Markup Language (RDML) S7 objects. Includes an extensible file-format registry, vendor/table importers, RDES import and export, fluorescence-table helpers, semantic validation, and compatibility wrappers for the historical RDML API.">
 </head>
-<body data-spy="scroll" data-target="#toc">
-    <div class="container template-home">
-      <header><div class="navbar navbar-default navbar-fixed-top" role="navigation">
-  <div class="container">
-    <div class="navbar-header">
-      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false">
-        <span class="sr-only">Toggle navigation</span>
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-        <span class="icon-bar"></span>
-      </button>
-      <span class="navbar-brand">
-        <a class="navbar-link" href="index.html">RDML</a>
-        <span class="version label label-default" data-toggle="tooltip" data-placement="bottom" title="Released version">1.2</span>
-      </span>
-    </div>
+<body>
+    <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
-    <div id="navbar" class="navbar-collapse collapse">
-      <ul class="nav navbar-nav">
-<li>
-  <a href="index.html">
-    <span class="fas fa fas fa-home fa-lg"></span>
-     
-  </a>
-</li>
-<li>
-  <a href="articles/RDML.html">Get started</a>
-</li>
-<li>
-  <a href="reference/index.html">Reference</a>
-</li>
-<li class="dropdown">
-  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
-    Articles
-     
-    <span class="caret"></span>
-  </a>
-  <ul class="dropdown-menu" role="menu">
-<li>
-      <a href="articles/CreateRDML.html">Creating RDML file from raw data</a>
-    </li>
-    <li>
-      <a href="articles/usingRDML_with_other_R_packages.html">Using RDML with other R packages</a>
-    </li>
+
+    <nav class="navbar navbar-expand-lg fixed-top bg-light" data-bs-theme="light" aria-label="Site navigation"><div class="container">
+
+    <a class="navbar-brand me-2" href="index.html">RDML7</a>
+
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">1.0</small>
+
+
+    <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
+      <span class="navbar-toggler-icon"></span>
+    </button>
+
+    <div id="navbar" class="collapse navbar-collapse ms-3">
+      <ul class="navbar-nav me-auto">
+<li class="nav-item"><a class="nav-link" href="articles/RDML7.html">Get started</a></li>
+<li class="nav-item"><a class="nav-link" href="reference/index.html">Reference</a></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
+<li><a class="dropdown-item" href="articles/RDML.html">Main workflow</a></li>
+    <li><a class="dropdown-item" href="articles/CreateRDML.html">Creating RDML objects</a></li>
+    <li><a class="dropdown-item" href="articles/RDES.html">RDES import/export</a></li>
+    <li><a class="dropdown-item" href="articles/format-plugins.html">File-format plugins</a></li>
+    <li><a class="dropdown-item" href="articles/usingRDML_with_other_R_packages.html">Other R packages</a></li>
   </ul>
 </li>
       </ul>
-<ul class="nav navbar-nav navbar-right">
-<li>
-  <a href="https://github.com/PCRuniversum/RDML/">
-    <span class="fab fa fab fa-github fa-lg"></span>
-     
-  </a>
-</li>
+<ul class="navbar-nav">
+<li class="nav-item"><a class="external-link nav-link" href="https://github.com/kablag/RDML7"><span class="fa fab fa-github"></span></a></li>
       </ul>
 </div>
-<!--/.nav-collapse -->
-  </div>
-<!--/.container -->
-</div>
-<!--/.navbar -->
 
-      
-
-      </header><div class="row">
-  <div class="contents col-md-9">
-
-
-<p><img src="https://raw.githubusercontent.com/pcruniversum/RDML/master/vignettes/RDML_logo.png" alt="RDML" width="100%"></p>
-<p>The RDML package is published in Oxford Bioinformatics: Stefan Rödiger, Michał Burdukiewicz, Andrej-Nikolai Spiess, Konstantin Blagodatskikh; Enabling reproducible real-time quantitative PCR research: the RDML package, Bioinformatics, <a href="https://doi.org/10.1093/bioinformatics/btx528">https://doi.org/10.1093/bioinformatics/btx528</a> (see also <code><a href="https://rdrr.io/r/utils/citation.html">citation()</a></code>).</p>
-<p>Imports qPCR data from RDML v1.1 format files (<a href="http://nar.oxfordjournals.org/content/32/5/1792.abstract?view=long&amp;pmid=19223324">Lefever et al. 2009</a>) and transforms it to the appropriate format of the qpcR package (Ritz et al. 2008, Spiess et al. 2008) or chipPCR package. <a href="http://www.rdml.org/">RDML</a> (Real-time PCR Data Markup Language) is the recommended file format element in the Minimum Information for Publication of Quantitative Real-Time PCR Experiments (MIQE) guidelines (<a href="http://clinchem.aaccjnls.org/content/55/4/611.long">Bustin et al. 2009</a>).</p>
-<div id="-installation" class="section level2">
-<h2 class="hasAnchor">
-<a href="#-installation" class="anchor"></a># Installation</h2>
-<p>The stable version of the <code>RDML</code> package for R is hosted on <a href="https://CRAN.R-project.org/package=RDML">CRAN</a> and can be installed as any R package.</p>
-<p>You can install the latest development version of the code using the <code>devtools</code> R package.</p>
-<div class="sourceCode" id="cb1"><pre class="downlit">
-<span class="co"># Install devtools, if you haven't already.</span>
-<span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html">install.packages</a></span>(<span class="st">"devtools"</span>)
-
-<span class="fu"><a href="https://rdrr.io/r/base/library.html">library</a></span>(<span class="kw"><a href="https://devtools.r-lib.org">devtools</a></span>)
-<span class="fu"><a href="https://devtools.r-lib.org//reference/remote-reexports.html">install_github</a></span>(<span class="st">"PCRuniversum/RDML"</span>)
-</pre></div>
-</div>
-<div id="manual" class="section level1">
-<div class="page-header"><h1 class="hasAnchor">
-<a href="#manual" class="anchor"></a>Manual</h1></div>
-<p>The manual is available <a href="https://pcruniversum.github.io/RDML/">online</a>.</p>
-</div>
-<div id="examples" class="section level1">
-<h1 class="hasAnchor">
-<a href="#examples" class="anchor"></a>Examples</h1>
-<p><code>RDML</code> imports various data formats (CSV, XMLX) besides the RDML format. Provided that the raw data have a defined structure (as described in the vignette) the import should be done by a few clicks. The example below shows the import of amplification curve data, which were stored in a CSV file. The function <code><a href="reference/rdmlEdit.html">rdmlEdit()</a></code> was used in the <a href="https://rkward.kde.org/">RKWard IDE/GUI</a> for further processing. rdmlEdit may be also accessed as a web server (<a href="http://shtest.evrogen.net/rdmlEdit/" class="uri">http://shtest.evrogen.net/rdmlEdit/</a>).</p>
-<p><img src="https://raw.githubusercontent.com/pcruniversum/RDML/master/vignettes/File_import.png" alt="Data Import" width="100%"></p>
-<p>Once imported enables <code><a href="reference/rdmlEdit.html">rdmlEdit()</a></code> and other functions from the <code>RDML</code> package complex data visualization and processing in the R statistical computing environment.</p>
-<p><img src="https://raw.githubusercontent.com/pcruniversum/RDML/master/vignettes/data_view.png" alt="Data View" width="100%"></p>
-</div>
 
   </div>
-
-  <div class="col-md-3 hidden-xs hidden-sm" id="pkgdown-sidebar">
-    <div class="links">
-<h2>Links</h2>
+</nav><div class="container template-home">
+<div class="row">
+  <main id="main" class="col-md-9"><div class="section level1">
+<div class="page-header"><h1 id="rdml7">RDML7<a class="anchor" aria-label="anchor" href="#rdml7"></a>
+</h1></div>
+<p><a href="https://doi.org/10.1093/bioinformatics/btx528" class="external-link"><img src="https://img.shields.io/badge/published%20in-Bioinformatics-ff69b4.svg?style=flat" alt="Published in Bioinformatics"></a></p>
+<p><code>RDML7</code> is an R package for reading, manipulating, validating, converting, and writing quantitative PCR data. The current implementation uses S7 value objects, a camelCase functional API, and an extensible file-format registry.</p>
+<p>The original RDML package is described in:</p>
+<blockquote>
+<p>Stefan Rödiger, Michał Burdukiewicz, Andrej-Nikolai Spiess, Konstantin Blagodatskikh. <em>Enabling reproducible real-time quantitative PCR research: the RDML package</em>. Bioinformatics. <a href="https://doi.org/10.1093/bioinformatics/btx528" class="external-link uri">https://doi.org/10.1093/bioinformatics/btx528</a></p>
+</blockquote>
+<div class="section level2">
+<h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
+</h2>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages</a></span><span class="op">(</span><span class="st">"remotes"</span><span class="op">)</span></span>
+<span><span class="fu">remotes</span><span class="fu">::</span><span class="fu"><a href="https://remotes.r-lib.org/reference/install_github.html" class="external-link">install_github</a></span><span class="op">(</span><span class="st">"kablag/RDML7"</span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="basic-workflow">Basic workflow<a class="anchor" aria-label="anchor" href="#basic-workflow"></a>
+</h2>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/kablag/RDML7" class="external-link">RDML7</a></span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/readRDML.html">readRDML</a></span><span class="op">(</span><span class="st">"experiment.rdml"</span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span>
+<span><span class="fu"><a href="reference/validateRDML.html">validateRDML</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">metadata</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/asTable.html">asTable</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">amp</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/getFData.html">getFData</a></span><span class="op">(</span></span>
+<span>  <span class="va">x</span>,</span>
+<span>  dpType <span class="op">=</span> <span class="st">"adp"</span>,</span>
+<span>  longTable <span class="op">=</span> <span class="cn">TRUE</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="reference/writeRDML.html">writeRDML</a></span><span class="op">(</span></span>
+<span>  <span class="va">x</span>,</span>
+<span>  <span class="st">"experiment-copy.rdml"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>RDML uses value semantics:</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/setFData.html">setFData</a></span><span class="op">(</span></span>
+<span>  <span class="va">x</span>,</span>
+<span>  <span class="va">fdata</span>,</span>
+<span>  <span class="va">description</span>,</span>
+<span>  fdataType <span class="op">=</span> <span class="st">"adp"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+</div>
+<div class="section level2">
+<h2 id="formats">Formats<a class="anchor" aria-label="anchor" href="#formats"></a>
+</h2>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="reference/listRDMLFormats.html">listRDMLFormats</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
+<p>Additional readers/writers can be registered with <code><a href="reference/registerRDMLFormat.html">registerRDMLFormat()</a></code> or loaded from module files with <code><a href="reference/loadRDMLModule.html">loadRDMLModule()</a></code>.</p>
+</div>
+<div class="section level2">
+<h2 id="rdes">RDES<a class="anchor" aria-label="anchor" href="#rdes"></a>
+</h2>
+<p>RDES import and export are supported:</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/readRDML.html">readRDML</a></span><span class="op">(</span></span>
+<span>  <span class="st">"run_amplification.tsv"</span>,</span>
+<span>  format <span class="op">=</span> <span class="st">"rdes"</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/readRDML.html">readRDML</a></span><span class="op">(</span></span>
+<span>  <span class="st">"run_amplification.tsv"</span>,</span>
+<span>  format <span class="op">=</span> <span class="st">"rdes"</span>,</span>
+<span>  companionFile <span class="op">=</span> <span class="st">"run_melting.tsv"</span></span>
+<span><span class="op">)</span></span>
+<span></span>
+<span><span class="fu"><a href="reference/writeRDML.html">writeRDML</a></span><span class="op">(</span></span>
+<span>  <span class="va">x</span>,</span>
+<span>  <span class="st">"run.tsv"</span>,</span>
+<span>  format <span class="op">=</span> <span class="st">"rdes"</span>,</span>
+<span>  rdesType <span class="op">=</span> <span class="st">"both"</span></span>
+<span><span class="op">)</span></span></code></pre></div>
+<p>See <code>vignette("RDES", package = "RDML")</code>.</p>
+</div>
+<div class="section level2">
+<h2 id="legacy-compatibility">Legacy compatibility<a class="anchor" aria-label="anchor" href="#legacy-compatibility"></a>
+</h2>
+<p>Older names such as <code><a href="reference/legacy-api.html">AsTable()</a></code>, <code><a href="reference/legacy-api.html">GetFData()</a></code>, <code><a href="reference/legacy-api.html">SetFData()</a></code> and <code><a href="reference/legacy-api.html">MergeRDMLs()</a></code>, remain available for dependent packages. New code should use the camelCase API.</p>
+</div>
+</div>
+  </main><aside class="col-md-3"><div class="links">
+<h2 data-toc-skip>Links</h2>
 <ul class="list-unstyled">
-<li>Download from CRAN at <br><a href="https://cloud.r-project.org/package=RDML">https://​cloud.r-project.org/​package=RDML</a>
-</li>
-<li>Browse source code at <br><a href="https://github.com/PCRuniversum/RDML/">https://​github.com/​PCRuniversum/​RDML/​</a>
-</li>
+<li><a href="https://github.com/kablag/RDML7/" class="external-link">Browse source code</a></li>
 </ul>
 </div>
+
 <div class="license">
-<h2>License</h2>
+<h2 data-toc-skip>License</h2>
 <ul class="list-unstyled">
 <li>
-<a href="https://opensource.org/licenses/mit-license.php">MIT</a> + file <a href="LICENSE-text.html">LICENSE</a>
+<a href="https://opensource.org/licenses/mit-license.php" class="external-link">MIT</a> + file <a href="LICENSE-text.html">LICENSE</a>
 </li>
 </ul>
 </div>
+
+
 <div class="citation">
-<h2>Citation</h2>
+<h2 data-toc-skip>Citation</h2>
 <ul class="list-unstyled">
-<li><a href="authors.html">Citing RDML</a></li>
+<li><a href="authors.html#citation">Citing RDML7</a></li>
 </ul>
 </div>
+
 <div class="developers">
-<h2>Developers</h2>
+<h2 data-toc-skip>Developers</h2>
 <ul class="list-unstyled">
-<li>Konstantin A. Blagodatskikh <br><small class="roles"> Maintainer, author </small>  </li>
-<li>Stefan Roediger <br><small class="roles"> Author </small>  </li>
-<li>Michal Burdukiewicz <br><small class="roles"> Author </small> <a href="https://orcid.org/0000-0001-8926-582X" target="orcid.widget" aria-label="ORCID"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a> </li>
-<li>Andrej-Nikolai Spiess <br><small class="roles"> Author </small>  </li>
+<li>Konstantin A. Blagodatskikh <br><small class="roles"> Maintainer, author </small>   </li>
+<li>Stefan Roediger <br><small class="roles"> Author </small>   </li>
+<li>Michal Burdukiewicz <br><small class="roles"> Author </small> <a href="https://orcid.org/0000-0001-8926-582X" target="orcid.widget" aria-label="ORCID" class="external-link"><span class="fab fa-orcid orcid" aria-hidden="true"></span></a>  </li>
+<li>Andrej-Nikolai Spiess <br><small class="roles"> Author </small>   </li>
 </ul>
 </div>
 
-  <div class="dev-status">
-<h2>Dev status</h2>
-<ul class="list-unstyled">
-<li><a href="https://doi.org/10.1093/bioinformatics/btx528"><img src="https://img.shields.io/badge/published%20in-Bioinformatics-ff69b4.svg?style=flat" alt="published in: Bioinformatics"></a></li>
-<li><a href="https://CRAN.R-project.org/package=RDML"><img src="http://www.r-pkg.org/badges/version/RDML" alt="CRAN_Status_Badge"></a></li>
-<li><a href="https://CRAN.R-project.org/package=RDML"><img src="https://cranlogs.r-pkg.org/badges/RDML" alt="Downloads"></a></li>
-<li><a href="https://travis-ci.org/pcruniversum/RDML"><img src="https://travis-ci.org/pcruniversum/RDML.svg?branch=master" alt="Travis-CI Build Status"></a></li>
-<li><a href="http://www.rdocumentation.org/packages/RDML"><img src="http://www.rdocumentation.org/badges/version/RDML" alt="Rdoc"></a></li>
-</ul>
-</div>
-</div>
+
+
+  </aside>
 </div>
 
 
-      <footer><div class="copyright">
+    <footer><div class="pkgdown-footer-left">
   <p>Developed by Konstantin A. Blagodatskikh, Stefan Roediger, Michal Burdukiewicz, Andrej-Nikolai Spiess.</p>
 </div>
 
-<div class="pkgdown">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/">pkgdown</a> 1.6.1.</p>
+<div class="pkgdown-footer-right">
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
-      </footer>
+    </footer>
 </div>
 
-  
+
+
 
 
   </body>

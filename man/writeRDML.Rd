@@ -34,5 +34,5 @@ Writer-specific result, normally an output path invisibly.
 Write an RDML object through the file-format registry
 }
 \seealso{
-`readRDML`, `rdmlFormats`, `rdmlLossRecord`
+`readRDML`, `listRDMLFormats`, `newRDMLLossRecord`
 }

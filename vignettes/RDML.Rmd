@@ -25,7 +25,7 @@ RDML/RDES and other registered formats.
 x <- system.file("extdata/stepone_std.rdml", package="RDML7") |> 
   readRDML()
 
-rdmlSummary(x)
+summary(x)
 validateRDML(x)
 
 metadata <- asTable(x)
@@ -45,15 +45,15 @@ x <- setFData(x, fdata, description)
 `readRDML()` dispatches through the runtime format registry.
 
 ```r
-rdmlFormats()
+listRDMLFormats()
 x <- readRDML("experiment.rdml")
 ```
 
-Use `rdmlDetectFormat()` to inspect selection without performing the import.
+Use `detectRDMLFormat()` to inspect selection without performing the import.
 
 ```r
-rdmlDetectFormat("run.r96")
-rdmlDetectFormat("run.tsv")
+detectRDMLFormat("run.r96")
+detectRDMLFormat("run.tsv")
 ```
 
 For RDES see `vignette("RDES", package = "RDML")`.
@@ -80,9 +80,9 @@ x$experiment$exp1$run$run1$react$A1$data$ACTB
 ## Summary and validation
 
 ```r
-rdmlSummary(x)
+summary(x)
 issues <- validateRDML(x)
-rdmlIsValid(x)
+isValidRDML(x)
 ```
 
 Validation can focus on structure, references, curves, or the full object:
@@ -187,13 +187,13 @@ x <- setFData(
 )
 ```
 
-For constructing a new object from tables use `rdmlFromFData()`. See
+For constructing a new object from tables use `buildRDMLFromFData()`. See
 `vignette("CreateRDML", package = "RDML")`.
 
 ## Merging
 
 ```r
-merged <- mergeRdmls(
+merged <- mergeRDMLs(
   list(x1, x2),
   dataConflict = "incoming"
 )

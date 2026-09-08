@@ -174,9 +174,9 @@ assign(
 #' @param reader Reader function or `NULL`.
 #' @param writer Writer function or `NULL`.
 #' @return Registered format specification invisibly.
-#' @seealso `rdmlLoadModule`, `rdmlFormats`, `rdmlRead`
+#' @seealso `loadRDMLModule`, `listRDMLFormats`, `readRDML`
 #' @export
-rdmlRegisterFormat <- function(
+registerRDMLFormat <- function(
     name,
     extensions = character(),
     reader = NULL,
@@ -196,9 +196,9 @@ rdmlRegisterFormat <- function(
 #' @param name Registered format name.
 #' @param force Allow removal of a built-in format.
 #' @return `TRUE` invisibly when removed.
-#' @seealso `rdmlRegisterFormat`, `rdmlFormats`
+#' @seealso `registerRDMLFormat`, `listRDMLFormats`
 #' @export
-rdmlUnregisterFormat <- function(name, force = FALSE) {
+unregisterRDMLFormat <- function(name, force = FALSE) {
   name <- .rdmlNormalizeFormatName(name, "name")
   checkmate::assertFlag(force)
 
@@ -260,9 +260,9 @@ rdmlUnregisterFormat <- function(name, force = FALSE) {
 #'
 #' @return Data frame with format name, extensions, and reader/writer
 #'   availability.
-#' @seealso `rdmlRegisterFormat`, `rdmlDetectFormat`
+#' @seealso `registerRDMLFormat`, `detectRDMLFormat`
 #' @export
-rdmlFormats <- function() {
+listRDMLFormats <- function() {
   specs <- .rdmlFormatSpecs()
 
   if (!length(specs)) {
@@ -396,7 +396,7 @@ rdmlFormats <- function() {
       operation,
       " format for extension .",
       ext,
-      ". Use `rdmlFormats()` to list available handlers or ",
+      ". Use `listRDMLFormats()` to list available handlers or ",
       "specify `format=` explicitly.",
       call. = FALSE
     )
@@ -436,9 +436,9 @@ rdmlFormats <- function() {
 #' @param fileName File path.
 #' @param operation `"read"` or `"write"`.
 #' @return Registered format name.
-#' @seealso `rdmlFormats`, `readRDML`, `writeRDML`
+#' @seealso `listRDMLFormats`, `readRDML`, `writeRDML`
 #' @export
-rdmlDetectFormat <- function(
+detectRDMLFormat <- function(
     fileName,
     operation = c("read", "write")) {
 
@@ -884,7 +884,7 @@ rdmlDetectFormat <- function(
 #' @param ... Format-specific arguments. RDES supports `companionFile`,
 #' `expId`, `runId`, and `strict`.
 #' @return `rdmlType`.
-#' @seealso `writeRDML`, `rdmlFormats`, `validateRDML`
+#' @seealso `writeRDML`, `listRDMLFormats`, `validateRDML`
 #' @export
 readRDML <- function(
     fileName,
@@ -935,7 +935,7 @@ readRDML <- function(
   )
 
   if (S7::S7_inherits(result, rdmlImportData)) {
-    result <- rdmlBuildImport(
+    result <- buildRDMLImport(
       result,
       loss = loss
     )
@@ -969,7 +969,7 @@ readRDML <- function(
 #' @param ... Format-specific arguments. RDES supports `expId`, `runId`, and
 #' `rdesType = "auto"`, `"adp"`, `"mdp"`, or `"both"`.
 #' @return Writer-specific result, normally an output path invisibly.
-#' @seealso `readRDML`, `rdmlFormats`, `rdmlLossRecord`
+#' @seealso `readRDML`, `listRDMLFormats`, `newRDMLLossRecord`
 #' @export
 writeRDML <- function(
     x,
@@ -1025,11 +1025,11 @@ writeRDML <- function(
 #' @param fdataType `"adp"` or `"mdp"`.
 #' @param publisher Optional publisher/importer identifier.
 #' @param serialNumber Top-level serial number.
-#' @param ... Additional arguments forwarded to `rdmlBuildImport()`.
+#' @param ... Additional arguments forwarded to `buildRDMLImport()`.
 #' @return `rdmlType`.
 #' @seealso `setFData`, `rdmlImportData`
 #' @export
-rdmlFromFData <- function(
+buildRDMLFromFData <- function(
     fdata,
     description,
     fdataType = "adp",
@@ -1045,9 +1045,9 @@ rdmlFromFData <- function(
     )
   )
 
-  importData <- rdmlImportData(
+  importData <- newRDMLImportData(
     series = list(
-      rdmlImportSeries(
+      newRDMLImportSeries(
         fdataType = fdataType,
         fdata = data.table::as.data.table(fdata),
         description = data.table::as.data.table(description)
@@ -1058,7 +1058,7 @@ rdmlFromFData <- function(
     format = "fdata"
   )
 
-  rdmlBuildImport(
+  buildRDMLImport(
     importData,
     ...
   )
@@ -1104,15 +1104,15 @@ rdmlFromFData <- function(
 #' Load file-format handlers from an R module
 #'
 #' The module defines `rdmlModule()` (legacy `rdml_module()` is also accepted)
-#' and returns one or more specifications accepted by `rdmlRegisterFormat()`.
+#' and returns one or more specifications accepted by `registerRDMLFormat()`.
 #' Each specification may contain only `name`, `extensions`, `reader`, and
 #' `writer`.
 #'
 #' @param path Module R file.
 #' @return Registered format names invisibly.
-#' @seealso `rdmlRegisterFormat`, `rdmlFormats`
+#' @seealso `registerRDMLFormat`, `listRDMLFormats`
 #' @export
-rdmlLoadModule <- function(path) {
+loadRDMLModule <- function(path) {
   checkmate::assertString(path)
 
   if (!file.exists(path)) {
@@ -1124,7 +1124,7 @@ rdmlLoadModule <- function(path) {
   }
 
   moduleEnv <- new.env(
-    parent = environment(rdmlLoadModule)
+    parent = environment(loadRDMLModule)
   )
 
   sys.source(
@@ -1204,7 +1204,7 @@ rdmlLoadModule <- function(path) {
     }
 
     do.call(
-      rdmlRegisterFormat,
+      registerRDMLFormat,
       spec
     )
 

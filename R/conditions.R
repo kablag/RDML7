@@ -81,10 +81,10 @@
 #' @param message Human-readable description.
 #' @param path Optional RDML object path.
 #' @param details Additional structured metadata.
-#' @return An `rdmlLossRecord`.
+#' @return An `newRDMLLossRecord`.
 #' @seealso `readRDML`, `writeRDML`, `rdmlImportData`
 #' @export
-rdmlLossRecord <- function(
+newRDMLLossRecord <- function(
     code,
     message,
     path = NA_character_,
@@ -104,7 +104,7 @@ rdmlLossRecord <- function(
       path = path,
       details = details
     ),
-    class = "rdmlLossRecord"
+    class = "newRDMLLossRecord"
   )
 }
 
@@ -160,7 +160,7 @@ rdmlLossRecord <- function(
   }
 
   for (record in losses) {
-    if (inherits(record, "rdmlLossRecord")) {
+    if (inherits(record, "newRDMLLossRecord")) {
       .rdmlSignalLoss(
         loss = loss,
         code = record$code,

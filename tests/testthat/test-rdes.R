@@ -46,7 +46,7 @@ test_that("RDES amplification import follows v1.0 layout", {
   )
 
   expect_identical(
-    rdmlDetectFormat(path),
+    detectRDMLFormat(path),
     "rdes"
   )
 

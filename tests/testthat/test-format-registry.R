@@ -1,6 +1,6 @@
-test_that("rdmlRegisterFormat has the minimal public API", {
+test_that("registerRDMLFormat has the minimal public API", {
   expect_identical(
-    names(formals(rdmlRegisterFormat)),
+    names(formals(registerRDMLFormat)),
     c(
       "name",
       "extensions",
@@ -11,9 +11,9 @@ test_that("rdmlRegisterFormat has the minimal public API", {
 })
 
 
-test_that("rdmlFormats exposes only dispatch information", {
+test_that("listRDMLFormats exposes only dispatch information", {
   expect_identical(
-    names(rdmlFormats()),
+    names(listRDMLFormats()),
     c(
       "format",
       "extensions",
@@ -33,27 +33,27 @@ test_that("the first registered reader is the default for an extension", {
   on.exit(
     for (name in namesToRemove) {
       try(
-        rdmlUnregisterFormat(name),
+        unregisterRDMLFormat(name),
         silent = TRUE
       )
     },
     add = TRUE
   )
 
-  rdmlRegisterFormat(
+  registerRDMLFormat(
     "test-first-default",
     extensions = "defaultqpcr",
     reader = function(fileName, ...) rdmlType()
   )
 
-  rdmlRegisterFormat(
+  registerRDMLFormat(
     "test-second-default",
     extensions = "defaultqpcr",
     reader = function(fileName, ...) rdmlType()
   )
 
   expect_identical(
-    rdmlDetectFormat("x.defaultqpcr", "read"),
+    detectRDMLFormat("x.defaultqpcr", "read"),
     "test-first-default"
   )
 
@@ -77,32 +77,32 @@ test_that("read and write defaults are operation-specific", {
   on.exit(
     for (name in namesToRemove) {
       try(
-        rdmlUnregisterFormat(name),
+        unregisterRDMLFormat(name),
         silent = TRUE
       )
     },
     add = TRUE
   )
 
-  rdmlRegisterFormat(
+  registerRDMLFormat(
     "test-reader-default",
     extensions = "opqpcr",
     reader = function(fileName, ...) rdmlType()
   )
 
-  rdmlRegisterFormat(
+  registerRDMLFormat(
     "test-writer-default",
     extensions = "opqpcr",
     writer = function(x, fileName, ...) invisible(fileName)
   )
 
   expect_identical(
-    rdmlDetectFormat("x.opqpcr", "read"),
+    detectRDMLFormat("x.opqpcr", "read"),
     "test-reader-default"
   )
 
   expect_identical(
-    rdmlDetectFormat("x.opqpcr", "write"),
+    detectRDMLFormat("x.opqpcr", "write"),
     "test-writer-default"
   )
 })
@@ -110,27 +110,27 @@ test_that("read and write defaults are operation-specific", {
 
 test_that("built-in overlapping extensions have stable defaults", {
   expect_identical(
-    rdmlDetectFormat("x.csv", "read"),
+    detectRDMLFormat("x.csv", "read"),
     "csv"
   )
 
   expect_identical(
-    rdmlDetectFormat("x.txt", "read"),
+    detectRDMLFormat("x.txt", "read"),
     "fqd"
   )
 
   expect_identical(
-    rdmlDetectFormat("x.tsv", "read"),
+    detectRDMLFormat("x.tsv", "read"),
     "rdes"
   )
 
   expect_identical(
-    rdmlDetectFormat("x.csv", "write"),
+    detectRDMLFormat("x.csv", "write"),
     "rdes"
   )
 
   expect_identical(
-    rdmlDetectFormat("x.txt", "write"),
+    detectRDMLFormat("x.txt", "write"),
     "rdes"
   )
 })
@@ -138,7 +138,7 @@ test_that("built-in overlapping extensions have stable defaults", {
 
 test_that("files without an extension require explicit format", {
   expect_error(
-    rdmlDetectFormat("no-extension", "read"),
+    detectRDMLFormat("no-extension", "read"),
     "without an extension"
   )
 })
@@ -146,7 +146,7 @@ test_that("files without an extension require explicit format", {
 
 test_that("unknown extensions fail clearly", {
   expect_error(
-    rdmlDetectFormat("x.unknownqpcr", "read"),
+    detectRDMLFormat("x.unknownqpcr", "read"),
     "No registered read format"
   )
 })
@@ -157,20 +157,20 @@ test_that("duplicate format names are rejected", {
 
   on.exit(
     try(
-      rdmlUnregisterFormat(name),
+      unregisterRDMLFormat(name),
       silent = TRUE
     ),
     add = TRUE
   )
 
-  rdmlRegisterFormat(
+  registerRDMLFormat(
     name,
     extensions = "dupqpcr",
     reader = function(fileName, ...) rdmlType()
   )
 
   expect_error(
-    rdmlRegisterFormat(
+    registerRDMLFormat(
       name,
       extensions = "dup2qpcr",
       reader = function(fileName, ...) rdmlType()
@@ -182,7 +182,7 @@ test_that("duplicate format names are rejected", {
 
 test_that("a format must provide a reader or writer", {
   expect_error(
-    rdmlRegisterFormat(
+    registerRDMLFormat(
       "test-empty-format",
       extensions = "emptyqpcr"
     ),

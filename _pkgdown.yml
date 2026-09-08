@@ -30,31 +30,31 @@ reference:
   contents:
   - readRDML
   - writeRDML
-  - rdmlFormats
-  - rdmlDetectFormat
+  - listRDMLFormats
+  - detectRDMLFormat
 
 - title: Inspect and manipulate
   contents:
   - asTable
   - getFData
   - setFData
-  - mergeRdmls
+  - mergeRDMLs
   - asDendrogram
   - asXML
   - rdmlSummary
   - validateRDML
-  - rdmlIsValid
+  - isValidRDML
 
 - title: Format registry and importer API
   contents:
-  - rdmlRegisterFormat
-  - rdmlUnregisterFormat
-  - rdmlLoadModule
-  - rdmlFromFData
+  - registerRDMLFormat
+  - unregisterRDMLFormat
+  - loadRDMLModule
+  - buildRDMLFromFData
   - rdmlImportSeries
   - rdmlImportData
-  - rdmlBuildImport
-  - rdmlLossRecord
+  - buildRDMLImport
+  - newRDMLLossRecord
 
 - title: Core and schema types
   contents:
@@ -69,4 +69,4 @@ reference:
 - title: Compatibility and UI
   contents:
   - legacy-api
-  - rdmlEdit
+  - editRDML

@@ -50,6 +50,6 @@ path <- tempfile(
     )
   )
 expect_identical(
-    rdmlDetectFormat(path),
+    detectRDMLFormat(path),
     "rdes"
   )

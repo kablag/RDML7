@@ -28,9 +28,9 @@
       check.names = FALSE
     )
 
-    rdmlImportData(
+    newRDMLImportData(
       series = list(
-        rdmlImportSeries(
+        newRDMLImportSeries(
           fdataType = dataType,
           fdata = pcrdata,
           description = descr

@@ -11,7 +11,7 @@
 #' `SetFData()` \tab `setFData()` \cr
 #' `AsDendrogram()` \tab `asDendrogram()` \cr
 #' `asXML()` \tab `asXML()` \cr
-#' `MergeRDMLs()` \tab `mergeRdmls()` \cr
+#' `MergeRDMLs()` \tab `mergeRDMLs()` \cr
 #' }
 #'
 #' Legacy `AsTable()` returns names such as `fdata.name`, `exp.id`, `run.id`,

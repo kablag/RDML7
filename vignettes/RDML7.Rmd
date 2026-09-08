@@ -56,13 +56,13 @@ rdmlType
   |
   +---- setFData() ------- add or replace fluorescence data
   |
-  +---- rdmlSummary() ---- summary
+  +---- summary() ---- summary
   |
   +---- validateRDML() --- validation
   |
   +---- asDendrogram() --- hierarchy
   |
-  +---- mergeRdmls() ----- merge RDML objects
+  +---- mergeRDMLs() ----- merge RDML objects
   |
   +---- writeRDML() ------ RDML / XML / RDES / other registered formats
 ```
@@ -154,18 +154,18 @@ The set of available formats is no longer hard-coded into the user-facing
 import function. It is stored in a registry.
 
 ```{r formats}
-formats <- rdmlFormats()
+formats <- listRDMLFormats()
 formats
 ```
 
-`rdmlFormats()` reports, among other things, the registered format name,
+`listRDMLFormats()` reports, among other things, the registered format name,
 extensions, aliases, whether reading/writing/sniffing is available, the
 priority, API version, capabilities, and whether the handler is built in.
 
 To see which reader or writer would be selected for a particular path:
 
 ```{r detect-format}
-rdmlDetectFormat(
+detectRDMLFormat(
   filename,
   operation = "read"
 )
@@ -175,7 +175,7 @@ RDML7 first uses the extension and, when necessary, registered format sniffers.
 If several handlers remain equally suitable, use `format =` explicitly.
 
 The repository includes readers for RDML/XML and several vendor or table
-formats. The exact supported set should be queried with `rdmlFormats()` rather
+formats. The exact supported set should be queried with `listRDMLFormats()` rather
 than assumed from a fixed list.
 
 # RDML7 object structure
@@ -244,7 +244,7 @@ summary(lc96)
 This is preferable to manually counting nested experiments, runs, reactions,
 targets, and curve types.
 
-## `validateRDML()` and `rdmlIsValid()`
+## `validateRDML()` and `isValidRDML()`
 
 RDML7 provides validation (as for RDML 1.3 version) functions in addition to S7 
 property validators.
@@ -252,7 +252,7 @@ property validators.
 ```{r validate, eval=FALSE}
 validateRDML(lc96)
 
-rdmlIsValid(lc96)
+isValidRDML(lc96)
 ```
 
 Use validation before exporting data or after programmatically modifying a
@@ -684,7 +684,7 @@ x <- readRDML(
 Always use:
 
 ```{r show-formats-again}
-rdmlFormats()
+listRDMLFormats()
 ```
 
 to inspect the format names actually registered in the installed version of
@@ -782,7 +782,10 @@ merged <- mergeRDMLs(
 merged <- mergeRDMLs(
     rdmls
   )
+rm(rdmls)
+
 asDendrogram(merged)
+rm(merged)
 ```
 
 If experiment identifiers are not unique between input files, rename them
@@ -830,7 +833,7 @@ A useful export workflow is:
 ```{r export-workflow, eval=FALSE}
 validation <- validateRDML(lc96)
 
-if (rdmlIsValid(lc96)) {
+if (isValidRDML(lc96)) {
   writeRDML(
     lc96,
     "validated.rdml",
@@ -854,7 +857,7 @@ A format can provide:
 The public registration function is:
 
 ```{r register-format-form, eval=FALSE}
-rdmlRegisterFormat(
+registerRDMLFormat(
   name,
   extensions = character(),
   reader = NULL,
@@ -1051,7 +1054,7 @@ readSimpleQPCR <- function(fileName, ...) {
     stringsAsFactors = FALSE
   )
 
-  rdmlFromFData(
+  buildRDMLFromFData(
     fdata = fdata,
     description = description,
     fdataType = "adp",
@@ -1060,7 +1063,7 @@ readSimpleQPCR <- function(fileName, ...) {
 }
 
 
-rdmlRegisterFormat(
+registerRDMLFormat(
   name = "simpleqpcr",
   extensions = "sqpcr",
   reader = readSimpleQPCR
@@ -1083,58 +1086,21 @@ summary(sqpcr)
 To remove a third-party format:
 
 ```{r unregister-format, eval=TRUE}
-rdmlUnregisterFormat("simpleqpcr")
+unregisterRDMLFormat("simpleqpcr")
 ```
 
 Built-in handlers are protected from accidental removal.
 
 # Canonical importer API
 
-RDML7 separates **parsing a vendor file** from **constructing the RDML
-hierarchy**.
-
-Plugin authors can represent parsed data with:
-
-- `rdmlImportSeries`;
-- `rdmlImportData`;
-- `rdmlBuildImport()`.
-
-An `rdmlImportSeries` contains:
-
-- `fdataType` (`"adp"` or `"mdp"`);
-- a wide fluorescence table accepted by `setFData()`;
-- a CamelCase description table accepted by `setFData()`.
-
-`rdmlImportData` groups one or more such series and can contain publisher,
-serial number, source format, metadata, and declared conversion losses.
-
-The central builder then constructs `rdmlType`:
-
-```{r canonical-importer, eval=FALSE}
-series <- rdmlImportSeries(
-  fdataType = "adp",
-  fdata = fdata,
-  description = description
-)
-
-parsed <- rdmlImportData(
-  series = list(series),
-  publisher = "Example vendor",
-  serialNumber = "12345",
-  format = "myformat"
-)
-
-x <- rdmlBuildImport(parsed)
-```
-
-This architecture keeps vendor parsers independent from the nested S7 schema
-construction.
+For custom file formats, see the
+[*Writing custom RDML importers*](custom-importers.html) vignette.
 
 # Loss-aware conversions
 
 Different external formats do not necessarily represent every RDML feature.
 The importer/exporter API can describe known information loss using
-`rdmlLossRecord()`.
+`newRDMLLossRecord()`.
 
 When developing a format plugin, declare known lossy transformations rather
 than silently discarding unsupported information.
@@ -1142,12 +1108,12 @@ than silently discarding unsupported information.
 This allows higher-level I/O code to decide whether loss should produce a
 warning, an error, or be explicitly allowed.
 
-# `rdmlEdit()`
+# `editRDML()`
 
-`rdmlEdit()` remains available as an editing interface.
+`editRDML()` remains available as an editing interface.
 
 ```{r rdml-edit, eval=FALSE}
-rdmlEdit(lc96)
+editRDML(lc96)
 ```
 
 For reproducible analyses, scripted operations with `asTable()`,
@@ -1163,7 +1129,7 @@ passed to other R packages.
 
 For example:
 
-```{r downstream, eval=FALSE}
+```{r downstream, eval=TRUE}
 curves <- getFData(
   lc96,
   dpType = "adp",
@@ -1194,7 +1160,7 @@ library(RDML7)
 x <- readRDML("experiment.rdml")
 
 # 2. Inspect and validate
-rdmlSummary(x)
+summary(x)
 validateRDML(x)
 
 # 3. Build the curve index / metadata table
@@ -1241,7 +1207,7 @@ GetFData       -> getFData
 SetFData       -> setFData
 AsDendrogram   -> asDendrogram
 asXML          -> asXML
-MergeRDMLs     -> mergeRdmls
+MergeRDMLs     -> mergeRDMLs
 ```
 
 Some old dotted argument names are also translated by compatibility code to
@@ -1291,8 +1257,8 @@ thermalCyclingConditionsType()
 readRDML()
 writeRDML()
 asXML()
-rdmlDetectFormat()
-rdmlFormats()
+detectRDMLFormat()
+listRDMLFormats()
 ```
 
 ## Metadata and fluorescence
@@ -1301,35 +1267,35 @@ rdmlFormats()
 asTable()
 getFData()
 setFData()
-rdmlFromFData()
+buildRDMLFromFData()
 ```
 
 ## Inspection and validation
 
 ```text
-rdmlSummary()
+summary()
 validateRDML()
-rdmlIsValid()
+isValidRDML()
 asDendrogram()
 ```
 
 ## Manipulation
 
 ```text
-mergeRdmls()
-rdmlEdit()
+mergeRDMLs()
+editRDML()
 ```
 
 ## Extensible import/export
 
 ```text
-rdmlRegisterFormat()
-rdmlUnregisterFormat()
-rdmlLoadModule()
-rdmlImportSeries()
-rdmlImportData()
-rdmlBuildImport()
-rdmlLossRecord()
+registerRDMLFormat()
+unregisterRDMLFormat()
+loadRDMLModule()
+newRDMLImportSeries()
+newRDMLImportData()
+buildRDMLImport()
+newRDMLLossRecord()
 ```
 
 # Summary
@@ -1348,14 +1314,14 @@ The central concepts for new code are:
 5. add custom `asTable()` columns directly through `...`;
 6. use `getFData()` and `setFData()` for fluorescence;
 7. remember that modification uses value semantics;
-8. validate with `validateRDML()` / `rdmlIsValid()`;
+8. validate with `validateRDML()` / `isValidRDML()`;
 9. write through `writeRDML()`;
 10. discover and extend formats through the format registry.
 
 For the current runtime list of supported file handlers, always prefer:
 
 ```r
-rdmlFormats()
+listRDMLFormats()
 ```
 
 over a hard-coded list in analysis code.

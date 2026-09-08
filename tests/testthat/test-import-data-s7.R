@@ -16,7 +16,7 @@ test_that("rdmlImportSeries supports public dollar access", {
     targetDyeId = "FAM"
   )
 
-  series <- rdmlImportSeries(
+  series <- newRDMLImportSeries(
     fdataType = "adp",
     fdata = fdata,
     description = description
@@ -56,13 +56,13 @@ test_that("rdmlImportData dollar access and build work", {
     targetDyeId = "FAM"
   )
 
-  series <- rdmlImportSeries(
+  series <- newRDMLImportSeries(
     fdataType = "adp",
     fdata = fdata,
     description = description
   )
 
-  parsed <- rdmlImportData(
+  parsed <- newRDMLImportData(
     series = list(series),
     publisher = "test",
     format = "test"
@@ -83,7 +83,7 @@ test_that("rdmlImportData dollar access and build work", {
     list()
   )
 
-  x <- rdmlBuildImport(
+  x <- buildRDMLImport(
     parsed,
     loss = "allow"
   )

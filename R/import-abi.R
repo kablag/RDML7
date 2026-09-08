@@ -148,9 +148,9 @@
       fdata[[as.character(r$fdataName)]] <- vals
     }
 
-    rdmlImportData(
+    newRDMLImportData(
       series = list(
-        rdmlImportSeries(
+        newRDMLImportSeries(
           fdataType = "adp",
           fdata = fdata,
           description = description

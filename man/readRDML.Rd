@@ -39,5 +39,5 @@ Selects a reader from the runtime registry. Readers may return `rdmlType`
 directly or `rdmlImportData`, which is built automatically.
 }
 \seealso{
-`writeRDML`, `rdmlFormats`, `validateRDML`
+`writeRDML`, `listRDMLFormats`, `validateRDML`
 }

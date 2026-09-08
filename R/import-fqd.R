@@ -104,14 +104,14 @@
     descriptionProcessed <- data.table::copy(description)
     descriptionProcessed[, runId := "processed_data"]
 
-    rdmlImportData(
+    newRDMLImportData(
       series = list(
-        rdmlImportSeries(
+        newRDMLImportSeries(
           fdataType = "adp",
           fdata = rawfdata,
           description = description
         ),
-        rdmlImportSeries(
+        newRDMLImportSeries(
           fdataType = "adp",
           fdata = processedfdata,
           description = descriptionProcessed

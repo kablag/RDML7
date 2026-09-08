@@ -141,5 +141,3 @@ idReferenceType <- S7::new_class(
   "idReferenceType",
   parent = idType
 )
-
-

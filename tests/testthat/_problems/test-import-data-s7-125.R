@@ -20,12 +20,12 @@ description <- data.table::data.table(
     target = "ACTB",
     targetDyeId = "FAM"
   )
-series <- rdmlImportSeries(
+series <- newRDMLImportSeries(
     fdataType = "adp",
     fdata = fdata,
     description = description
   )
-parsed <- rdmlImportData(
+parsed <- newRDMLImportData(
     series = list(series),
     publisher = "test",
     format = "test"
@@ -42,7 +42,7 @@ expect_identical(
     parsed$losses,
     list()
   )
-x <- rdmlBuildImport(
+x <- buildRDMLImport(
     parsed,
     loss = "allow"
   )

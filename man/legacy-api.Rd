@@ -8,6 +8,21 @@
 \alias{AsDendrogram}
 \alias{asXML}
 \alias{MergeRDMLs}
+\alias{rdmlRead}
+\alias{rdmlWrite}
+\alias{rdmlRegisterFormat}
+\alias{rdmlUnregisterFormat}
+\alias{rdmlDetectFormat}
+\alias{rdmlFormats}
+\alias{rdmlLoadModule}
+\alias{rdmlBuildImport}
+\alias{rdmlFromFData}
+\alias{rdmlValidate}
+\alias{rdmlIsValid}
+\alias{rdmlEdit}
+\alias{mergeRdmls}
+\alias{asXml}
+\alias{rdmlLossRecord}
 \title{Legacy API compatibility wrappers}
 \usage{
 AsTable(
@@ -42,6 +57,36 @@ SetFData(
 AsDendrogram(x, plot.dendrogram = TRUE, ...)
 
 MergeRDMLs(to.merge, data.conflict = c("incoming", "base", "error"))
+
+rdmlRead(...)
+
+rdmlWrite(...)
+
+rdmlRegisterFormat(...)
+
+rdmlUnregisterFormat(...)
+
+rdmlDetectFormat(...)
+
+rdmlFormats(...)
+
+rdmlLoadModule(...)
+
+rdmlBuildImport(...)
+
+rdmlFromFData(...)
+
+rdmlValidate(...)
+
+rdmlIsValid(...)
+
+rdmlEdit(...)
+
+mergeRdmls(...)
+
+asXml(...)
+
+rdmlLossRecord(...)
 }
 \description{
 These functions preserve public names, dotted argument names, and (where
@@ -56,7 +101,7 @@ Legacy \tab Canonical \cr
 `SetFData()` \tab `setFData()` \cr
 `AsDendrogram()` \tab `asDendrogram()` \cr
 `asXML()` \tab `asXML()` \cr
-`MergeRDMLs()` \tab `mergeRdmls()` \cr
+`MergeRDMLs()` \tab `mergeRDMLs()` \cr
 }
 
 Legacy `AsTable()` returns names such as `fdata.name`, `exp.id`, `run.id`,
