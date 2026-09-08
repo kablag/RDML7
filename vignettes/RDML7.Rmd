@@ -97,7 +97,7 @@ A migration summary is shown below.
 | `x$AsTable()` / `AsTable(x)` | `asTable(x)` |
 | `x$GetFData()` / `GetFData(x)` | `getFData(x)` |
 | `x$SetFData()` / `SetFData(x)` | `x <- setFData(x, ...)` |
-| `x$AsDendrogram()` | `asDendrogram(x)` |
+| `x$AsDendrogram()` / `AsDendrogram(x)` | `asDendrogram(x)` |
 | `x$asXML()` | `asXML(x)` or `writeRDML(x, ...)` |
 | `MergeRDMLs(...)` | `mergeRDMLs(...)` |
 | file-specific constructor logic | `readRDML()` + format registry |
@@ -129,7 +129,6 @@ Use `readRDML()` as the main entry point for file import.
 
 ```{r read-rdml}
 lc96 <- readRDML(filename)
-lc96
 ```
 
 The default format selection is automatic. If a format is ambiguous, it can be
@@ -209,15 +208,12 @@ rdmlType
 
 ## S7 property access
 
-RDML7 schema objects are S7 objects. Use `@` to access their properties.
+RDML7 schema objects are S7 objects. Use `$` to access their properties.
 
 ```{r s7-access}
-lc96@version
+lc96$version
 
-names(lc96@experiment)
-
-experiment <- lc96@experiment[[1]]
-experiment@id@id
+lc96$experiment[[1]]$id$id
 ```
 
 Collections such as experiments, runs, samples, and targets are keyed by their
@@ -225,11 +221,11 @@ RDML identifiers. This makes it possible to inspect identifiers first and then
 select an element.
 
 ```{r keyed-lists}
-names(lc96@experiment)
+expname <- names(lc96$experiment)[1]
 
-experiment <- lc96@experiment[[1]]
+experiment <- lc96$experiment[[expname]]
 
-names(experiment@run)
+names(experiment$run)
 ```
 
 For routine data analysis, direct traversal of the full hierarchy is usually
@@ -237,12 +233,12 @@ unnecessary. `asTable()` and `getFData()` provide a flatter interface.
 
 # Summarising and validating RDML data
 
-## `rdmlSummary()`
+## `summary()`
 
-Use `rdmlSummary()` for a compact overview of an RDML object.
+Use `summary()` for a compact overview of an RDML object.
 
 ```{r summary, eval=FALSE}
-rdmlSummary(lc96)
+summary(lc96)
 ```
 
 This is preferable to manually counting nested experiments, runs, reactions,
@@ -250,7 +246,8 @@ targets, and curve types.
 
 ## `validateRDML()` and `rdmlIsValid()`
 
-RDML7 provides validation functions in addition to S7 property validators.
+RDML7 provides validation (as for RDML 1.3 version) functions in addition to S7 
+property validators.
 
 ```{r validate, eval=FALSE}
 validation <- validateRDML(lc96)
@@ -358,7 +355,8 @@ Custom columns supplied through `...` are also available to `namePattern`.
 
 Including `expId` and `runId` is recommended when an object may contain more
 than one experiment or run. It substantially reduces accidental duplicate
-`fdataName` values.
+`fdataName` values.To avoid duplication `asTable` automatically adds number 
+indices to duplicated `fdataName` values. But it's generate warning.
 
 ## Adding custom columns
 
@@ -379,8 +377,7 @@ tbl <- asTable(
     sample,
     target,
     sep = ":"
-  )
-)
+))
 
 head(tbl)
 ```
@@ -423,9 +420,9 @@ object and then used as a template field:
 ```{r custom-s7-column, eval=FALSE}
 tbl <- asTable(
   lc96,
-  cq = S7::prop(data, "cq"),
+  cq = data$cq,
   namePattern =
-    "{expId}_{runId}_{position}_{sample}_{target}_{cq}"
+    "{position}:{sample}_{target}-{cq}"
 )
 ```
 
@@ -443,23 +440,20 @@ if a concentration is encoded as a separate underscore-delimited component
 of the sample name:
 
 ```{r concentration-column, eval=FALSE}
-concValues <- c(
-  "500", "50", "10", "5", "1",
-  "0.5", "0.1", "0.01"
-)
+
+r96 <- readRDML(system.file(
+  "extdata",
+  "cd53_efficiency.r96",
+  package = "RDML7"
+))
+concValues <- c("1", "0.5", "0.1", "0.01")
 
 tbl <- asTable(
-  lc96,
+  r96,
   concentration = {
-    parts <- strsplit(
-      sample,
-      "_",
-      fixed = TRUE
-    )[[1]]
+    parts <- strsplit(sample, "_", fixed = TRUE)[[1]]
 
-    value <- parts[
-      parts %in% concValues
-    ]
+    value <- parts[parts %in% concValues]
 
     if (length(value)) {
       as.numeric(value[[1]])
@@ -488,17 +482,15 @@ This gives `asTable()` a single, predictable column-selection model.
 
 Fluorescence data are stored separately from the flattened metadata table.
 Use `getFData()` to extract them.
+You can provide special `request` to access some part of data or access
+all available without request (executes `asTable()` with default parameters
+under the hood) - see later.
 
 ## Amplification data (`adp`)
 
+Default data is `adp`.
 ```{r get-adp}
-request <- asTable(lc96)
-
-amp <- getFData(
-  lc96,
-  request = request,
-  dpType = "adp"
-)
+amp <- getFData(lc96)
 
 head(amp)
 ```
@@ -509,9 +501,13 @@ If cycle temperatures are present, `tmp` may also be available.
 ## Melting data (`mdp`)
 
 ```{r get-mdp}
+biorad <- readRDML(system.file(
+  "extdata",
+  "BioRad_qPCR_melt.rdml",
+  package = "RDML7"
+))
 melt <- getFData(
-  lc96,
-  request = request,
+  biorad,
   dpType = "mdp"
 )
 
@@ -525,12 +521,7 @@ For melting data, the coordinate is `tmp`.
 For plotting and grouped statistical analysis, use `longTable = TRUE`.
 
 ```{r get-long}
-ampLong <- getFData(
-  lc96,
-  request = request,
-  dpType = "adp",
-  longTable = TRUE
-)
+ampLong <- getFData(lc96, longTable = TRUE)
 
 head(ampLong)
 ```
@@ -732,7 +723,7 @@ output format.
 
 # Merging RDML objects
 
-Use `mergeRdmls()` to combine RDML objects.
+Use `mergeRDMLs()` to combine RDML objects.
 
 ```{r merge, eval=FALSE}
 file1 <- system.file(
@@ -767,7 +758,7 @@ different values:
 For merging independent files, `"error"` is useful while developing a
 pipeline because unexpected ID collisions become visible immediately.
 
-A directory of files can be processed in a loop:
+A directory of files can be processed in a list:
 
 ```{r merge-directory, eval=FALSE}
 files <- dir(
@@ -775,17 +766,11 @@ files <- dir(
   full.names = TRUE
 )
 
-merged <- rdmlType()
-
-for (file in files) {
-  current <- readRDML(file)
-
-  merged <- mergeRDMLs(
-    merged,
-    current,
+rdmls <- lapply(files, function(file) readRDML(file))
+merged <- mergeRDMLs(
+    rdmls,
     dataConflict = "error"
   )
-}
 ```
 
 If experiment identifiers are not unique between input files, rename them
@@ -798,7 +783,7 @@ before merging.
 Use `asXML()` when the XML representation itself is needed:
 
 ```{r as-xml, eval=FALSE}
-xml <- asXML(lc96)
+xml <- asXML(r96)
 
 cat(
   substr(

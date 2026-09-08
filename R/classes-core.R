@@ -2,9 +2,47 @@
 
 .rdmlSchemaVersion <- "1.3"
 
+# Base type ---------------------------------------------------------------
+
+rdmlBaseType <- S7::new_class(
+  "rdmlBaseType",
+  abstract = TRUE
+)
+
+S7::method(names, rdmlBaseType) <- function(x) {
+  S7::prop_names(x)
+}
+
+# Public convenience accessor ------------------------------------------------
+#
+# RDML7 intentionally supports nested `$` navigation for S7 schema objects.
+# Keyed list properties are exposed as transient rdmlKeyedList wrappers.
+S7::method(`$`, rdmlBaseType) <- function(x, name) {
+  value <- S7::prop(x, name)
+  key <- .propertyKey(x, name)
+  
+  if (!is.null(key) && is.list(value)) {
+    return(rdmlKeyedList(value, key = key))
+  }
+  
+  value
+}
+
+S7::method(`$<-`, rdmlBaseType) <- function(x, name, value) {
+  key <- .propertyKey(x, name)
+  
+  if (!is.null(key) && S7::S7_inherits(value, rdmlKeyedList)) {
+    value <- S7::S7_data(value)
+  }
+  
+  S7::prop(x, name) <- value
+  x
+}
+
 # Abstract enum base.
 rdmlEnum <- S7::new_class(
   "rdmlEnum",
+  parent = rdmlBaseType,
   properties = list(
     value = S7::class_character,
     variants = S7::class_character
@@ -63,6 +101,7 @@ S7::method(as.character, rdmlEnum) <- function(x, ...) {
 #' @export
 idType <- S7::new_class(
   "idType",
+  parent = rdmlBaseType,
   properties = list(
     id = S7::class_character
   ),
@@ -103,39 +142,4 @@ idReferenceType <- S7::new_class(
   parent = idType
 )
 
-# Base type ---------------------------------------------------------------
 
-rdmlBaseType <- S7::new_class(
-  "rdmlBaseType",
-  abstract = TRUE
-)
-
-S7::method(names, rdmlBaseType) <- function(x) {
-  S7::prop_names(x)
-}
-
-# Public convenience accessor ------------------------------------------------
-#
-# RDML7 intentionally supports nested `$` navigation for S7 schema objects.
-# Keyed list properties are exposed as transient rdmlKeyedList wrappers.
-S7::method(`$`, rdmlBaseType) <- function(x, name) {
-  value <- S7::prop(x, name)
-  key <- .propertyKey(x, name)
-
-  if (!is.null(key) && is.list(value)) {
-    return(rdmlKeyedList(value, key = key))
-  }
-
-  value
-}
-
-S7::method(`$<-`, rdmlBaseType) <- function(x, name, value) {
-  key <- .propertyKey(x, name)
-
-  if (!is.null(key) && S7::S7_inherits(value, rdmlKeyedList)) {
-    value <- S7::S7_data(value)
-  }
-
-  S7::prop(x, name) <- value
-  x
-}

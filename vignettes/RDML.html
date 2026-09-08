@@ -12,9 +12,9 @@
 
 <meta name="author" content="Konstantin A. Blagodatskikh, Michał Burdukiewicz, Stefan Rödiger, Andrej-Nikolai Spiess" />
 
-<meta name="date" content="2026-09-01" />
+<meta name="date" content="2026-09-04" />
 
-<title>Using the RDML package</title>
+<title>Using the RDML7 package</title>
 
 <script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
 // be compatible with the behavior of Pandoc < 2.8).
@@ -339,10 +339,10 @@ code > span.er { color: #a61717; background-color: #e3d2d2; }
 
 
 
-<h1 class="title toc-ignore">Using the RDML package</h1>
+<h1 class="title toc-ignore">Using the RDML7 package</h1>
 <h4 class="author">Konstantin A. Blagodatskikh, Michał Burdukiewicz,
 Stefan Rödiger, Andrej-Nikolai Spiess</h4>
-<h4 class="date">2026-09-01</h4>
+<h4 class="date">2026-09-04</h4>
 
 
 
@@ -353,15 +353,16 @@ functional camelCase API. It reads qPCR data, exposes the RDML hierarchy
 for programmatic editing, provides tabular fluorescence interfaces,
 validates semantic consistency, and writes RDML/RDES and other
 registered formats.</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a>x <span class="ot">&lt;-</span> <span class="fu">readRDML</span>(<span class="st">&quot;experiment.rdml&quot;</span>)</span>
-<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a></span>
-<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a><span class="fu">rdmlSummary</span>(x)</span>
-<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a><span class="fu">validateRDML</span>(x)</span>
-<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a></span>
-<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a>metadata <span class="ot">&lt;-</span> <span class="fu">asTable</span>(x)</span>
-<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a>amp <span class="ot">&lt;-</span> <span class="fu">getFData</span>(x, <span class="at">dpType =</span> <span class="st">&quot;adp&quot;</span>, <span class="at">longTable =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a></span>
-<span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a><span class="fu">writeRDML</span>(x, <span class="st">&quot;experiment-copy.rdml&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a>x <span class="ot">&lt;-</span> <span class="fu">system.file</span>(<span class="st">&quot;extdata/stepone_std.rdml&quot;</span>, <span class="at">package=</span><span class="st">&quot;RDML7&quot;</span>) <span class="sc">|&gt;</span> </span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a>  <span class="fu">readRDML</span>()</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a><span class="fu">rdmlSummary</span>(x)</span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a><span class="fu">validateRDML</span>(x)</span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a></span>
+<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a>metadata <span class="ot">&lt;-</span> <span class="fu">asTable</span>(x)</span>
+<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a>amp <span class="ot">&lt;-</span> <span class="fu">getFData</span>(x, <span class="at">dpType =</span> <span class="st">&quot;adp&quot;</span>, <span class="at">longTable =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a></span>
+<span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a><span class="fu">writeRDML</span>(x, <span class="st">&quot;experiment-copy.rdml&quot;</span>)</span></code></pre></div>
 <p>Functions that modify an object return a new S7 value:</p>
 <div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>x <span class="ot">&lt;-</span> <span class="fu">setFData</span>(x, fdata, description)</span></code></pre></div>
 </div>
@@ -504,8 +505,7 @@ schema key.</p>
 API:</p>
 <div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a><span class="fu">AsTable</span>(x)</span>
 <span id="cb18-2"><a href="#cb18-2" tabindex="-1"></a><span class="fu">GetFData</span>(x, <span class="at">long.table =</span> <span class="cn">TRUE</span>)</span>
-<span id="cb18-3"><a href="#cb18-3" tabindex="-1"></a><span class="fu">SetFData</span>(x, fdata, legacyDescription, <span class="at">fdata.type =</span> <span class="st">&quot;adp&quot;</span>)</span>
-<span id="cb18-4"><a href="#cb18-4" tabindex="-1"></a><span class="fu">rdml_read</span>(<span class="st">&quot;experiment.rdml&quot;</span>)</span></code></pre></div>
+<span id="cb18-3"><a href="#cb18-3" tabindex="-1"></a><span class="fu">SetFData</span>(x, fdata, legacyDescription, <span class="at">fdata.type =</span> <span class="st">&quot;adp&quot;</span>)</span></code></pre></div>
 <p>New code should prefer the camelCase functions.</p>
 </div>
 <div id="further-reading" class="section level2">
