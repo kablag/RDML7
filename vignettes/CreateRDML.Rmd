@@ -71,9 +71,9 @@ x <- setFData(
 ## Result columns
 
 Description tables may carry calculated result fields such as `cq`,
-`meltTemp`, or the package extension `meltTemps`.
+`meltTemp`, or the package extension `meltTemp`.
 
-`meltTemps` preserves multiple measured RDES Tm values. Standard RDML XML can
+`meltTemp` preserves multiple measured RDES Tm values. Standard RDML XML can
 represent only the primary single `meltTemp`, so conversion to RDML may be
 lossy.
 

@@ -1297,6 +1297,14 @@ newRDMLImportData()
 buildRDMLImport()
 newRDMLLossRecord()
 ```
+# RDML7 public API naming convention rules
+
+- Actions start with a verb: `readRDML()`, `validateRDML()`.
+- Conversion/coercion uses standard R `as...`: `asTable()`, `asDendrogram()`, `asXML()`.
+- Predicates start with `is...`: `isValidRDML()`.
+- Helper-object constructors start with `new...`.
+- RDML schema/S7 type constructors keep the schema noun name:
+  `rdmlType()`, `sampleType()`, `targetType()`, `dataType()`, etc.
 
 # Summary
 

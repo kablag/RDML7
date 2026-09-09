@@ -297,25 +297,7 @@ validateRDML <- function(
           }
 
           if (doData) {
-            if (.rdmlPresent(dataObj$meltTemps)) {
-              multi <- as.numeric(dataObj$meltTemps)
-
-              if (
-                .rdmlPresent(dataObj$meltTemp) &&
-                length(multi) &&
-                !isTRUE(all.equal(
-                  as.numeric(dataObj$meltTemp),
-                  multi[[1L]]
-                ))
-              ) {
-                add(.rdmlValidationIssue(
-                  "warning",
-                  dataPath,
-                  "meltTempMismatch",
-                  "meltTemp differs from the first value in meltTemps"
-                ))
-              }
-            }
+            
 
             if (.rdmlPresent(dataObj$adp)) {
               points <- dataObj$adp$fpoints

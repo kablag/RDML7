@@ -29,7 +29,7 @@ XML text, invisibly when a file is written.
 }
 \description{
 Standard schema properties are serialized to RDML XML. Package-only
-extension fields such as `meltTemps` are kept in memory but are not emitted
+extension fields such as `meltTemp` are kept in memory but are not emitted
 as non-standard XML elements.
 }
 \seealso{

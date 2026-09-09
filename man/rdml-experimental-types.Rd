@@ -26,9 +26,7 @@ layouts, digital-PCR partitions, and the top-level RDML document.
   \item{`dpAmpCurveType`}{Amplification `fpoints`: `cyc`, optional `tmp`,
   and `fluor`.}
   \item{`dpMeltingCurveType`}{Melting `fpoints`: `tmp` and `fluor`.}
-  \item{`dataType`}{Target-specific results and curves. `meltTemps` is a
-  package extension used to retain multiple RDES Tm values; standard RDML
-  XML still contains the single `meltTemp` element.}
+  \item{`dataType`}{Target-specific results and curves.}
 }
 }
 

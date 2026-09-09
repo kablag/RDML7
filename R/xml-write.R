@@ -373,14 +373,7 @@ NULL
 
   children <- character()
   
-  for (property in properties) {
-
-    # Package-only extension fields are retained in memory but are not part of
-    # the RDML XML schema.
-    if (property %in% c("meltTemps")) {
-      next
-    }
-    
+  for (property in properties) {    
     # version у корневого rdml — attribute
     if (
       S7::S7_inherits(x, rdmlType) &&
@@ -472,38 +465,6 @@ NULL
 .rdmlXmlLosses <- function(x) {
   losses <- list()
 
-  for (experiment in .rdmlPropList(x, "experiment")) {
-    expId <- .rdmlIdChr(experiment$id)
-    for (run in .rdmlPropList(experiment, "run")) {
-      runId <- .rdmlIdChr(run$id)
-      for (react in .rdmlPropList(run, "react")) {
-        reactId <- .rdmlIdChr(react$id)
-        for (dataObj in .rdmlPropList(react, "data")) {
-          if (
-            .rdmlPresent(dataObj$meltTemps) &&
-            length(dataObj$meltTemps) > 1L
-          ) {
-            targetId <- .rdmlIdChr(dataObj$targetId)
-            losses[[length(losses) + 1L]] <- newRDMLLossRecord(
-              code = "multipleTmUnsupported",
-              message = paste0(
-                "RDML XML supports one meltTemp value; ",
-                "additional meltTemps values are not serialized"
-              ),
-              path = paste0(
-                "experiment.", expId,
-                ".run.", runId,
-                ".react.", reactId,
-                ".data.", targetId
-              ),
-              details = list(values = dataObj$meltTemps)
-            )
-          }
-        }
-      }
-    }
-  }
-
   losses
 }
 
@@ -511,7 +472,7 @@ NULL
 #' Serialize an RDML object as XML or an RDML archive
 #'
 #' Standard schema properties are serialized to RDML XML. Package-only
-#' extension fields such as `meltTemps` are kept in memory but are not emitted
+#' extension fields such as `meltTemp` are kept in memory but are not emitted
 #' as non-standard XML elements.
 #'
 #' @param x `rdmlType`.

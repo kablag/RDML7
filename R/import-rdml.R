@@ -60,6 +60,33 @@
     FUN(node)
   }
   
+
+  parseNumericValues <- function(tree, path) {
+    nodes <- xml2::xml_find_all(
+      tree,
+      path,
+      rdmlEnv$ns
+    )
+
+    if (!length(nodes)) {
+      return(NA_real_)
+    }
+
+    values <- suppressWarnings(
+      as.numeric(
+        xml2::xml_text(nodes)
+      )
+    )
+
+    values <- values[!is.na(values)]
+
+    if (!length(values)) {
+      NA_real_
+    } else {
+      values
+    }
+  }
+
   parseIdRefs <- function(tree, path) {
     .xmlNodesApply(
       xml2::xml_find_all(tree, path, rdmlEnv$ns),
@@ -587,7 +614,7 @@
         ampEffSE = .getNumericValue(data, "rdml:ampEffSE"),
         corrF = .getNumericValue(data, "rdml:corrF"),
         corrP = .getNumericValue(data, "rdml:corrP"),
-        meltTemp = .getNumericValue(data, "rdml:meltTemp"),
+        meltTemp = parseNumericValues(data, "rdml:meltTemp"),
         excl = .getTextValue(data, "rdml:excl"),
         note = .getTextValue(data, "rdml:note"),
         adp = parseAdp(data),

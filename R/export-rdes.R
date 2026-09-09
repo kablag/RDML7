@@ -337,8 +337,8 @@
         identical(rdesType, "adp")
       ) {
         dataObj$cq
-      } else if (.rdmlPresent(dataObj$meltTemps)) {
-        dataObj$meltTemps
+      } else if (.rdmlPresent(dataObj$meltTemp)) {
+        dataObj$meltTemp
       } else {
         dataObj$meltTemp
       }

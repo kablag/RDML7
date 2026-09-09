@@ -806,26 +806,11 @@
     )
 
 
-    firstTm <- vapply(
-      tmValues,
-      function(value) {
-        if (length(value)) {
-          value[[1L]]
-        } else {
-          NA_real_
-        }
-      },
-      numeric(1)
-    )
-
+    # RDES permits multiple Tm values separated by ';'. Keep them as one
+    # numeric vector in the canonical meltTemp property.
     description[
       ,
-      meltTemp := firstTm
-    ]
-
-    description[
-      ,
-      meltTemps := tmValues
+      meltTemp := tmValues
     ]
   }
 
@@ -880,12 +865,19 @@
       targets[[targetId]] <- targetObj
     }
 
-    if (
-      "meltTemp" %in% names(row) &&
-      !is.na(
-        row[["meltTemp"]][[1L]]
+    meltTempValue <- if ("meltTemp" %in% names(row)) {
+      suppressWarnings(
+        as.numeric(
+          row[["meltTemp"]][[1L]]
+        )
       )
-    ) {
+    } else {
+      numeric()
+    }
+
+    meltTempValue <- meltTempValue[!is.na(meltTempValue)]
+
+    if (length(meltTempValue)) {
       expId <- as.character(
         row[["expId"]][[1L]]
       )
@@ -918,9 +910,7 @@
       S7::prop(
         dataObj,
         "meltTemp"
-      ) <- as.numeric(
-        row[["meltTemp"]][[1L]]
-      )
+      ) <- meltTempValue
 
       dataList[[targetId]] <- dataObj
       react <- .rdmlSetPropList(

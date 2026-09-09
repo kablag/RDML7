@@ -934,7 +934,7 @@ dpMeltingCurveType <- S7::new_class(
 #'   \item{`ampEffSE`}{`numeric(1)` or `NA`. Standard error of amplification efficiency.}
 #'   \item{`corrF`}{`numeric(1)` or `NA`. Fluorescence correction factor.}
 #'   \item{`corrP`}{`numeric(1)` or `NA`. Correction parameter.}
-#'   \item{`meltTemp`}{`numeric(1)` or `NA`. Primary melting temperature.}
+#'   \item{`meltTemp`}{Numeric vector or `NA`. One or more melting temperatures.}
 #'   \item{`excl`}{`character(1)` or `NA`. Exclusion information.}
 #'   \item{`note`}{`character(1)` or `NA`. Free-text note.}
 #'   \item{`adp`}{`dpAmpCurveType` or `NA`. Amplification curve.}
@@ -960,11 +960,9 @@ dataType <-
               ampEffSE = classNumberNASingle,
               corrF = classNumberNASingle,
               corrP = classNumberNASingle,
-              meltTemp = classNumberNASingle,
               # Package extension: RDES can represent multiple measured Tm
               # values while the RDML schema has a single meltTemp element.
-              # XML serializers intentionally do not emit meltTemps.
-              meltTemps = classNumberNAVector,
+              meltTemp = classNumberNAVector,
               excl = classCharacterNANonemptySingle,
               note = classCharacterNANonemptySingle,
               adp = .testClassNA("dpAmpCurveType"),

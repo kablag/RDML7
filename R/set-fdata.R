@@ -217,9 +217,7 @@ S7::method(setFData, rdmlType) <- function(
         ampEffSE = NA_real_,
         corrF = NA_real_,
         corrP = NA_real_,
-        meltTemp = NA_real_,
-        meltTemps = NA_real_,
-        excl = NA_character_,
+        meltTemp = NA_real_,        excl = NA_character_,
         note = NA_character_,
         adp = NA,
         mdp = NA,
@@ -240,22 +238,11 @@ S7::method(setFData, rdmlType) <- function(
 
     if ("meltTemp" %in% names(row)) {
       meltTemp <- value1(row, "meltTemp", NA_real_)
-      if (length(meltTemp) == 1L && !is.na(meltTemp)) {
-        S7::prop(dataObj, "meltTemp") <- as.numeric(meltTemp)
-      }
-    }
+      meltTemp <- suppressWarnings(as.numeric(meltTemp))
+      meltTemp <- meltTemp[!is.na(meltTemp)]
 
-    if ("meltTemps" %in% names(row)) {
-      meltTemps <- value1(row, "meltTemps", NA_real_)
-      meltTemps <- suppressWarnings(as.numeric(meltTemps))
-      meltTemps <- meltTemps[!is.na(meltTemps)]
-
-      if (length(meltTemps)) {
-        S7::prop(dataObj, "meltTemps") <- meltTemps
-
-        if (is.na(dataObj$meltTemp)) {
-          S7::prop(dataObj, "meltTemp") <- meltTemps[[1L]]
-        }
+      if (length(meltTemp)) {
+        S7::prop(dataObj, "meltTemp") <- meltTemp
       }
     }
 

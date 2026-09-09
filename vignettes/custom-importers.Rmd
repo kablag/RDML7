@@ -199,7 +199,7 @@ targetType
 quantity
 cq
 meltTemp
-meltTemps
+meltTemp
 ```
 
 The exact optional fields accepted by the installed version of RDML7 are

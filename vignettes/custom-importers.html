@@ -1,0 +1,1221 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+
+<meta name="author" content="RDML7 authors" />
+
+<meta name="date" content="2026-09-09" />
+
+<title>Writing custom RDML importers</title>
+
+<script>// Pandoc 2.9 adds attributes on both header and div. We remove the former (to
+// be compatible with the behavior of Pandoc < 2.8).
+document.addEventListener('DOMContentLoaded', function(e) {
+  var hs = document.querySelectorAll("div.section[class*='level'] > :first-child");
+  var i, h, a;
+  for (i = 0; i < hs.length; i++) {
+    h = hs[i];
+    if (!/^h[1-6]$/i.test(h.tagName)) continue;  // it should be a header h1-h6
+    a = h.attributes;
+    while (a.length > 0) h.removeAttribute(a[0].name);
+  }
+});
+</script>
+
+<style type="text/css">
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+span.underline{text-decoration: underline;}
+div.column{display: inline-block; vertical-align: top; width: 50%;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+</style>
+
+
+
+<style type="text/css">
+code {
+white-space: pre;
+}
+.sourceCode {
+overflow: visible;
+}
+</style>
+<style type="text/css" data-origin="pandoc">
+html { -webkit-text-size-adjust: 100%; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+{ counter-reset: source-line 0; }
+pre.numberSource code > span
+{ position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+{ content: counter(source-line);
+position: relative; left: -1em; text-align: right; vertical-align: baseline;
+border: none; display: inline-block;
+-webkit-touch-callout: none; -webkit-user-select: none;
+-khtml-user-select: none; -moz-user-select: none;
+-ms-user-select: none; user-select: none;
+padding: 0 4px; width: 4em;
+color: #aaaaaa;
+}
+pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa; padding-left: 4px; }
+div.sourceCode
+{ }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span.al { color: #ff0000; font-weight: bold; } 
+code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.at { color: #7d9029; } 
+code span.bn { color: #40a070; } 
+code span.bu { color: #008000; } 
+code span.cf { color: #007020; font-weight: bold; } 
+code span.ch { color: #4070a0; } 
+code span.cn { color: #880000; } 
+code span.co { color: #60a0b0; font-style: italic; } 
+code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.do { color: #ba2121; font-style: italic; } 
+code span.dt { color: #902000; } 
+code span.dv { color: #40a070; } 
+code span.er { color: #ff0000; font-weight: bold; } 
+code span.ex { } 
+code span.fl { color: #40a070; } 
+code span.fu { color: #06287e; } 
+code span.im { color: #008000; font-weight: bold; } 
+code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } 
+code span.kw { color: #007020; font-weight: bold; } 
+code span.op { color: #666666; } 
+code span.ot { color: #007020; } 
+code span.pp { color: #bc7a00; } 
+code span.sc { color: #4070a0; } 
+code span.ss { color: #bb6688; } 
+code span.st { color: #4070a0; } 
+code span.va { color: #19177c; } 
+code span.vs { color: #4070a0; } 
+code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } 
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    var j = 0;
+    while (j < rules.length) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") {
+        j++;
+        continue;
+      }
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') {
+        j++;
+        continue;
+      }
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+<style type="text/css">body {
+background-color: #fff;
+margin: 1em auto;
+max-width: 700px;
+overflow: visible;
+padding-left: 2em;
+padding-right: 2em;
+font-family: "Open Sans", "Helvetica Neue", Helvetica, Arial, sans-serif;
+font-size: 14px;
+line-height: 1.35;
+}
+#TOC {
+clear: both;
+margin: 0 0 10px 10px;
+padding: 4px;
+width: 400px;
+border: 1px solid #CCCCCC;
+border-radius: 5px;
+background-color: #f6f6f6;
+font-size: 13px;
+line-height: 1.3;
+}
+#TOC .toctitle {
+font-weight: bold;
+font-size: 15px;
+margin-left: 5px;
+}
+#TOC ul {
+padding-left: 40px;
+margin-left: -1.5em;
+margin-top: 5px;
+margin-bottom: 5px;
+}
+#TOC ul ul {
+margin-left: -2em;
+}
+#TOC li {
+line-height: 16px;
+}
+table {
+margin: 1em auto;
+border-width: 1px;
+border-color: #DDDDDD;
+border-style: outset;
+border-collapse: collapse;
+}
+table th {
+border-width: 2px;
+padding: 5px;
+border-style: inset;
+}
+table td {
+border-width: 1px;
+border-style: inset;
+line-height: 18px;
+padding: 5px 5px;
+}
+table, table th, table td {
+border-left-style: none;
+border-right-style: none;
+}
+table thead, table tr.even {
+background-color: #f7f7f7;
+}
+p {
+margin: 0.5em 0;
+}
+blockquote {
+background-color: #f6f6f6;
+padding: 0.25em 0.75em;
+}
+hr {
+border-style: solid;
+border: none;
+border-top: 1px solid #777;
+margin: 28px 0;
+}
+dl {
+margin-left: 0;
+}
+dl dd {
+margin-bottom: 13px;
+margin-left: 13px;
+}
+dl dt {
+font-weight: bold;
+}
+ul {
+margin-top: 0;
+}
+ul li {
+list-style: circle outside;
+}
+ul ul {
+margin-bottom: 0;
+}
+pre, code {
+background-color: #f7f7f7;
+border-radius: 3px;
+color: #333;
+white-space: pre-wrap; 
+}
+pre {
+border-radius: 3px;
+margin: 5px 0px 10px 0px;
+padding: 10px;
+}
+pre:not([class]) {
+background-color: #f7f7f7;
+}
+code {
+font-family: Consolas, Monaco, 'Courier New', monospace;
+font-size: 85%;
+}
+p > code, li > code {
+padding: 2px 0px;
+}
+div.figure {
+text-align: center;
+}
+img {
+background-color: #FFFFFF;
+padding: 2px;
+border: 1px solid #DDDDDD;
+border-radius: 3px;
+border: 1px solid #CCCCCC;
+margin: 0 5px;
+}
+h1 {
+margin-top: 0;
+font-size: 35px;
+line-height: 40px;
+}
+h2 {
+border-bottom: 4px solid #f7f7f7;
+padding-top: 10px;
+padding-bottom: 2px;
+font-size: 145%;
+}
+h3 {
+border-bottom: 2px solid #f7f7f7;
+padding-top: 10px;
+font-size: 120%;
+}
+h4 {
+border-bottom: 1px solid #f7f7f7;
+margin-left: 8px;
+font-size: 105%;
+}
+h5, h6 {
+border-bottom: 1px solid #ccc;
+font-size: 105%;
+}
+a {
+color: #0033dd;
+text-decoration: none;
+}
+a:hover {
+color: #6666ff; }
+a:visited {
+color: #800080; }
+a:visited:hover {
+color: #BB00BB; }
+a[href^="http:"] {
+text-decoration: underline; }
+a[href^="https:"] {
+text-decoration: underline; }
+
+code > span.kw { color: #555; font-weight: bold; } 
+code > span.dt { color: #902000; } 
+code > span.dv { color: #40a070; } 
+code > span.bn { color: #d14; } 
+code > span.fl { color: #d14; } 
+code > span.ch { color: #d14; } 
+code > span.st { color: #d14; } 
+code > span.co { color: #888888; font-style: italic; } 
+code > span.ot { color: #007020; } 
+code > span.al { color: #ff0000; font-weight: bold; } 
+code > span.fu { color: #900; font-weight: bold; } 
+code > span.er { color: #a61717; background-color: #e3d2d2; } 
+</style>
+
+
+
+
+</head>
+
+<body>
+
+
+
+
+<h1 class="title toc-ignore">Writing custom RDML importers</h1>
+<h4 class="author">RDML7 authors</h4>
+<h4 class="date">2026-09-09</h4>
+
+
+<div id="TOC">
+<ul>
+<li><a href="#overview" id="toc-overview">Overview</a></li>
+<li><a href="#registering-a-reader" id="toc-registering-a-reader">Registering a reader</a></li>
+<li><a href="#the-common-table-contract" id="toc-the-common-table-contract">The common table contract</a>
+<ul>
+<li><a href="#fluorescence-table" id="toc-fluorescence-table">Fluorescence table</a></li>
+<li><a href="#description-table" id="toc-description-table">Description
+table</a></li>
+</ul></li>
+<li><a href="#simple-importer" id="toc-simple-importer">Simple
+importer</a>
+<ul>
+<li><a href="#when-to-use-the-simple-form" id="toc-when-to-use-the-simple-form">When to use the simple
+form</a></li>
+<li><a href="#minimal-simple-reader" id="toc-minimal-simple-reader">Minimal simple reader</a></li>
+</ul></li>
+<li><a href="#example-a-simple-text-qpcr-format" id="toc-example-a-simple-text-qpcr-format">Example: a simple text qPCR
+format</a></li>
+<li><a href="#complex-importer" id="toc-complex-importer">Complex
+importer</a>
+<ul>
+<li><a href="#when-to-use-the-complex-form" id="toc-when-to-use-the-complex-form">When to use the complex
+form</a></li>
+</ul></li>
+<li><a href="#rdmlimportseries" id="toc-rdmlimportseries"><code>rdmlImportSeries</code></a></li>
+<li><a href="#rdmlimportdata" id="toc-rdmlimportdata"><code>rdmlImportData</code></a></li>
+<li><a href="#building-the-rdml-object-explicitly" id="toc-building-the-rdml-object-explicitly">Building the RDML object
+explicitly</a></li>
+<li><a href="#returning-intermediate-data-directly-from-a-reader" id="toc-returning-intermediate-data-directly-from-a-reader">Returning
+intermediate data directly from a reader</a></li>
+<li><a href="#why-not-always-use-the-complex-form" id="toc-why-not-always-use-the-complex-form">Why not always use the
+complex form?</a></li>
+<li><a href="#choosing-between-the-two-forms" id="toc-choosing-between-the-two-forms">Choosing between the two
+forms</a></li>
+<li><a href="#relationship-between-the-two-apis" id="toc-relationship-between-the-two-apis">Relationship between the two
+APIs</a></li>
+<li><a href="#reader-responsibilities" id="toc-reader-responsibilities">Reader responsibilities</a></li>
+<li><a href="#validating-an-importer" id="toc-validating-an-importer">Validating an importer</a></li>
+<li><a href="#testing-a-reader" id="toc-testing-a-reader">Testing a
+reader</a></li>
+<li><a href="#summary" id="toc-summary">Summary</a></li>
+</ul>
+</div>
+
+<div id="overview" class="section level1">
+<h1>Overview</h1>
+<p>RDML7 provides two levels for writing file importers.</p>
+<p>The <strong>simple form</strong> is intended for formats that can be
+represented as one fluorescence table plus one metadata table:</p>
+<pre class="text"><code>vendor file
+    |
+    v
+parser
+    |
+    +-- fdata
+    |
+    `-- description
+            |
+            v
+    buildRDMLFromFData()
+            |
+            v
+         rdmlType</code></pre>
+<p>The <strong>complex form</strong> is intended for formats that
+contain several independent fluorescence-series groups, for example
+amplification and melting data, or several data blocks that should be
+parsed first and converted to RDML in one central step:</p>
+<pre class="text"><code>vendor file
+    |
+    v
+parser
+    |
+    +-- rdmlImportSeries (adp)
+    +-- rdmlImportSeries (mdp)
+    `-- ...
+            |
+            v
+       rdmlImportData
+            |
+            v
+       buildRDMLImport()
+            |
+            v
+         rdmlType</code></pre>
+<p>Both forms keep the vendor-specific parser separate from the nested
+RDML/S7 schema construction.</p>
+<p>This separation is useful because a parser should primarily answer
+questions such as:</p>
+<ul>
+<li>where are the fluorescence values in this file?</li>
+<li>which reaction belongs to which sample?</li>
+<li>which target and dye were used?</li>
+<li>which run and reaction identifiers are present?</li>
+<li>does the file contain amplification (<code>adp</code>), melting
+(<code>mdp</code>), or both?</li>
+</ul>
+<p>The common RDML builder then handles creation of
+<code>experimentType</code>, <code>runType</code>,
+<code>reactType</code>, <code>dataType</code>, <code>sampleType</code>,
+<code>targetType</code>, dyes, references, and fluorescence-point
+objects.</p>
+</div>
+<div id="registering-a-reader" class="section level1">
+<h1>Registering a reader</h1>
+<p>After a reader has been written, register it with the minimal format
+registry:</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="fu">registerRDMLFormat</span>(</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>  <span class="at">name =</span> <span class="st">&quot;myformat&quot;</span>,</span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>  <span class="at">extensions =</span> <span class="st">&quot;abc&quot;</span>,</span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>  <span class="at">reader =</span> readMyFormat</span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a>)</span></code></pre></div>
+<p>A format may provide a reader, a writer, or both:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="fu">registerRDMLFormat</span>(</span>
+<span id="cb4-2"><a href="#cb4-2" tabindex="-1"></a>  name,</span>
+<span id="cb4-3"><a href="#cb4-3" tabindex="-1"></a>  <span class="at">extensions =</span> <span class="fu">character</span>(),</span>
+<span id="cb4-4"><a href="#cb4-4" tabindex="-1"></a>  <span class="at">reader =</span> <span class="cn">NULL</span>,</span>
+<span id="cb4-5"><a href="#cb4-5" tabindex="-1"></a>  <span class="at">writer =</span> <span class="cn">NULL</span></span>
+<span id="cb4-6"><a href="#cb4-6" tabindex="-1"></a>)</span></code></pre></div>
+<p>Automatic dispatch uses the file extension. A different registered
+format can be selected explicitly with <code>format =</code>.</p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a>x <span class="ot">&lt;-</span> <span class="fu">readRDML</span>(</span>
+<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a>  <span class="st">&quot;experiment.abc&quot;</span>,</span>
+<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a>  <span class="at">format =</span> <span class="st">&quot;myformat&quot;</span></span>
+<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a>)</span></code></pre></div>
+<p>A reader may return either:</p>
+<ol style="list-style-type: decimal">
+<li>a finished <code>rdmlType</code>; or</li>
+<li>an <code>rdmlImportData</code> intermediate object.</li>
+</ol>
+<p>When a reader returns <code>rdmlImportData</code>,
+<code>readRDML()</code> converts it to <code>rdmlType</code> with the
+common importer builder.</p>
+</div>
+<div id="the-common-table-contract" class="section level1">
+<h1>The common table contract</h1>
+<p>Both simple and complex importers ultimately use the same table
+representation.</p>
+<div id="fluorescence-table" class="section level2">
+<h2>Fluorescence table</h2>
+<p><code>fdata</code> is a wide table. Its first column is the
+coordinate:</p>
+<ul>
+<li><code>cyc</code> for amplification data;</li>
+<li><code>tmp</code> for melting data.</li>
+</ul>
+<p>All remaining columns are fluorescence series.</p>
+<p>For example:</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>fdata <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>  <span class="at">cyc =</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">5</span>,</span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>  <span class="at">r1 =</span> <span class="fu">c</span>(<span class="dv">100</span>, <span class="dv">102</span>, <span class="dv">110</span>, <span class="dv">180</span>, <span class="dv">650</span>),</span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>  <span class="at">r2 =</span> <span class="fu">c</span>(<span class="dv">101</span>, <span class="dv">103</span>, <span class="dv">112</span>, <span class="dv">190</span>, <span class="dv">690</span>)</span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>)</span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a></span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a>fdata</span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a><span class="co">#&gt;   cyc  r1  r2</span></span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a><span class="co">#&gt; 1   1 100 101</span></span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a><span class="co">#&gt; 2   2 102 103</span></span>
+<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a><span class="co">#&gt; 3   3 110 112</span></span>
+<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a><span class="co">#&gt; 4   4 180 190</span></span>
+<span id="cb6-13"><a href="#cb6-13" tabindex="-1"></a><span class="co">#&gt; 5   5 650 690</span></span></code></pre></div>
+<p>The fluorescence column names (<code>r1</code>, <code>r2</code>) are
+arbitrary identifiers used to join the fluorescence data to the
+description table.</p>
+</div>
+<div id="description-table" class="section level2">
+<h2>Description table</h2>
+<p>The corresponding description table contains one row per fluorescence
+series.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a>description <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>  <span class="at">fdataName =</span> <span class="fu">c</span>(<span class="st">&quot;r1&quot;</span>, <span class="st">&quot;r2&quot;</span>),</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>  <span class="at">expId =</span> <span class="fu">c</span>(<span class="st">&quot;exp1&quot;</span>, <span class="st">&quot;exp1&quot;</span>),</span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>  <span class="at">runId =</span> <span class="fu">c</span>(<span class="st">&quot;run1&quot;</span>, <span class="st">&quot;run1&quot;</span>),</span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>  <span class="at">reactId =</span> <span class="fu">c</span>(<span class="st">&quot;1&quot;</span>, <span class="st">&quot;2&quot;</span>),</span>
+<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>  <span class="at">sample =</span> <span class="fu">c</span>(<span class="st">&quot;sample1&quot;</span>, <span class="st">&quot;sample2&quot;</span>),</span>
+<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a>  <span class="at">sampleType =</span> <span class="fu">c</span>(<span class="st">&quot;std&quot;</span>, <span class="st">&quot;unkn&quot;</span>),</span>
+<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a>  <span class="at">target =</span> <span class="fu">c</span>(<span class="st">&quot;CD53&quot;</span>, <span class="st">&quot;CD53&quot;</span>),</span>
+<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a>  <span class="at">targetDyeId =</span> <span class="fu">c</span>(<span class="st">&quot;FAM&quot;</span>, <span class="st">&quot;FAM&quot;</span>),</span>
+<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a>  <span class="at">stringsAsFactors =</span> <span class="cn">FALSE</span></span>
+<span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a>)</span>
+<span id="cb7-12"><a href="#cb7-12" tabindex="-1"></a></span>
+<span id="cb7-13"><a href="#cb7-13" tabindex="-1"></a>description</span>
+<span id="cb7-14"><a href="#cb7-14" tabindex="-1"></a><span class="co">#&gt;   fdataName expId runId reactId  sample sampleType target targetDyeId</span></span>
+<span id="cb7-15"><a href="#cb7-15" tabindex="-1"></a><span class="co">#&gt; 1        r1  exp1  run1       1 sample1        std   CD53         FAM</span></span>
+<span id="cb7-16"><a href="#cb7-16" tabindex="-1"></a><span class="co">#&gt; 2        r2  exp1  run1       2 sample2       unkn   CD53         FAM</span></span></code></pre></div>
+<p>The required columns are:</p>
+<pre class="text"><code>fdataName
+expId
+runId
+reactId
+target</code></pre>
+<p>In practice, importers commonly also provide:</p>
+<pre class="text"><code>sample
+sampleType
+targetDyeId</code></pre>
+<p>Other supported metadata can be added when present in the source
+file, for example:</p>
+<pre class="text"><code>targetType
+quantity
+cq
+meltTemp
+meltTemp</code></pre>
+<p>The exact optional fields accepted by the installed version of RDML7
+are documented by <code>setFData()</code>.</p>
+<p>The key rule is:</p>
+<pre class="text"><code>description$fdataName &lt;-&gt; names(fdata)[-1]</code></pre>
+<p>Each fluorescence column should have exactly one matching description
+row.</p>
+</div>
+</div>
+<div id="simple-importer" class="section level1">
+<h1>Simple importer</h1>
+<div id="when-to-use-the-simple-form" class="section level2">
+<h2>When to use the simple form</h2>
+<p>Use <code>buildRDMLFromFData()</code> when the file naturally
+contains <strong>one fluorescence series group</strong>:</p>
+<ul>
+<li>one amplification table; or</li>
+<li>one melting table.</li>
+</ul>
+<p>This is the preferred interface for most third-party readers.</p>
+<p>Typical examples are:</p>
+<ul>
+<li>a CSV export containing amplification curves;</li>
+<li>a simple text export with one curve table;</li>
+<li>a custom laboratory format containing one qPCR run;</li>
+<li>a format that already has one row of metadata per fluorescence
+series.</li>
+</ul>
+<p>The parser only needs to produce <code>fdata</code> and
+<code>description</code>.</p>
+</div>
+<div id="minimal-simple-reader" class="section level2">
+<h2>Minimal simple reader</h2>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a>readMyFormat <span class="ot">&lt;-</span> <span class="cf">function</span>(fileName, ...) {</span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a></span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a>  <span class="co"># Vendor-specific parsing</span></span>
+<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a>  fdata <span class="ot">&lt;-</span> ...</span>
+<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a>  description <span class="ot">&lt;-</span> ...</span>
+<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a></span>
+<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a>  <span class="fu">buildRDMLFromFData</span>(</span>
+<span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a>    <span class="at">fdata =</span> fdata,</span>
+<span id="cb12-9"><a href="#cb12-9" tabindex="-1"></a>    <span class="at">description =</span> description,</span>
+<span id="cb12-10"><a href="#cb12-10" tabindex="-1"></a>    <span class="at">fdataType =</span> <span class="st">&quot;adp&quot;</span></span>
+<span id="cb12-11"><a href="#cb12-11" tabindex="-1"></a>  )</span>
+<span id="cb12-12"><a href="#cb12-12" tabindex="-1"></a>}</span></code></pre></div>
+<p>The reader does <strong>not</strong> need to construct nested S7
+objects manually.</p>
+<p>It should not need code such as:</p>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a><span class="co"># Do not do this in a normal file parser:</span></span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a><span class="fu">experimentType</span>(</span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a>  <span class="at">run =</span> <span class="fu">list</span>(</span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a>    <span class="fu">runType</span>(</span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a>      <span class="at">react =</span> <span class="fu">list</span>(</span>
+<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a>        <span class="fu">reactType</span>(</span>
+<span id="cb13-7"><a href="#cb13-7" tabindex="-1"></a>          <span class="at">data =</span> <span class="fu">list</span>(</span>
+<span id="cb13-8"><a href="#cb13-8" tabindex="-1"></a>            <span class="fu">dataType</span>(...)</span>
+<span id="cb13-9"><a href="#cb13-9" tabindex="-1"></a>          )</span>
+<span id="cb13-10"><a href="#cb13-10" tabindex="-1"></a>        )</span>
+<span id="cb13-11"><a href="#cb13-11" tabindex="-1"></a>      )</span>
+<span id="cb13-12"><a href="#cb13-12" tabindex="-1"></a>    )</span>
+<span id="cb13-13"><a href="#cb13-13" tabindex="-1"></a>  )</span>
+<span id="cb13-14"><a href="#cb13-14" tabindex="-1"></a>)</span></code></pre></div>
+<p>That construction belongs to the common RDML builder.</p>
+</div>
+</div>
+<div id="example-a-simple-text-qpcr-format" class="section level1">
+<h1>Example: a simple text qPCR format</h1>
+<p>Consider a deliberately small text format with three sections:</p>
+<pre class="text"><code># Simple qPCR format
+
+[meta]
+experiment=cd53_efficiency
+run=run1
+target=CD53
+dye=FAM
+
+[reactions]
+fdataName  reactId  sample       sampleType  quantity
+r1         1        CD53_1       std         1
+r2         2        CD53_0.1     std         0.1
+r3         3        CD53_0.01    std         0.01
+r4         4        CD53_0.001   std         0.001
+
+[adp]
+cyc  r1   r2   r3   r4
+1    100  100  100  100
+2    101  100  101  100
+3    103  102  101  101
+...</code></pre>
+<p>The format deliberately stores <code>quantity</code> as metadata
+rather than encoding it only in the sample name.</p>
+<p>A reader can parse these sections and then convert them to the common
+tables.</p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" tabindex="-1"></a>readSimpleQPCR <span class="ot">&lt;-</span> <span class="cf">function</span>(fileName, ...) {</span>
+<span id="cb15-2"><a href="#cb15-2" tabindex="-1"></a></span>
+<span id="cb15-3"><a href="#cb15-3" tabindex="-1"></a>  lines <span class="ot">&lt;-</span> <span class="fu">readLines</span>(</span>
+<span id="cb15-4"><a href="#cb15-4" tabindex="-1"></a>    fileName,</span>
+<span id="cb15-5"><a href="#cb15-5" tabindex="-1"></a>    <span class="at">warn =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb15-6"><a href="#cb15-6" tabindex="-1"></a>    <span class="at">encoding =</span> <span class="st">&quot;UTF-8&quot;</span></span>
+<span id="cb15-7"><a href="#cb15-7" tabindex="-1"></a>  )</span>
+<span id="cb15-8"><a href="#cb15-8" tabindex="-1"></a></span>
+<span id="cb15-9"><a href="#cb15-9" tabindex="-1"></a>  getSection <span class="ot">&lt;-</span> <span class="cf">function</span>(name) {</span>
+<span id="cb15-10"><a href="#cb15-10" tabindex="-1"></a>    marker <span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">&quot;[&quot;</span>, name, <span class="st">&quot;]&quot;</span>)</span>
+<span id="cb15-11"><a href="#cb15-11" tabindex="-1"></a>    start <span class="ot">&lt;-</span> <span class="fu">match</span>(marker, lines)</span>
+<span id="cb15-12"><a href="#cb15-12" tabindex="-1"></a></span>
+<span id="cb15-13"><a href="#cb15-13" tabindex="-1"></a>    <span class="cf">if</span> (<span class="fu">is.na</span>(start)) {</span>
+<span id="cb15-14"><a href="#cb15-14" tabindex="-1"></a>      <span class="fu">stop</span>(</span>
+<span id="cb15-15"><a href="#cb15-15" tabindex="-1"></a>        <span class="st">&quot;Missing section &quot;</span>,</span>
+<span id="cb15-16"><a href="#cb15-16" tabindex="-1"></a>        marker,</span>
+<span id="cb15-17"><a href="#cb15-17" tabindex="-1"></a>        <span class="at">call. =</span> <span class="cn">FALSE</span></span>
+<span id="cb15-18"><a href="#cb15-18" tabindex="-1"></a>      )</span>
+<span id="cb15-19"><a href="#cb15-19" tabindex="-1"></a>    }</span>
+<span id="cb15-20"><a href="#cb15-20" tabindex="-1"></a></span>
+<span id="cb15-21"><a href="#cb15-21" tabindex="-1"></a>    sections <span class="ot">&lt;-</span> <span class="fu">grep</span>(</span>
+<span id="cb15-22"><a href="#cb15-22" tabindex="-1"></a>      <span class="st">&quot;^</span><span class="sc">\\</span><span class="st">[[^]]+</span><span class="sc">\\</span><span class="st">]$&quot;</span>,</span>
+<span id="cb15-23"><a href="#cb15-23" tabindex="-1"></a>      lines</span>
+<span id="cb15-24"><a href="#cb15-24" tabindex="-1"></a>    )</span>
+<span id="cb15-25"><a href="#cb15-25" tabindex="-1"></a></span>
+<span id="cb15-26"><a href="#cb15-26" tabindex="-1"></a>    nextSection <span class="ot">&lt;-</span> sections[</span>
+<span id="cb15-27"><a href="#cb15-27" tabindex="-1"></a>      sections <span class="sc">&gt;</span> start</span>
+<span id="cb15-28"><a href="#cb15-28" tabindex="-1"></a>    ]</span>
+<span id="cb15-29"><a href="#cb15-29" tabindex="-1"></a></span>
+<span id="cb15-30"><a href="#cb15-30" tabindex="-1"></a>    end <span class="ot">&lt;-</span> <span class="cf">if</span> (<span class="fu">length</span>(nextSection)) {</span>
+<span id="cb15-31"><a href="#cb15-31" tabindex="-1"></a>      nextSection[[<span class="dv">1</span><span class="dt">L</span>]] <span class="sc">-</span> <span class="dv">1</span><span class="dt">L</span></span>
+<span id="cb15-32"><a href="#cb15-32" tabindex="-1"></a>    } <span class="cf">else</span> {</span>
+<span id="cb15-33"><a href="#cb15-33" tabindex="-1"></a>      <span class="fu">length</span>(lines)</span>
+<span id="cb15-34"><a href="#cb15-34" tabindex="-1"></a>    }</span>
+<span id="cb15-35"><a href="#cb15-35" tabindex="-1"></a></span>
+<span id="cb15-36"><a href="#cb15-36" tabindex="-1"></a>    out <span class="ot">&lt;-</span> lines[</span>
+<span id="cb15-37"><a href="#cb15-37" tabindex="-1"></a>      <span class="fu">seq.int</span>(</span>
+<span id="cb15-38"><a href="#cb15-38" tabindex="-1"></a>        start <span class="sc">+</span> <span class="dv">1</span><span class="dt">L</span>,</span>
+<span id="cb15-39"><a href="#cb15-39" tabindex="-1"></a>        end</span>
+<span id="cb15-40"><a href="#cb15-40" tabindex="-1"></a>      )</span>
+<span id="cb15-41"><a href="#cb15-41" tabindex="-1"></a>    ]</span>
+<span id="cb15-42"><a href="#cb15-42" tabindex="-1"></a></span>
+<span id="cb15-43"><a href="#cb15-43" tabindex="-1"></a>    out[</span>
+<span id="cb15-44"><a href="#cb15-44" tabindex="-1"></a>      <span class="fu">nzchar</span>(<span class="fu">trimws</span>(out))</span>
+<span id="cb15-45"><a href="#cb15-45" tabindex="-1"></a>    ]</span>
+<span id="cb15-46"><a href="#cb15-46" tabindex="-1"></a>  }</span>
+<span id="cb15-47"><a href="#cb15-47" tabindex="-1"></a></span>
+<span id="cb15-48"><a href="#cb15-48" tabindex="-1"></a>  <span class="co"># Metadata -------------------------------------------------------------</span></span>
+<span id="cb15-49"><a href="#cb15-49" tabindex="-1"></a>  metaParts <span class="ot">&lt;-</span> <span class="fu">strsplit</span>(</span>
+<span id="cb15-50"><a href="#cb15-50" tabindex="-1"></a>    <span class="fu">getSection</span>(<span class="st">&quot;meta&quot;</span>),</span>
+<span id="cb15-51"><a href="#cb15-51" tabindex="-1"></a>    <span class="st">&quot;=&quot;</span>,</span>
+<span id="cb15-52"><a href="#cb15-52" tabindex="-1"></a>    <span class="at">fixed =</span> <span class="cn">TRUE</span></span>
+<span id="cb15-53"><a href="#cb15-53" tabindex="-1"></a>  )</span>
+<span id="cb15-54"><a href="#cb15-54" tabindex="-1"></a></span>
+<span id="cb15-55"><a href="#cb15-55" tabindex="-1"></a>  meta <span class="ot">&lt;-</span> stats<span class="sc">::</span><span class="fu">setNames</span>(</span>
+<span id="cb15-56"><a href="#cb15-56" tabindex="-1"></a>    <span class="fu">vapply</span>(</span>
+<span id="cb15-57"><a href="#cb15-57" tabindex="-1"></a>      metaParts,</span>
+<span id="cb15-58"><a href="#cb15-58" tabindex="-1"></a>      <span class="cf">function</span>(x) {</span>
+<span id="cb15-59"><a href="#cb15-59" tabindex="-1"></a>        <span class="fu">paste</span>(</span>
+<span id="cb15-60"><a href="#cb15-60" tabindex="-1"></a>          x[<span class="sc">-</span><span class="dv">1</span><span class="dt">L</span>],</span>
+<span id="cb15-61"><a href="#cb15-61" tabindex="-1"></a>          <span class="at">collapse =</span> <span class="st">&quot;=&quot;</span></span>
+<span id="cb15-62"><a href="#cb15-62" tabindex="-1"></a>        )</span>
+<span id="cb15-63"><a href="#cb15-63" tabindex="-1"></a>      },</span>
+<span id="cb15-64"><a href="#cb15-64" tabindex="-1"></a>      <span class="fu">character</span>(<span class="dv">1</span>)</span>
+<span id="cb15-65"><a href="#cb15-65" tabindex="-1"></a>    ),</span>
+<span id="cb15-66"><a href="#cb15-66" tabindex="-1"></a>    <span class="fu">vapply</span>(</span>
+<span id="cb15-67"><a href="#cb15-67" tabindex="-1"></a>      metaParts,</span>
+<span id="cb15-68"><a href="#cb15-68" tabindex="-1"></a>      <span class="st">`</span><span class="at">[[</span><span class="st">`</span>,</span>
+<span id="cb15-69"><a href="#cb15-69" tabindex="-1"></a>      <span class="fu">character</span>(<span class="dv">1</span>),</span>
+<span id="cb15-70"><a href="#cb15-70" tabindex="-1"></a>      <span class="dv">1</span><span class="dt">L</span></span>
+<span id="cb15-71"><a href="#cb15-71" tabindex="-1"></a>    )</span>
+<span id="cb15-72"><a href="#cb15-72" tabindex="-1"></a>  )</span>
+<span id="cb15-73"><a href="#cb15-73" tabindex="-1"></a></span>
+<span id="cb15-74"><a href="#cb15-74" tabindex="-1"></a>  <span class="co"># Reaction metadata ----------------------------------------------------</span></span>
+<span id="cb15-75"><a href="#cb15-75" tabindex="-1"></a>  reactions <span class="ot">&lt;-</span> utils<span class="sc">::</span><span class="fu">read.delim</span>(</span>
+<span id="cb15-76"><a href="#cb15-76" tabindex="-1"></a>    <span class="at">text =</span> <span class="fu">paste</span>(</span>
+<span id="cb15-77"><a href="#cb15-77" tabindex="-1"></a>      <span class="fu">getSection</span>(<span class="st">&quot;reactions&quot;</span>),</span>
+<span id="cb15-78"><a href="#cb15-78" tabindex="-1"></a>      <span class="at">collapse =</span> <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span></span>
+<span id="cb15-79"><a href="#cb15-79" tabindex="-1"></a>    ),</span>
+<span id="cb15-80"><a href="#cb15-80" tabindex="-1"></a>    <span class="at">stringsAsFactors =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb15-81"><a href="#cb15-81" tabindex="-1"></a>    <span class="at">check.names =</span> <span class="cn">FALSE</span></span>
+<span id="cb15-82"><a href="#cb15-82" tabindex="-1"></a>  )</span>
+<span id="cb15-83"><a href="#cb15-83" tabindex="-1"></a></span>
+<span id="cb15-84"><a href="#cb15-84" tabindex="-1"></a>  <span class="co"># Amplification curves -------------------------------------------------</span></span>
+<span id="cb15-85"><a href="#cb15-85" tabindex="-1"></a>  fdata <span class="ot">&lt;-</span> utils<span class="sc">::</span><span class="fu">read.delim</span>(</span>
+<span id="cb15-86"><a href="#cb15-86" tabindex="-1"></a>    <span class="at">text =</span> <span class="fu">paste</span>(</span>
+<span id="cb15-87"><a href="#cb15-87" tabindex="-1"></a>      <span class="fu">getSection</span>(<span class="st">&quot;adp&quot;</span>),</span>
+<span id="cb15-88"><a href="#cb15-88" tabindex="-1"></a>      <span class="at">collapse =</span> <span class="st">&quot;</span><span class="sc">\n</span><span class="st">&quot;</span></span>
+<span id="cb15-89"><a href="#cb15-89" tabindex="-1"></a>    ),</span>
+<span id="cb15-90"><a href="#cb15-90" tabindex="-1"></a>    <span class="at">stringsAsFactors =</span> <span class="cn">FALSE</span>,</span>
+<span id="cb15-91"><a href="#cb15-91" tabindex="-1"></a>    <span class="at">check.names =</span> <span class="cn">FALSE</span></span>
+<span id="cb15-92"><a href="#cb15-92" tabindex="-1"></a>  )</span>
+<span id="cb15-93"><a href="#cb15-93" tabindex="-1"></a></span>
+<span id="cb15-94"><a href="#cb15-94" tabindex="-1"></a>  description <span class="ot">&lt;-</span> <span class="fu">data.frame</span>(</span>
+<span id="cb15-95"><a href="#cb15-95" tabindex="-1"></a>    <span class="at">fdataName =</span> reactions<span class="sc">$</span>fdataName,</span>
+<span id="cb15-96"><a href="#cb15-96" tabindex="-1"></a>    <span class="at">expId =</span> meta[[<span class="st">&quot;experiment&quot;</span>]],</span>
+<span id="cb15-97"><a href="#cb15-97" tabindex="-1"></a>    <span class="at">runId =</span> meta[[<span class="st">&quot;run&quot;</span>]],</span>
+<span id="cb15-98"><a href="#cb15-98" tabindex="-1"></a>    <span class="at">reactId =</span> <span class="fu">as.character</span>(</span>
+<span id="cb15-99"><a href="#cb15-99" tabindex="-1"></a>      reactions<span class="sc">$</span>reactId</span>
+<span id="cb15-100"><a href="#cb15-100" tabindex="-1"></a>    ),</span>
+<span id="cb15-101"><a href="#cb15-101" tabindex="-1"></a>    <span class="at">sample =</span> reactions<span class="sc">$</span>sample,</span>
+<span id="cb15-102"><a href="#cb15-102" tabindex="-1"></a>    <span class="at">sampleType =</span> reactions<span class="sc">$</span>sampleType,</span>
+<span id="cb15-103"><a href="#cb15-103" tabindex="-1"></a>    <span class="at">target =</span> meta[[<span class="st">&quot;target&quot;</span>]],</span>
+<span id="cb15-104"><a href="#cb15-104" tabindex="-1"></a>    <span class="at">targetDyeId =</span> meta[[<span class="st">&quot;dye&quot;</span>]],</span>
+<span id="cb15-105"><a href="#cb15-105" tabindex="-1"></a>    <span class="at">quantity =</span> <span class="fu">as.numeric</span>(</span>
+<span id="cb15-106"><a href="#cb15-106" tabindex="-1"></a>      reactions<span class="sc">$</span>quantity</span>
+<span id="cb15-107"><a href="#cb15-107" tabindex="-1"></a>    ),</span>
+<span id="cb15-108"><a href="#cb15-108" tabindex="-1"></a>    <span class="at">stringsAsFactors =</span> <span class="cn">FALSE</span></span>
+<span id="cb15-109"><a href="#cb15-109" tabindex="-1"></a>  )</span>
+<span id="cb15-110"><a href="#cb15-110" tabindex="-1"></a></span>
+<span id="cb15-111"><a href="#cb15-111" tabindex="-1"></a>  <span class="fu">buildRDMLFromFData</span>(</span>
+<span id="cb15-112"><a href="#cb15-112" tabindex="-1"></a>    <span class="at">fdata =</span> fdata,</span>
+<span id="cb15-113"><a href="#cb15-113" tabindex="-1"></a>    <span class="at">description =</span> description,</span>
+<span id="cb15-114"><a href="#cb15-114" tabindex="-1"></a>    <span class="at">fdataType =</span> <span class="st">&quot;adp&quot;</span>,</span>
+<span id="cb15-115"><a href="#cb15-115" tabindex="-1"></a>    <span class="at">publisher =</span> <span class="st">&quot;simpleqpcr&quot;</span></span>
+<span id="cb15-116"><a href="#cb15-116" tabindex="-1"></a>  )</span>
+<span id="cb15-117"><a href="#cb15-117" tabindex="-1"></a>}</span></code></pre></div>
+<p>Register the reader:</p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a><span class="fu">registerRDMLFormat</span>(</span>
+<span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a>  <span class="at">name =</span> <span class="st">&quot;simpleqpcr&quot;</span>,</span>
+<span id="cb16-3"><a href="#cb16-3" tabindex="-1"></a>  <span class="at">extensions =</span> <span class="st">&quot;sqpcr&quot;</span>,</span>
+<span id="cb16-4"><a href="#cb16-4" tabindex="-1"></a>  <span class="at">reader =</span> readSimpleQPCR</span>
+<span id="cb16-5"><a href="#cb16-5" tabindex="-1"></a>)</span></code></pre></div>
+<p>It can then be used through the normal RDML7 interface:</p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a>x <span class="ot">&lt;-</span> <span class="fu">readRDML</span>(</span>
+<span id="cb17-2"><a href="#cb17-2" tabindex="-1"></a>  <span class="st">&quot;cd53_efficiency.sqpcr&quot;</span></span>
+<span id="cb17-3"><a href="#cb17-3" tabindex="-1"></a>)</span>
+<span id="cb17-4"><a href="#cb17-4" tabindex="-1"></a></span>
+<span id="cb17-5"><a href="#cb17-5" tabindex="-1"></a><span class="fu">summary</span>(x)</span>
+<span id="cb17-6"><a href="#cb17-6" tabindex="-1"></a></span>
+<span id="cb17-7"><a href="#cb17-7" tabindex="-1"></a><span class="fu">asTable</span>(x)</span>
+<span id="cb17-8"><a href="#cb17-8" tabindex="-1"></a></span>
+<span id="cb17-9"><a href="#cb17-9" tabindex="-1"></a>amp <span class="ot">&lt;-</span> <span class="fu">getFData</span>(</span>
+<span id="cb17-10"><a href="#cb17-10" tabindex="-1"></a>  x,</span>
+<span id="cb17-11"><a href="#cb17-11" tabindex="-1"></a>  <span class="at">dpType =</span> <span class="st">&quot;adp&quot;</span>,</span>
+<span id="cb17-12"><a href="#cb17-12" tabindex="-1"></a>  <span class="at">longTable =</span> <span class="cn">TRUE</span></span>
+<span id="cb17-13"><a href="#cb17-13" tabindex="-1"></a>)</span></code></pre></div>
+<p>The parser knows nothing about the internal structure of
+<code>sampleType</code>, <code>quantityType</code>,
+<code>targetType</code>, <code>experimentType</code>, or
+<code>dataType</code>. It only maps the source file into the standard
+fluorescence and description tables.</p>
+</div>
+<div id="complex-importer" class="section level1">
+<h1>Complex importer</h1>
+<div id="when-to-use-the-complex-form" class="section level2">
+<h2>When to use the complex form</h2>
+<p>Use the canonical intermediate representation when a single source
+file contains <strong>more than one independently described
+fluorescence-series group</strong>.</p>
+<p>The most common case is:</p>
+<pre class="text"><code>one source file
+    |
+    +-- amplification curves (adp)
+    |
+    `-- melting curves (mdp)</code></pre>
+<p>Other reasons include:</p>
+<ul>
+<li>separate curve blocks with different coordinate systems;</li>
+<li>several tables that should be validated before any RDML object is
+built;</li>
+<li>source metadata that belongs to the import as a whole rather than to
+one fluorescence table;</li>
+<li>a parser that should preserve original reaction identifiers;</li>
+<li>an importer that needs to declare conversion information
+centrally.</li>
+</ul>
+<p>In this situation it is useful to parse the complete vendor file
+first and only then construct the RDML hierarchy.</p>
+</div>
+</div>
+<div id="rdmlimportseries" class="section level1">
+<h1><code>rdmlImportSeries</code></h1>
+<p>One <code>rdmlImportSeries</code> represents one homogeneous
+fluorescence-series group.</p>
+<p>For amplification data:</p>
+<div class="sourceCode" id="cb19"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb19-1"><a href="#cb19-1" tabindex="-1"></a>ampSeries <span class="ot">&lt;-</span> <span class="fu">newRDMLImportSeries</span>(</span>
+<span id="cb19-2"><a href="#cb19-2" tabindex="-1"></a>  <span class="at">fdataType =</span> <span class="st">&quot;adp&quot;</span>,</span>
+<span id="cb19-3"><a href="#cb19-3" tabindex="-1"></a>  <span class="at">fdata =</span> ampFdata,</span>
+<span id="cb19-4"><a href="#cb19-4" tabindex="-1"></a>  <span class="at">description =</span> ampDescription</span>
+<span id="cb19-5"><a href="#cb19-5" tabindex="-1"></a>)</span></code></pre></div>
+<p>For melting data:</p>
+<div class="sourceCode" id="cb20"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" tabindex="-1"></a>meltSeries <span class="ot">&lt;-</span> <span class="fu">newRDMLImportSeries</span>(</span>
+<span id="cb20-2"><a href="#cb20-2" tabindex="-1"></a>  <span class="at">fdataType =</span> <span class="st">&quot;mdp&quot;</span>,</span>
+<span id="cb20-3"><a href="#cb20-3" tabindex="-1"></a>  <span class="at">fdata =</span> meltFdata,</span>
+<span id="cb20-4"><a href="#cb20-4" tabindex="-1"></a>  <span class="at">description =</span> meltDescription</span>
+<span id="cb20-5"><a href="#cb20-5" tabindex="-1"></a>)</span></code></pre></div>
+<p>Each series has its own:</p>
+<pre class="text"><code>fdataType
+fdata
+description</code></pre>
+<p>This is important because <code>adp</code> and <code>mdp</code> have
+different coordinates and may contain different subsets of
+reactions.</p>
+</div>
+<div id="rdmlimportdata" class="section level1">
+<h1><code>rdmlImportData</code></h1>
+<p><code>rdmlImportData</code> represents the complete result of parsing
+one source file.</p>
+<div class="sourceCode" id="cb22"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb22-1"><a href="#cb22-1" tabindex="-1"></a>parsed <span class="ot">&lt;-</span> <span class="fu">newRDMLImportData</span>(</span>
+<span id="cb22-2"><a href="#cb22-2" tabindex="-1"></a>  <span class="at">series =</span> <span class="fu">list</span>(</span>
+<span id="cb22-3"><a href="#cb22-3" tabindex="-1"></a>    ampSeries,</span>
+<span id="cb22-4"><a href="#cb22-4" tabindex="-1"></a>    meltSeries</span>
+<span id="cb22-5"><a href="#cb22-5" tabindex="-1"></a>  ),</span>
+<span id="cb22-6"><a href="#cb22-6" tabindex="-1"></a>  <span class="at">publisher =</span> <span class="st">&quot;Example vendor&quot;</span>,</span>
+<span id="cb22-7"><a href="#cb22-7" tabindex="-1"></a>  <span class="at">serialNumber =</span> <span class="st">&quot;12345&quot;</span>,</span>
+<span id="cb22-8"><a href="#cb22-8" tabindex="-1"></a>  <span class="at">format =</span> <span class="st">&quot;myformat&quot;</span></span>
+<span id="cb22-9"><a href="#cb22-9" tabindex="-1"></a>)</span></code></pre></div>
+<p>The object groups the fluorescence-series blocks and source-level
+metadata without yet constructing the nested RDML hierarchy.</p>
+<p>This gives the parser a clean boundary:</p>
+<pre class="text"><code>everything above rdmlImportData = vendor parsing
+everything below rdmlImportData = RDML construction</code></pre>
+</div>
+<div id="building-the-rdml-object-explicitly" class="section level1">
+<h1>Building the RDML object explicitly</h1>
+<p>The parsed representation can be converted explicitly:</p>
+<div class="sourceCode" id="cb24"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb24-1"><a href="#cb24-1" tabindex="-1"></a>x <span class="ot">&lt;-</span> <span class="fu">buildRDMLImport</span>(</span>
+<span id="cb24-2"><a href="#cb24-2" tabindex="-1"></a>  parsed</span>
+<span id="cb24-3"><a href="#cb24-3" tabindex="-1"></a>)</span></code></pre></div>
+<p>The builder processes each series with the common fluorescence-data
+machinery and returns one <code>rdmlType</code>.</p>
+<p>Conceptually:</p>
+<pre class="text"><code>rdmlImportData
+    |
+    +-- series 1 -&gt; setFData(..., fdataType = &quot;adp&quot;)
+    |
+    +-- series 2 -&gt; setFData(..., fdataType = &quot;mdp&quot;)
+    |
+    `-- ...
+            |
+            v
+         rdmlType</code></pre>
+<p>This means all complex importers use the same RDML construction
+rules.</p>
+</div>
+<div id="returning-intermediate-data-directly-from-a-reader" class="section level1">
+<h1>Returning intermediate data directly from a reader</h1>
+<p>A complex reader does not have to call <code>buildRDMLImport()</code>
+itself.</p>
+<p>It may return <code>rdmlImportData</code>:</p>
+<div class="sourceCode" id="cb26"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" tabindex="-1"></a>readMyComplexFormat <span class="ot">&lt;-</span> <span class="cf">function</span>(fileName, ...) {</span>
+<span id="cb26-2"><a href="#cb26-2" tabindex="-1"></a></span>
+<span id="cb26-3"><a href="#cb26-3" tabindex="-1"></a>  <span class="co"># Parse the source file.</span></span>
+<span id="cb26-4"><a href="#cb26-4" tabindex="-1"></a>  ampFdata <span class="ot">&lt;-</span> ...</span>
+<span id="cb26-5"><a href="#cb26-5" tabindex="-1"></a>  ampDescription <span class="ot">&lt;-</span> ...</span>
+<span id="cb26-6"><a href="#cb26-6" tabindex="-1"></a></span>
+<span id="cb26-7"><a href="#cb26-7" tabindex="-1"></a>  meltFdata <span class="ot">&lt;-</span> ...</span>
+<span id="cb26-8"><a href="#cb26-8" tabindex="-1"></a>  meltDescription <span class="ot">&lt;-</span> ...</span>
+<span id="cb26-9"><a href="#cb26-9" tabindex="-1"></a></span>
+<span id="cb26-10"><a href="#cb26-10" tabindex="-1"></a>  ampSeries <span class="ot">&lt;-</span> <span class="fu">newRDMLImportSeries</span>(</span>
+<span id="cb26-11"><a href="#cb26-11" tabindex="-1"></a>    <span class="at">fdataType =</span> <span class="st">&quot;adp&quot;</span>,</span>
+<span id="cb26-12"><a href="#cb26-12" tabindex="-1"></a>    <span class="at">fdata =</span> ampFdata,</span>
+<span id="cb26-13"><a href="#cb26-13" tabindex="-1"></a>    <span class="at">description =</span> ampDescription</span>
+<span id="cb26-14"><a href="#cb26-14" tabindex="-1"></a>  )</span>
+<span id="cb26-15"><a href="#cb26-15" tabindex="-1"></a></span>
+<span id="cb26-16"><a href="#cb26-16" tabindex="-1"></a>  meltSeries <span class="ot">&lt;-</span> <span class="fu">newRDMLImportSeries</span>(</span>
+<span id="cb26-17"><a href="#cb26-17" tabindex="-1"></a>    <span class="at">fdataType =</span> <span class="st">&quot;mdp&quot;</span>,</span>
+<span id="cb26-18"><a href="#cb26-18" tabindex="-1"></a>    <span class="at">fdata =</span> meltFdata,</span>
+<span id="cb26-19"><a href="#cb26-19" tabindex="-1"></a>    <span class="at">description =</span> meltDescription</span>
+<span id="cb26-20"><a href="#cb26-20" tabindex="-1"></a>  )</span>
+<span id="cb26-21"><a href="#cb26-21" tabindex="-1"></a></span>
+<span id="cb26-22"><a href="#cb26-22" tabindex="-1"></a>  <span class="fu">newRDMLImportData</span>(</span>
+<span id="cb26-23"><a href="#cb26-23" tabindex="-1"></a>    <span class="at">series =</span> <span class="fu">list</span>(</span>
+<span id="cb26-24"><a href="#cb26-24" tabindex="-1"></a>      ampSeries,</span>
+<span id="cb26-25"><a href="#cb26-25" tabindex="-1"></a>      meltSeries</span>
+<span id="cb26-26"><a href="#cb26-26" tabindex="-1"></a>    ),</span>
+<span id="cb26-27"><a href="#cb26-27" tabindex="-1"></a>    <span class="at">publisher =</span> <span class="st">&quot;Example vendor&quot;</span>,</span>
+<span id="cb26-28"><a href="#cb26-28" tabindex="-1"></a>    <span class="at">serialNumber =</span> <span class="st">&quot;12345&quot;</span>,</span>
+<span id="cb26-29"><a href="#cb26-29" tabindex="-1"></a>    <span class="at">format =</span> <span class="st">&quot;mycomplexformat&quot;</span></span>
+<span id="cb26-30"><a href="#cb26-30" tabindex="-1"></a>  )</span>
+<span id="cb26-31"><a href="#cb26-31" tabindex="-1"></a>}</span></code></pre></div>
+<p>Register it normally:</p>
+<div class="sourceCode" id="cb27"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb27-1"><a href="#cb27-1" tabindex="-1"></a><span class="fu">registerRDMLFormat</span>(</span>
+<span id="cb27-2"><a href="#cb27-2" tabindex="-1"></a>  <span class="at">name =</span> <span class="st">&quot;mycomplexformat&quot;</span>,</span>
+<span id="cb27-3"><a href="#cb27-3" tabindex="-1"></a>  <span class="at">extensions =</span> <span class="st">&quot;mcf&quot;</span>,</span>
+<span id="cb27-4"><a href="#cb27-4" tabindex="-1"></a>  <span class="at">reader =</span> readMyComplexFormat</span>
+<span id="cb27-5"><a href="#cb27-5" tabindex="-1"></a>)</span></code></pre></div>
+<p>Then:</p>
+<div class="sourceCode" id="cb28"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" tabindex="-1"></a>x <span class="ot">&lt;-</span> <span class="fu">readRDML</span>(</span>
+<span id="cb28-2"><a href="#cb28-2" tabindex="-1"></a>  <span class="st">&quot;experiment.mcf&quot;</span></span>
+<span id="cb28-3"><a href="#cb28-3" tabindex="-1"></a>)</span></code></pre></div>
+<p><code>readRDML()</code> detects that the reader returned
+<code>rdmlImportData</code> and runs the common builder before returning
+the final <code>rdmlType</code>.</p>
+<p>This is the preferred complex-reader pattern because the reader
+remains a pure parser.</p>
+</div>
+<div id="why-not-always-use-the-complex-form" class="section level1">
+<h1>Why not always use the complex form?</h1>
+<p>The intermediate representation is useful, but it should not be
+required for simple formats.</p>
+<p>For a single amplification table, this:</p>
+<div class="sourceCode" id="cb29"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" tabindex="-1"></a><span class="fu">buildRDMLFromFData</span>(</span>
+<span id="cb29-2"><a href="#cb29-2" tabindex="-1"></a>  fdata,</span>
+<span id="cb29-3"><a href="#cb29-3" tabindex="-1"></a>  description,</span>
+<span id="cb29-4"><a href="#cb29-4" tabindex="-1"></a>  <span class="at">fdataType =</span> <span class="st">&quot;adp&quot;</span></span>
+<span id="cb29-5"><a href="#cb29-5" tabindex="-1"></a>)</span></code></pre></div>
+<p>is clearer than:</p>
+<div class="sourceCode" id="cb30"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb30-1"><a href="#cb30-1" tabindex="-1"></a>series <span class="ot">&lt;-</span> <span class="fu">newRDMLImportSeries</span>(</span>
+<span id="cb30-2"><a href="#cb30-2" tabindex="-1"></a>  <span class="st">&quot;adp&quot;</span>,</span>
+<span id="cb30-3"><a href="#cb30-3" tabindex="-1"></a>  fdata,</span>
+<span id="cb30-4"><a href="#cb30-4" tabindex="-1"></a>  description</span>
+<span id="cb30-5"><a href="#cb30-5" tabindex="-1"></a>)</span>
+<span id="cb30-6"><a href="#cb30-6" tabindex="-1"></a></span>
+<span id="cb30-7"><a href="#cb30-7" tabindex="-1"></a>parsed <span class="ot">&lt;-</span> <span class="fu">newRDMLImportData</span>(</span>
+<span id="cb30-8"><a href="#cb30-8" tabindex="-1"></a>  <span class="at">series =</span> <span class="fu">list</span>(series)</span>
+<span id="cb30-9"><a href="#cb30-9" tabindex="-1"></a>)</span>
+<span id="cb30-10"><a href="#cb30-10" tabindex="-1"></a></span>
+<span id="cb30-11"><a href="#cb30-11" tabindex="-1"></a><span class="fu">buildRDMLImport</span>(parsed)</span></code></pre></div>
+<p>The second form adds objects without adding information.</p>
+<p>Use the lowest-level interface that faithfully represents the source
+format.</p>
+</div>
+<div id="choosing-between-the-two-forms" class="section level1">
+<h1>Choosing between the two forms</h1>
+<table>
+<colgroup>
+<col width="50%" />
+<col width="50%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th>Source format</th>
+<th>Recommended form</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>One amplification table</td>
+<td><code>buildRDMLFromFData()</code></td>
+</tr>
+<tr class="even">
+<td>One melting table</td>
+<td><code>buildRDMLFromFData()</code></td>
+</tr>
+<tr class="odd">
+<td>Simple CSV or TSV curve export</td>
+<td><code>buildRDMLFromFData()</code></td>
+</tr>
+<tr class="even">
+<td>One table plus straightforward metadata</td>
+<td><code>buildRDMLFromFData()</code></td>
+</tr>
+<tr class="odd">
+<td>Amplification + melting in one file</td>
+<td>canonical importer</td>
+</tr>
+<tr class="even">
+<td>Several independent fluorescence blocks</td>
+<td>canonical importer</td>
+</tr>
+<tr class="odd">
+<td>Need to parse/validate all blocks before building RDML</td>
+<td>canonical importer</td>
+</tr>
+<tr class="even">
+<td>Need source-level importer metadata</td>
+<td>canonical importer</td>
+</tr>
+</tbody>
+</table>
+<p>A useful rule is:</p>
+<blockquote>
+<p>If the source can be described by one <code>fdata</code> table and
+one <code>description</code> table, use
+<code>buildRDMLFromFData()</code>. If it naturally requires a list of
+such pairs, use <code>rdmlImportData</code>.</p>
+</blockquote>
+</div>
+<div id="relationship-between-the-two-apis" class="section level1">
+<h1>Relationship between the two APIs</h1>
+<p>The simple API is not a separate implementation.</p>
+<p>Conceptually:</p>
+<pre class="text"><code>buildRDMLFromFData()
+        |
+        v
+newRDMLImportSeries()
+        |
+        v
+newRDMLImportData()
+        |
+        v
+buildRDMLImport()</code></pre>
+<p>In other words, the simple function is a convenience layer over the
+same canonical construction path.</p>
+<p>This is important because both simple and complex third-party
+importers get the same behavior for:</p>
+<ul>
+<li>creation of experiments and runs;</li>
+<li>creation of reactions;</li>
+<li>sample and target references;</li>
+<li>dyes;</li>
+<li>sample types;</li>
+<li>quantities;</li>
+<li>Cq and melting metadata;</li>
+<li>amplification and melting curve storage;</li>
+<li>conflict handling.</li>
+</ul>
+</div>
+<div id="reader-responsibilities" class="section level1">
+<h1>Reader responsibilities</h1>
+<p>A custom reader <strong>should</strong>:</p>
+<ol style="list-style-type: decimal">
+<li>parse the external file;</li>
+<li>normalize identifiers to character values;</li>
+<li>construct the standard <code>fdata</code> and
+<code>description</code> tables;</li>
+<li>preserve meaningful source metadata;</li>
+<li>report malformed input clearly;</li>
+<li>return either <code>rdmlType</code> or
+<code>rdmlImportData</code>.</li>
+</ol>
+<p>A custom reader normally <strong>should not</strong>:</p>
+<ol style="list-style-type: decimal">
+<li>manually construct the complete nested RDML hierarchy;</li>
+<li>duplicate <code>setFData()</code> logic;</li>
+<li>invent missing biological metadata;</li>
+<li>silently change sample or target identifiers;</li>
+<li>encode format detection logic inside the parser.</li>
+</ol>
+<p>Format selection is handled by the registry; RDML construction is
+handled by the common builder.</p>
+</div>
+<div id="validating-an-importer" class="section level1">
+<h1>Validating an importer</h1>
+<p>A useful development loop is:</p>
+<div class="sourceCode" id="cb32"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb32-1"><a href="#cb32-1" tabindex="-1"></a><span class="fu">registerRDMLFormat</span>(</span>
+<span id="cb32-2"><a href="#cb32-2" tabindex="-1"></a>  <span class="at">name =</span> <span class="st">&quot;myformat&quot;</span>,</span>
+<span id="cb32-3"><a href="#cb32-3" tabindex="-1"></a>  <span class="at">extensions =</span> <span class="st">&quot;abc&quot;</span>,</span>
+<span id="cb32-4"><a href="#cb32-4" tabindex="-1"></a>  <span class="at">reader =</span> readMyFormat</span>
+<span id="cb32-5"><a href="#cb32-5" tabindex="-1"></a>)</span>
+<span id="cb32-6"><a href="#cb32-6" tabindex="-1"></a></span>
+<span id="cb32-7"><a href="#cb32-7" tabindex="-1"></a>x <span class="ot">&lt;-</span> <span class="fu">readRDML</span>(</span>
+<span id="cb32-8"><a href="#cb32-8" tabindex="-1"></a>  <span class="st">&quot;example.abc&quot;</span></span>
+<span id="cb32-9"><a href="#cb32-9" tabindex="-1"></a>)</span>
+<span id="cb32-10"><a href="#cb32-10" tabindex="-1"></a></span>
+<span id="cb32-11"><a href="#cb32-11" tabindex="-1"></a><span class="fu">summary</span>(x)</span>
+<span id="cb32-12"><a href="#cb32-12" tabindex="-1"></a></span>
+<span id="cb32-13"><a href="#cb32-13" tabindex="-1"></a>tbl <span class="ot">&lt;-</span> <span class="fu">asTable</span>(x)</span>
+<span id="cb32-14"><a href="#cb32-14" tabindex="-1"></a>tbl</span>
+<span id="cb32-15"><a href="#cb32-15" tabindex="-1"></a></span>
+<span id="cb32-16"><a href="#cb32-16" tabindex="-1"></a><span class="fu">validateRDML</span>(x)</span>
+<span id="cb32-17"><a href="#cb32-17" tabindex="-1"></a></span>
+<span id="cb32-18"><a href="#cb32-18" tabindex="-1"></a>amp <span class="ot">&lt;-</span> <span class="fu">getFData</span>(</span>
+<span id="cb32-19"><a href="#cb32-19" tabindex="-1"></a>  x,</span>
+<span id="cb32-20"><a href="#cb32-20" tabindex="-1"></a>  <span class="at">dpType =</span> <span class="st">&quot;adp&quot;</span>,</span>
+<span id="cb32-21"><a href="#cb32-21" tabindex="-1"></a>  <span class="at">longTable =</span> <span class="cn">TRUE</span></span>
+<span id="cb32-22"><a href="#cb32-22" tabindex="-1"></a>)</span></code></pre></div>
+<p>For a format containing melting data, inspect those separately:</p>
+<div class="sourceCode" id="cb33"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" tabindex="-1"></a>melt <span class="ot">&lt;-</span> <span class="fu">getFData</span>(</span>
+<span id="cb33-2"><a href="#cb33-2" tabindex="-1"></a>  x,</span>
+<span id="cb33-3"><a href="#cb33-3" tabindex="-1"></a>  <span class="at">dpType =</span> <span class="st">&quot;mdp&quot;</span>,</span>
+<span id="cb33-4"><a href="#cb33-4" tabindex="-1"></a>  <span class="at">longTable =</span> <span class="cn">TRUE</span></span>
+<span id="cb33-5"><a href="#cb33-5" tabindex="-1"></a>)</span></code></pre></div>
+<p>During importer development, verify at least:</p>
+<ul>
+<li>number of experiments and runs;</li>
+<li>reaction identifiers;</li>
+<li>sample identifiers;</li>
+<li>target identifiers;</li>
+<li>sample types;</li>
+<li>quantities, if provided;</li>
+<li>dye references;</li>
+<li>number of fluorescence curves;</li>
+<li>number and order of curve coordinates;</li>
+<li><code>adp</code> versus <code>mdp</code> assignment.</li>
+</ul>
+</div>
+<div id="testing-a-reader" class="section level1">
+<h1>Testing a reader</h1>
+<p>A small test should verify both dispatch and biological metadata.</p>
+<div class="sourceCode" id="cb34"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" tabindex="-1"></a><span class="fu">test_that</span>(<span class="st">&quot;myformat reader imports amplification curves&quot;</span>, {</span>
+<span id="cb34-2"><a href="#cb34-2" tabindex="-1"></a></span>
+<span id="cb34-3"><a href="#cb34-3" tabindex="-1"></a>  x <span class="ot">&lt;-</span> <span class="fu">readRDML</span>(</span>
+<span id="cb34-4"><a href="#cb34-4" tabindex="-1"></a>    <span class="fu">test_path</span>(</span>
+<span id="cb34-5"><a href="#cb34-5" tabindex="-1"></a>      <span class="st">&quot;data&quot;</span>,</span>
+<span id="cb34-6"><a href="#cb34-6" tabindex="-1"></a>      <span class="st">&quot;example.abc&quot;</span></span>
+<span id="cb34-7"><a href="#cb34-7" tabindex="-1"></a>    )</span>
+<span id="cb34-8"><a href="#cb34-8" tabindex="-1"></a>  )</span>
+<span id="cb34-9"><a href="#cb34-9" tabindex="-1"></a></span>
+<span id="cb34-10"><a href="#cb34-10" tabindex="-1"></a>  <span class="fu">expect_true</span>(</span>
+<span id="cb34-11"><a href="#cb34-11" tabindex="-1"></a>    S7<span class="sc">::</span><span class="fu">S7_inherits</span>(</span>
+<span id="cb34-12"><a href="#cb34-12" tabindex="-1"></a>      x,</span>
+<span id="cb34-13"><a href="#cb34-13" tabindex="-1"></a>      rdmlType</span>
+<span id="cb34-14"><a href="#cb34-14" tabindex="-1"></a>    )</span>
+<span id="cb34-15"><a href="#cb34-15" tabindex="-1"></a>  )</span>
+<span id="cb34-16"><a href="#cb34-16" tabindex="-1"></a></span>
+<span id="cb34-17"><a href="#cb34-17" tabindex="-1"></a>  tbl <span class="ot">&lt;-</span> <span class="fu">asTable</span>(x)</span>
+<span id="cb34-18"><a href="#cb34-18" tabindex="-1"></a></span>
+<span id="cb34-19"><a href="#cb34-19" tabindex="-1"></a>  <span class="fu">expect_true</span>(</span>
+<span id="cb34-20"><a href="#cb34-20" tabindex="-1"></a>    <span class="fu">all</span>(tbl<span class="sc">$</span>adp)</span>
+<span id="cb34-21"><a href="#cb34-21" tabindex="-1"></a>  )</span>
+<span id="cb34-22"><a href="#cb34-22" tabindex="-1"></a></span>
+<span id="cb34-23"><a href="#cb34-23" tabindex="-1"></a>  <span class="fu">expect_setequal</span>(</span>
+<span id="cb34-24"><a href="#cb34-24" tabindex="-1"></a>    <span class="fu">unique</span>(tbl<span class="sc">$</span>target),</span>
+<span id="cb34-25"><a href="#cb34-25" tabindex="-1"></a>    <span class="st">&quot;CD53&quot;</span></span>
+<span id="cb34-26"><a href="#cb34-26" tabindex="-1"></a>  )</span>
+<span id="cb34-27"><a href="#cb34-27" tabindex="-1"></a></span>
+<span id="cb34-28"><a href="#cb34-28" tabindex="-1"></a>  amp <span class="ot">&lt;-</span> <span class="fu">getFData</span>(</span>
+<span id="cb34-29"><a href="#cb34-29" tabindex="-1"></a>    x,</span>
+<span id="cb34-30"><a href="#cb34-30" tabindex="-1"></a>    <span class="at">dpType =</span> <span class="st">&quot;adp&quot;</span></span>
+<span id="cb34-31"><a href="#cb34-31" tabindex="-1"></a>  )</span>
+<span id="cb34-32"><a href="#cb34-32" tabindex="-1"></a></span>
+<span id="cb34-33"><a href="#cb34-33" tabindex="-1"></a>  <span class="fu">expect_gt</span>(</span>
+<span id="cb34-34"><a href="#cb34-34" tabindex="-1"></a>    <span class="fu">nrow</span>(amp),</span>
+<span id="cb34-35"><a href="#cb34-35" tabindex="-1"></a>    <span class="dv">0</span><span class="dt">L</span></span>
+<span id="cb34-36"><a href="#cb34-36" tabindex="-1"></a>  )</span>
+<span id="cb34-37"><a href="#cb34-37" tabindex="-1"></a>})</span></code></pre></div>
+<p>For a complex reader:</p>
+<div class="sourceCode" id="cb35"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb35-1"><a href="#cb35-1" tabindex="-1"></a><span class="fu">test_that</span>(<span class="st">&quot;complex reader imports both amplification and melting data&quot;</span>, {</span>
+<span id="cb35-2"><a href="#cb35-2" tabindex="-1"></a></span>
+<span id="cb35-3"><a href="#cb35-3" tabindex="-1"></a>  x <span class="ot">&lt;-</span> <span class="fu">readRDML</span>(</span>
+<span id="cb35-4"><a href="#cb35-4" tabindex="-1"></a>    <span class="fu">test_path</span>(</span>
+<span id="cb35-5"><a href="#cb35-5" tabindex="-1"></a>      <span class="st">&quot;data&quot;</span>,</span>
+<span id="cb35-6"><a href="#cb35-6" tabindex="-1"></a>      <span class="st">&quot;example.mcf&quot;</span></span>
+<span id="cb35-7"><a href="#cb35-7" tabindex="-1"></a>    )</span>
+<span id="cb35-8"><a href="#cb35-8" tabindex="-1"></a>  )</span>
+<span id="cb35-9"><a href="#cb35-9" tabindex="-1"></a></span>
+<span id="cb35-10"><a href="#cb35-10" tabindex="-1"></a>  tbl <span class="ot">&lt;-</span> <span class="fu">asTable</span>(x)</span>
+<span id="cb35-11"><a href="#cb35-11" tabindex="-1"></a></span>
+<span id="cb35-12"><a href="#cb35-12" tabindex="-1"></a>  <span class="fu">expect_true</span>(</span>
+<span id="cb35-13"><a href="#cb35-13" tabindex="-1"></a>    <span class="fu">any</span>(tbl<span class="sc">$</span>adp)</span>
+<span id="cb35-14"><a href="#cb35-14" tabindex="-1"></a>  )</span>
+<span id="cb35-15"><a href="#cb35-15" tabindex="-1"></a></span>
+<span id="cb35-16"><a href="#cb35-16" tabindex="-1"></a>  <span class="fu">expect_true</span>(</span>
+<span id="cb35-17"><a href="#cb35-17" tabindex="-1"></a>    <span class="fu">any</span>(tbl<span class="sc">$</span>mdp)</span>
+<span id="cb35-18"><a href="#cb35-18" tabindex="-1"></a>  )</span>
+<span id="cb35-19"><a href="#cb35-19" tabindex="-1"></a>})</span></code></pre></div>
+</div>
+<div id="summary" class="section level1">
+<h1>Summary</h1>
+<p>RDML7 intentionally provides two importer interfaces.</p>
+<p>The simple form:</p>
+<div class="sourceCode" id="cb36"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" tabindex="-1"></a><span class="fu">buildRDMLFromFData</span>(</span>
+<span id="cb36-2"><a href="#cb36-2" tabindex="-1"></a>  fdata,</span>
+<span id="cb36-3"><a href="#cb36-3" tabindex="-1"></a>  description,</span>
+<span id="cb36-4"><a href="#cb36-4" tabindex="-1"></a>  fdataType</span>
+<span id="cb36-5"><a href="#cb36-5" tabindex="-1"></a>)</span></code></pre></div>
+<p>is the preferred choice for a source represented by one fluorescence
+table.</p>
+<p>The complex form:</p>
+<div class="sourceCode" id="cb37"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" tabindex="-1"></a>series <span class="ot">&lt;-</span> <span class="fu">newRDMLImportSeries</span>(...)</span>
+<span id="cb37-2"><a href="#cb37-2" tabindex="-1"></a>parsed <span class="ot">&lt;-</span> <span class="fu">newRDMLImportData</span>(</span>
+<span id="cb37-3"><a href="#cb37-3" tabindex="-1"></a>  <span class="at">series =</span> <span class="fu">list</span>(...)</span>
+<span id="cb37-4"><a href="#cb37-4" tabindex="-1"></a>)</span>
+<span id="cb37-5"><a href="#cb37-5" tabindex="-1"></a></span>
+<span id="cb37-6"><a href="#cb37-6" tabindex="-1"></a><span class="fu">buildRDMLImport</span>(parsed)</span></code></pre></div>
+<p>is useful when a file contains several independently described
+fluorescence groups.</p>
+<p>The format registry remains independent of both approaches:</p>
+<div class="sourceCode" id="cb38"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb38-1"><a href="#cb38-1" tabindex="-1"></a><span class="fu">registerRDMLFormat</span>(</span>
+<span id="cb38-2"><a href="#cb38-2" tabindex="-1"></a>  name,</span>
+<span id="cb38-3"><a href="#cb38-3" tabindex="-1"></a>  extensions,</span>
+<span id="cb38-4"><a href="#cb38-4" tabindex="-1"></a>  reader,</span>
+<span id="cb38-5"><a href="#cb38-5" tabindex="-1"></a>  writer</span>
+<span id="cb38-6"><a href="#cb38-6" tabindex="-1"></a>)</span></code></pre></div>
+<p>This keeps the three responsibilities separate:</p>
+<pre class="text"><code>registry       -&gt; which reader handles this file?
+parser         -&gt; what data are stored in this vendor format?
+RDML builder   -&gt; how are those data represented as rdmlType?</code></pre>
+<p>That separation is the main reason the importer API exists.</p>
+</div>
+
+
+
+<!-- code folding -->
+
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

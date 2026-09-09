@@ -34,17 +34,19 @@ RDES specification.
 
 ## Import amplification data
 
-```r
-amp <- readRDML(
-  "RDES_v1_0_example_amplification.tsv"
-)
+```{r}
+rdesamp <- system.file(
+  "extdata",
+  "RDES_v1_0_example_amplification.tsv",
+  package = "RDML7")
+amp <- readRDML(rdesamp)
 ```
 
 The format can also be selected explicitly.
 
-```r
+```{r}
 amp <- readRDML(
-  "RDES_v1_0_example_amplification.tsv",
+  rdesamp,
   format = "rdes",
   expId = "RDES",
   runId = "run1"
@@ -53,11 +55,12 @@ amp <- readRDML(
 
 ## Import melting data
 
-```r
-melt <- readRDML(
+```{r}
+rdesmelt <- system.file(
+  "extdata",
   "RDES_v1_0_example_melting.tsv",
-  format = "rdes"
-)
+  package = "RDML7")
+melt <- readRDML(rdesmelt)
 
 request <- asTable(melt)
 request <- request[request$mdp, ]
@@ -75,14 +78,16 @@ meltData <- getFData(
 RDES stores the two curve types in independent files. Use `companionFile` to
 merge them into one RDML run.
 
-```r
+```{r}
 both <- readRDML(
-  "run_amplification.tsv",
+  rdesamp,
   format = "rdes",
-  companionFile = "run_melting.tsv",
+  companionFile = rdesmelt,
   expId = "exp1",
   runId = "run1"
 )
+
+asDendrogram(both)
 ```
 
 ## Column mapping
@@ -96,7 +101,7 @@ both <- readRDML(
 | Target Type | `toi` / `ref` |
 | Dye | target dye id |
 | Cq | `dataType$cq` |
-| Tm | `dataType$meltTemp` / `meltTemps` |
+| Tm | `dataType$meltTemp` |
 | cycle columns | amplification `fpoints` |
 | temperature columns | melting `fpoints` |
 
@@ -108,19 +113,31 @@ type is unavailable.
 RDES allows several Tm values separated by semicolons without spaces:
 
 ```text
-82.9;73.6;69.8
+87.8;82.2
 ```
 
-The RDML package preserves the full vector in the package extension
-`meltTemps`, while `meltTemp` stores the primary/first value. RDES export can
-write all values back. Standard RDML XML has a single `meltTemp`, so exporting
-such an object to RDML can trigger a lossy-conversion warning/error.
+The RDML package preserves the full vector in the `meltTemp`. RDES export can
+write all values back. Standard RDML XML has a single `meltTemp`, but RDML7
+package ignores that!
+
+```{r}
+rdesmeltsemi <- system.file(
+  "extdata",
+  "RDES_v1_0_example_melting_semicolon.tsv",
+  package = "RDML7")
+meltsemi <- readRDML(
+  rdesmeltsemi,
+  format = "rdes"
+)
+meltsemi$experiment$RDES$run$RDES_v1_0_example_melting_semicolon$react$A1$data$`Exon 1`$meltTemp
+```
 
 ## Strict parsing
 
-```r
-x <- readRDML(
-  "run.tsv",
+*RDES_v1_0_example_melting_semicolon.tsv* contains error: space after *;*.
+```{r}
+readRDML(
+  rdesmeltsemi,
   format = "rdes",
   strict = TRUE
 )
@@ -131,7 +148,7 @@ strict mode converts them into errors.
 
 ## Export amplification or melting data
 
-```r
+```{r}
 writeRDML(
   both,
   "run_amplification.tsv",
@@ -153,10 +170,10 @@ writeRDML(
 
 ## Export both RDES files
 
-```r
+```{r}
 paths <- writeRDML(
   both,
-  "run.tsv",
+  "runboth.tsv",
   format = "rdes",
   expId = "exp1",
   runId = "run1",

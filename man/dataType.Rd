@@ -17,7 +17,6 @@ dataType(
   corrF = NA_real_,
   corrP = NA_real_,
   meltTemp = NA_real_,
-  meltTemps = NA_real_,
   excl = NA_character_,
   note = NA_character_,
   adp = NA,
@@ -42,7 +41,7 @@ Target-specific qPCR result data for one reaction. It stores calculated results 
   \item{`ampEffSE`}{`numeric(1)` or `NA`. Standard error of amplification efficiency.}
   \item{`corrF`}{`numeric(1)` or `NA`. Fluorescence correction factor.}
   \item{`corrP`}{`numeric(1)` or `NA`. Correction parameter.}
-  \item{`meltTemp`}{`numeric(1)` or `NA`. Primary melting temperature.}
+  \item{`meltTemp`}{Numeric vector or `NA`. One or more melting temperatures.}
   \item{`excl`}{`character(1)` or `NA`. Exclusion information.}
   \item{`note`}{`character(1)` or `NA`. Free-text note.}
   \item{`adp`}{`dpAmpCurveType` or `NA`. Amplification curve.}
