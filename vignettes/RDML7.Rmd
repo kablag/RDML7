@@ -1333,3 +1333,10 @@ listRDMLFormats()
 ```
 
 over a hard-coded list in analysis code.
+
+## Further reading
+
+- `vignette("CreateRDML", package = "RDML")`
+- `vignette("RDES", package = "RDML")`
+- `vignette("format-plugins", package = "RDML")`
+- `vignette("usingRDML_with_other_R_packages", package = "RDML")`
