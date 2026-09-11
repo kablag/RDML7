@@ -364,11 +364,6 @@ test_that("RDES multiple Tm values are retained", {
 
   expect_equal(
     dataObj$meltTemp,
-    71.5
-  )
-
-  expect_equal(
-    dataObj$meltTemp,
     c(71.5, 75.2)
   )
 })

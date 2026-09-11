@@ -19,6 +19,5 @@
 #' `fdataName`, `expId`, `runId`, `reactId`, `sampleType`, and `targetDyeId`.
 #'
 #' @name legacy-api
-#' @aliases AsTable GetFData SetFData AsDendrogram asXML MergeRDMLs 
 #' @seealso `RDML-package`
 NULL

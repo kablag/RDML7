@@ -2,19 +2,6 @@
 % Please edit documentation in R/schema-docs.R
 \name{rdml-experimental-types}
 \alias{rdml-experimental-types}
-\alias{dpAmpCurveType}
-\alias{dpMeltingCurveType}
-\alias{dataType}
-\alias{partitionDataType}
-\alias{partitionsType}
-\alias{reactType}
-\alias{dataCollectionSoftwareType}
-\alias{labelFormatType}
-\alias{pcrFormatType}
-\alias{cqDetectionMethodType}
-\alias{runType}
-\alias{experimentType}
-\alias{rdmlType}
 \title{Experimental data and run schema types}
 \description{
 S7 classes for fluorescence curves, reactions, runs, experiments, plate
@@ -45,6 +32,3 @@ layouts, digital-PCR partitions, and the top-level RDML document.
 }
 }
 
-\seealso{
-`readRDML`, `asTable`, `getFData`, `validateRDML`
-}

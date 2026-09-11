@@ -16,6 +16,19 @@ thermalCyclingConditionsType(
   step = list()
 )
 }
+\arguments{
+\item{id}{`idType`. Unique program identifier.}
+
+\item{description}{`character(1)` or `NA`. Program description.}
+
+\item{documentation}{List of `idReferenceType` objects or `NA`. Documentation references.}
+
+\item{lidTemperature}{`numeric(1)` or `NA`. Heated-lid temperature.}
+
+\item{experimenter}{List of `idReferenceType` objects or `NA`. Experimenter references.}
+
+\item{step}{List of `stepType` objects. Ordered program steps.}
+}
 \description{
 A reusable thermal-cycling program referenced by runs or cDNA-synthesis metadata. Inherits from `rdmlBaseType`.
 }

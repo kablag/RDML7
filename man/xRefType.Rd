@@ -9,6 +9,11 @@ An S7 class.
 \usage{
 xRefType(name = NA_character_, id = NA_character_)
 }
+\arguments{
+\item{name}{`character(1)` or `NA`. Name of the external reference system.}
+
+\item{id}{`character(1)` or `NA`. Identifier in that reference system.}
+}
 \description{
 External database or ontology cross-reference. Inherits from `rdmlBaseType`.
 }

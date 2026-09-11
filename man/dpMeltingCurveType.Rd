@@ -24,6 +24,9 @@ dpMeltingCurveType(
     })()
 )
 }
+\arguments{
+\item{fpoints}{`data.table` containing `tmp` and `fluor`.}
+}
 \description{
 Melting fluorescence curve. Inherits from `rdmlBaseType`.
 }

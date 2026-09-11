@@ -15,6 +15,17 @@ sequencesType(
   amplicon = NA
 )
 }
+\arguments{
+\item{forwardPrimer}{`oligoType` or `NA`. Forward primer.}
+
+\item{reversePrimer}{`oligoType` or `NA`. Reverse primer.}
+
+\item{probe1}{`oligoType` or `NA`. First probe.}
+
+\item{probe2}{`oligoType` or `NA`. Second probe.}
+
+\item{amplicon}{`oligoType` or `NA`. Amplicon sequence.}
+}
 \description{
 Primer, probe, and amplicon sequences associated with a target. Inherits from `rdmlBaseType`.
 }

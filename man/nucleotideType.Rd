@@ -9,6 +9,10 @@ An S7 class.
 \usage{
 nucleotideType(value = "")
 }
+\arguments{
+\item{value}{`character(1)`. Enumeration value; must be one of the allowed values listed
+below.}
+}
 \description{
 Nucleic-acid type of the template material.
 }

@@ -9,6 +9,11 @@ An S7 class.
 \usage{
 commercialAssayType(company = character(0), orderNumber = character(0))
 }
+\arguments{
+\item{company}{`character(1)`. Manufacturer/company.}
+
+\item{orderNumber}{`character(1)`. Catalogue or order number.}
+}
 \description{
 Commercial assay identification. Inherits from `rdmlBaseType`.
 }

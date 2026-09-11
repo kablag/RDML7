@@ -9,6 +9,11 @@ An S7 class.
 \usage{
 templateQuantityType(conc = integer(0), nucleotide = nucleotideType())
 }
+\arguments{
+\item{conc}{`numeric(1)`. Template concentration.}
+
+\item{nucleotide}{`nucleotideType`. Nucleic-acid type.}
+}
 \description{
 Total template concentration together with the template nucleotide type. Inherits from `rdmlBaseType`.
 }

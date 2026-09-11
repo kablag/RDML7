@@ -9,6 +9,11 @@ An S7 class.
 \usage{
 annotationType(property = NA_character_, value = NA_character_)
 }
+\arguments{
+\item{property}{`character(1)` or `NA`. Annotation property name.}
+
+\item{value}{`character(1)` or `NA`. Annotation value.}
+}
 \description{
 Free-form property/value annotation attached to a sample. Inherits from `rdmlBaseType`.
 }

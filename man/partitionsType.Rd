@@ -9,6 +9,13 @@ An S7 class.
 \usage{
 partitionsType(volume = integer(0), endPtTable = NA_character_, data = NA)
 }
+\arguments{
+\item{volume}{`numeric(1)`. Partition volume.}
+
+\item{endPtTable}{`character(1)` or `NA`. Optional endpoint-table representation/reference.}
+
+\item{data}{Target-keyed list of `partitionDataType` objects or `NA`.}
+}
 \description{
 Digital-PCR partition metadata and target-specific partition results. Inherits from `rdmlBaseType`.
 }

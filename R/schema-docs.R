@@ -19,8 +19,6 @@
 #' }
 #'
 #' @seealso `idType`, `idReferenceType`, `rdmlType`
-#' @name rdml-metadata-types
-#' @aliases experimenterType documentationType dyeChemistryType dyeType xRefType annotationType rdmlIdType
 NULL
 
 
@@ -59,7 +57,6 @@ NULL
 #' }
 #'
 #' @name rdml-sample-target-types
-#' @aliases sampleTypeType sampleTargetType quantityUnitType quantityType primingMethodType cdnaSynthesisMethodType nucleotideType templateQuantityType sampleType oligoType sequencesType commercialAssayType targetTypeType targetType
 NULL
 
 
@@ -83,7 +80,6 @@ NULL
 #' }
 #'
 #' @name rdml-thermal-types
-#' @aliases measureType temperatureBaseType temperatureType gradientType loopType pauseType lidOpenType stepType thermalCyclingConditionsType
 NULL
 
 
@@ -113,7 +109,5 @@ NULL
 #'   \item{`rdmlType`}{Top-level RDML document.}
 #' }
 #'
-#' @seealso `readRDML`, `asTable`, `getFData`, `validateRDML`
 #' @name rdml-experimental-types
-#' @aliases dpAmpCurveType dpMeltingCurveType dataType partitionDataType partitionsType reactType dataCollectionSoftwareType labelFormatType pcrFormatType cqDetectionMethodType runType experimentType rdmlType
 NULL

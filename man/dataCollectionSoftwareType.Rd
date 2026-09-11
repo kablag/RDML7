@@ -9,6 +9,11 @@ An S7 class.
 \usage{
 dataCollectionSoftwareType(name = character(0), version = character(0))
 }
+\arguments{
+\item{name}{`character(1)`. Software name.}
+
+\item{version}{`character(1)`. Software version.}
+}
 \description{
 Software used by the instrument to collect qPCR data. Inherits from `rdmlBaseType`.
 }

@@ -5,7 +5,6 @@
 \alias{RDML7}
 \alias{RDML7-package}
 \alias{RDML-package}
-\alias{RDML}
 \title{RDML: qPCR data import, conversion, validation, and export}
 \description{
 `RDML` provides S7 classes and a functional API for Real-time PCR Data

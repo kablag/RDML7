@@ -9,6 +9,11 @@ An S7 class.
 \usage{
 documentationType(id = NULL, text = NA_character_)
 }
+\arguments{
+\item{id}{`idType`. Unique documentation identifier.}
+
+\item{text}{`character(1)` or `NA`. Documentation text.}
+}
 \description{
 Reusable documentation text. Use this type when the same description or
  note is referenced by several samples, targets, runs, or experiments.

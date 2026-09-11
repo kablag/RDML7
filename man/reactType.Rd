@@ -9,6 +9,15 @@ An S7 class.
 \usage{
 reactType(id = NULL, sample = NA, data = NA, partitions = NA)
 }
+\arguments{
+\item{id}{`idType`. Reaction identifier or well position.}
+
+\item{sample}{`idReferenceType`. Reference to the sample.}
+
+\item{data}{Target-keyed list of `dataType` objects or `NA`.}
+
+\item{partitions}{List of `partitionsType` objects or `NA`.}
+}
 \description{
 One reaction/well within a run. It references a sample and stores target-specific qPCR or digital-PCR results. Inherits from `rdmlBaseType`.
 }

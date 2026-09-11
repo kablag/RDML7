@@ -9,6 +9,10 @@ An S7 class.
 \usage{
 dyeChemistryType(value = "")
 }
+\arguments{
+\item{value}{`character(1)`. Enumeration value; must be one of the allowed values listed
+below.}
+}
 \description{
 Fluorescence chemistry used by a dye or detection system.
 }

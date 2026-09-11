@@ -27,6 +27,41 @@ dataType(
   quantFluor = NA_real_
 )
 }
+\arguments{
+\item{targetId}{`idReferenceType`. Reference to the target.}
+
+\item{cq}{`numeric(1)` or `NA`. Quantification cycle (Cq).}
+
+\item{N0}{`numeric(1)` or `NA`. Estimated initial template quantity.}
+
+\item{ampEffMet}{`character(1)` or `NA`. Amplification-efficiency method.}
+
+\item{ampEff}{`numeric(1)` or `NA`. Amplification efficiency.}
+
+\item{ampEffSE}{`numeric(1)` or `NA`. Standard error of amplification efficiency.}
+
+\item{corrF}{`numeric(1)` or `NA`. Fluorescence correction factor.}
+
+\item{corrP}{`numeric(1)` or `NA`. Correction parameter.}
+
+\item{meltTemp}{Numeric vector or `NA`. One or more melting temperatures.}
+
+\item{excl}{`character(1)` or `NA`. Exclusion information.}
+
+\item{note}{`character(1)` or `NA`. Free-text note.}
+
+\item{adp}{`dpAmpCurveType` or `NA`. Amplification curve.}
+
+\item{mdp}{`dpMeltingCurveType` or `NA`. Melting curve.}
+
+\item{endPt}{`numeric(1)` or `NA`. End-point fluorescence/result.}
+
+\item{bgFluor}{`numeric(1)` or `NA`. Background fluorescence.}
+
+\item{bgFluorSlp}{`numeric(1)` or `NA`. Background-fluorescence slope.}
+
+\item{quantFluor}{`numeric(1)` or `NA`. Quantification fluorescence.}
+}
 \description{
 Target-specific qPCR result data for one reaction. It stores calculated results and optional amplification and melting fluorescence curves. Inherits from `rdmlBaseType`.
 }

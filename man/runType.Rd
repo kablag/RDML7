@@ -22,6 +22,32 @@ runType(
   react = NA
 )
 }
+\arguments{
+\item{id}{`idType`. Unique run identifier within the experiment.}
+
+\item{description}{`character(1)` or `NA`. Run description.}
+
+\item{documentation}{List of `idReferenceType` objects or `NA`. Documentation references.}
+
+\item{experimenter}{List of `idReferenceType` objects or `NA`. Experimenter references.}
+
+\item{instrument}{`character(1)` or `NA`. Instrument description.}
+
+\item{dataCollectionSoftware}{`dataCollectionSoftwareType` or `NA`. Acquisition software.}
+
+\item{backgroundDeterminationMethod}{`character(1)` or `NA`. Background determination method.}
+
+\item{cqDetectionMethod}{`cqDetectionMethodType` or `NA`. Cq calculation method.}
+
+\item{thermalCyclingConditions}{`idReferenceType` or `NA`. Reference to thermal cycling
+conditions.}
+
+\item{pcrFormat}{`pcrFormatType` or `NA`. Plate/layout format.}
+
+\item{runDate}{Date-time value or `NA`. Date/time of the run.}
+
+\item{react}{Reaction-id-keyed list of `reactType` objects or `NA`.}
+}
 \description{
 One qPCR instrument run within an experiment. A run contains instrument/acquisition metadata and reactions. Inherits from `rdmlBaseType`.
 }

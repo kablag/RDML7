@@ -23,6 +23,35 @@ targetType(
   commercialAssay = NA
 )
 }
+\arguments{
+\item{id}{`idType`. Unique target identifier.}
+
+\item{description}{`character(1)` or `NA`. Target description.}
+
+\item{documentation}{List of `idReferenceType` objects or `NA`. Documentation references.}
+
+\item{xRef}{List of `xRefType` objects or `NA`. External references.}
+
+\item{type}{`targetTypeType`. Reference target or target of interest.}
+
+\item{amplificationEfficiencyMethod}{`character(1)` or `NA`. Method used to determine
+amplification efficiency.}
+
+\item{amplificationEfficiency}{`numeric(1)` or `NA`. Amplification efficiency.}
+
+\item{amplificationEfficiencySE}{`numeric(1)` or `NA`. Standard error of amplification
+efficiency.}
+
+\item{meltingTemperature}{`numeric(1)` or `NA`. Expected target melting temperature.}
+
+\item{detectionLimit}{`numeric(1)` or `NA`. Detection limit.}
+
+\item{dyeId}{`idReferenceType`. Reference to the detection dye.}
+
+\item{sequences}{`sequencesType` or `NA`. Primers/probes/amplicon.}
+
+\item{commercialAssay}{`commercialAssayType` or `NA`. Commercial assay metadata.}
+}
 \description{
 Description of a qPCR target, including dye, efficiency, sequence, and assay metadata. Inherits from `rdmlBaseType`.
 }

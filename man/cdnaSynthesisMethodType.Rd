@@ -14,6 +14,16 @@ cdnaSynthesisMethodType(
   thermalCyclingConditions = NA
 )
 }
+\arguments{
+\item{enzyme}{`character(1)` or `NA`. Reverse-transcriptase/enzyme description.}
+
+\item{primingMethod}{`primingMethodType` or `NA`. Priming strategy.}
+
+\item{dnaseTreatment}{`logical(1)` or `NA`. Whether DNase treatment was performed.}
+
+\item{thermalCyclingConditions}{`idReferenceType` or `NA`. Reference to the thermal program
+used for cDNA synthesis.}
+}
 \description{
 Description of reverse-transcription/cDNA-synthesis conditions. Inherits from `rdmlBaseType`.
 }

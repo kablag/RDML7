@@ -6,7 +6,6 @@
 \alias{GetFData}
 \alias{SetFData}
 \alias{AsDendrogram}
-\alias{asXML}
 \alias{MergeRDMLs}
 \alias{rdmlRead}
 \alias{rdmlWrite}

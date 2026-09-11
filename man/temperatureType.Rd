@@ -16,6 +16,19 @@ temperatureType(
   temperature = integer(0)
 )
 }
+\arguments{
+\item{duration}{Positive integer. Step duration.}
+
+\item{temperatureChange}{`numeric(1)` or `NA`. Temperature increment/decrement per cycle.}
+
+\item{durationChange}{`integer(1)` or `NA`. Duration increment/decrement per cycle.}
+
+\item{measure}{`measureType` or `NA`. Fluorescence measurement mode.}
+
+\item{ramp}{`numeric(1)` or `NA`. Ramp rate.}
+
+\item{temperature}{`numeric(1)`. Step temperature.}
+}
 \description{
 Fixed-temperature thermal-cycling step. Inherits from `temperatureBaseType`.
 }

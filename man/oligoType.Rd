@@ -13,6 +13,13 @@ oligoType(
   sequence = character(0)
 )
 }
+\arguments{
+\item{threePrimeTag}{`character(1)` or `NA`. Optional 3-prime modification/tag.}
+
+\item{fivePrimeTag}{`character(1)` or `NA`. Optional 5-prime modification/tag.}
+
+\item{sequence}{`character(1)`. Nucleotide sequence.}
+}
 \description{
 Oligonucleotide sequence used for a primer, probe, or amplicon definition. Inherits from `rdmlBaseType`.
 }

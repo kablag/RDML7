@@ -24,6 +24,9 @@ dpAmpCurveType(
     })()
 )
 }
+\arguments{
+\item{fpoints}{`data.table` containing `cyc` and `fluor`, with optional per-cycle `tmp`.}
+}
 \description{
 Amplification fluorescence curve. Inherits from `rdmlBaseType`.
 }

@@ -2,20 +2,6 @@
 % Please edit documentation in R/schema-docs.R
 \name{rdml-sample-target-types}
 \alias{rdml-sample-target-types}
-\alias{sampleTypeType}
-\alias{sampleTargetType}
-\alias{quantityUnitType}
-\alias{quantityType}
-\alias{primingMethodType}
-\alias{cdnaSynthesisMethodType}
-\alias{nucleotideType}
-\alias{templateQuantityType}
-\alias{sampleType}
-\alias{oligoType}
-\alias{sequencesType}
-\alias{commercialAssayType}
-\alias{targetTypeType}
-\alias{targetType}
 \title{Sample and target schema types}
 \description{
 S7 classes used to describe samples, quantities, targets, oligonucleotides,

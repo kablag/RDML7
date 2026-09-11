@@ -469,64 +469,66 @@ data.</p>
 <h2>Multiple Tm values</h2>
 <p>RDES allows several Tm values separated by semicolons without
 spaces:</p>
-<pre class="text"><code>82.9;73.6;69.8</code></pre>
+<pre class="text"><code>87.8;82.2</code></pre>
 <p>The RDML package preserves the full vector in the
 <code>meltTemp</code>. RDES export can write all values back. Standard
 RDML XML has a single <code>meltTemp</code>, but RDML7 package ignores
 that!</p>
-</div>
-<div id="strict-parsing" class="section level2">
-<h2>Strict parsing</h2>
 <div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a>rdesmeltsemi <span class="ot">&lt;-</span> <span class="fu">system.file</span>(</span>
 <span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a>  <span class="st">&quot;extdata&quot;</span>,</span>
 <span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a>  <span class="st">&quot;RDES_v1_0_example_melting_semicolon.tsv&quot;</span>,</span>
 <span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a>  <span class="at">package =</span> <span class="st">&quot;RDML7&quot;</span>)</span>
-<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>x <span class="ot">&lt;-</span> <span class="fu">readRDML</span>(</span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>meltsemi <span class="ot">&lt;-</span> <span class="fu">readRDML</span>(</span>
 <span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a>  rdesmeltsemi,</span>
-<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a>  <span class="at">format =</span> <span class="st">&quot;rdes&quot;</span>,</span>
-<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a>  <span class="at">strict =</span> <span class="cn">TRUE</span></span>
-<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a>)</span>
-<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a>x <span class="ot">&lt;-</span> <span class="fu">readRDML</span>(</span>
-<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a>  rdesmeltsemi,</span>
-<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a>  <span class="at">format =</span> <span class="st">&quot;rdes&quot;</span>,</span>
-<span id="cb6-13"><a href="#cb6-13" tabindex="-1"></a>  <span class="at">strict =</span> <span class="cn">FALSE</span></span>
-<span id="cb6-14"><a href="#cb6-14" tabindex="-1"></a>)</span></code></pre></div>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a>  <span class="at">format =</span> <span class="st">&quot;rdes&quot;</span></span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a>)</span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a>meltsemi<span class="sc">$</span>experiment<span class="sc">$</span>RDES<span class="sc">$</span>run<span class="sc">$</span>RDES_v1_0_example_melting_semicolon<span class="sc">$</span>react<span class="sc">$</span>A1<span class="sc">$</span>data<span class="sc">$</span><span class="st">`</span><span class="at">Exon 1</span><span class="st">`</span><span class="sc">$</span>meltTemp</span></code></pre></div>
+</div>
+<div id="strict-parsing" class="section level2">
+<h2>Strict parsing</h2>
+<p><em>RDES_v1_0_example_melting_semicolon.tsv</em> contains error:
+space after <em>;</em>.</p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="fu">readRDML</span>(</span>
+<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>  rdesmeltsemi,</span>
+<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>  <span class="at">format =</span> <span class="st">&quot;rdes&quot;</span>,</span>
+<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>  <span class="at">strict =</span> <span class="cn">TRUE</span></span>
+<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>)</span></code></pre></div>
 <p>The normal parser accepts and normalizes some practical text-file
 deviations; strict mode converts them into errors.</p>
 </div>
 <div id="export-amplification-or-melting-data" class="section level2">
 <h2>Export amplification or melting data</h2>
-<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" tabindex="-1"></a><span class="fu">writeRDML</span>(</span>
-<span id="cb7-2"><a href="#cb7-2" tabindex="-1"></a>  both,</span>
-<span id="cb7-3"><a href="#cb7-3" tabindex="-1"></a>  <span class="st">&quot;run_amplification.tsv&quot;</span>,</span>
-<span id="cb7-4"><a href="#cb7-4" tabindex="-1"></a>  <span class="at">format =</span> <span class="st">&quot;rdes&quot;</span>,</span>
-<span id="cb7-5"><a href="#cb7-5" tabindex="-1"></a>  <span class="at">expId =</span> <span class="st">&quot;exp1&quot;</span>,</span>
-<span id="cb7-6"><a href="#cb7-6" tabindex="-1"></a>  <span class="at">runId =</span> <span class="st">&quot;run1&quot;</span>,</span>
-<span id="cb7-7"><a href="#cb7-7" tabindex="-1"></a>  <span class="at">rdesType =</span> <span class="st">&quot;adp&quot;</span></span>
-<span id="cb7-8"><a href="#cb7-8" tabindex="-1"></a>)</span>
-<span id="cb7-9"><a href="#cb7-9" tabindex="-1"></a></span>
-<span id="cb7-10"><a href="#cb7-10" tabindex="-1"></a><span class="fu">writeRDML</span>(</span>
-<span id="cb7-11"><a href="#cb7-11" tabindex="-1"></a>  both,</span>
-<span id="cb7-12"><a href="#cb7-12" tabindex="-1"></a>  <span class="st">&quot;run_melting.tsv&quot;</span>,</span>
-<span id="cb7-13"><a href="#cb7-13" tabindex="-1"></a>  <span class="at">format =</span> <span class="st">&quot;rdes&quot;</span>,</span>
-<span id="cb7-14"><a href="#cb7-14" tabindex="-1"></a>  <span class="at">expId =</span> <span class="st">&quot;exp1&quot;</span>,</span>
-<span id="cb7-15"><a href="#cb7-15" tabindex="-1"></a>  <span class="at">runId =</span> <span class="st">&quot;run1&quot;</span>,</span>
-<span id="cb7-16"><a href="#cb7-16" tabindex="-1"></a>  <span class="at">rdesType =</span> <span class="st">&quot;mdp&quot;</span></span>
-<span id="cb7-17"><a href="#cb7-17" tabindex="-1"></a>)</span></code></pre></div>
-</div>
-<div id="export-both-rdes-files" class="section level2">
-<h2>Export both RDES files</h2>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a>paths <span class="ot">&lt;-</span> <span class="fu">writeRDML</span>(</span>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="fu">writeRDML</span>(</span>
 <span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>  both,</span>
-<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a>  <span class="st">&quot;run.tsv&quot;</span>,</span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a>  <span class="st">&quot;run_amplification.tsv&quot;</span>,</span>
 <span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a>  <span class="at">format =</span> <span class="st">&quot;rdes&quot;</span>,</span>
 <span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a>  <span class="at">expId =</span> <span class="st">&quot;exp1&quot;</span>,</span>
 <span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a>  <span class="at">runId =</span> <span class="st">&quot;run1&quot;</span>,</span>
-<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a>  <span class="at">rdesType =</span> <span class="st">&quot;both&quot;</span></span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a>  <span class="at">rdesType =</span> <span class="st">&quot;adp&quot;</span></span>
 <span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a>)</span>
 <span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a></span>
-<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a>paths[<span class="st">&quot;amplification&quot;</span>]</span>
-<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a>paths[<span class="st">&quot;melting&quot;</span>]</span></code></pre></div>
+<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a><span class="fu">writeRDML</span>(</span>
+<span id="cb8-11"><a href="#cb8-11" tabindex="-1"></a>  both,</span>
+<span id="cb8-12"><a href="#cb8-12" tabindex="-1"></a>  <span class="st">&quot;run_melting.tsv&quot;</span>,</span>
+<span id="cb8-13"><a href="#cb8-13" tabindex="-1"></a>  <span class="at">format =</span> <span class="st">&quot;rdes&quot;</span>,</span>
+<span id="cb8-14"><a href="#cb8-14" tabindex="-1"></a>  <span class="at">expId =</span> <span class="st">&quot;exp1&quot;</span>,</span>
+<span id="cb8-15"><a href="#cb8-15" tabindex="-1"></a>  <span class="at">runId =</span> <span class="st">&quot;run1&quot;</span>,</span>
+<span id="cb8-16"><a href="#cb8-16" tabindex="-1"></a>  <span class="at">rdesType =</span> <span class="st">&quot;mdp&quot;</span></span>
+<span id="cb8-17"><a href="#cb8-17" tabindex="-1"></a>)</span></code></pre></div>
+</div>
+<div id="export-both-rdes-files" class="section level2">
+<h2>Export both RDES files</h2>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a>paths <span class="ot">&lt;-</span> <span class="fu">writeRDML</span>(</span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a>  both,</span>
+<span id="cb9-3"><a href="#cb9-3" tabindex="-1"></a>  <span class="st">&quot;runboth.tsv&quot;</span>,</span>
+<span id="cb9-4"><a href="#cb9-4" tabindex="-1"></a>  <span class="at">format =</span> <span class="st">&quot;rdes&quot;</span>,</span>
+<span id="cb9-5"><a href="#cb9-5" tabindex="-1"></a>  <span class="at">expId =</span> <span class="st">&quot;exp1&quot;</span>,</span>
+<span id="cb9-6"><a href="#cb9-6" tabindex="-1"></a>  <span class="at">runId =</span> <span class="st">&quot;run1&quot;</span>,</span>
+<span id="cb9-7"><a href="#cb9-7" tabindex="-1"></a>  <span class="at">rdesType =</span> <span class="st">&quot;both&quot;</span></span>
+<span id="cb9-8"><a href="#cb9-8" tabindex="-1"></a>)</span>
+<span id="cb9-9"><a href="#cb9-9" tabindex="-1"></a></span>
+<span id="cb9-10"><a href="#cb9-10" tabindex="-1"></a>paths[<span class="st">&quot;amplification&quot;</span>]</span>
+<span id="cb9-11"><a href="#cb9-11" tabindex="-1"></a>paths[<span class="st">&quot;melting&quot;</span>]</span></code></pre></div>
 <p>The writer creates independent <code>_amplification</code> and
 <code>_melting</code> files.</p>
 </div>

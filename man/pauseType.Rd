@@ -9,6 +9,9 @@ An S7 class.
 \usage{
 pauseType(temperature = integer(0))
 }
+\arguments{
+\item{temperature}{`numeric(1)`. Pause temperature.}
+}
 \description{
 Pause instruction at a specified temperature. Inherits from `rdmlBaseType`.
 }

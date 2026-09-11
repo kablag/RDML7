@@ -48,6 +48,5 @@
 #' `validateRDML()`, `summary()`, `listRDMLFormats()`
 #'
 #' @name RDML-package
-#' @aliases RDML RDML-package
 #' @keywords internal
 "_PACKAGE"

@@ -6,6 +6,13 @@
 #' Contact details of an experimenter associated with an RDML document or
 #'  thermal cycling conditions. Inherits from `rdmlBaseType`.
 #'
+#' @param id `idType`. Unique experimenter identifier.
+#' @param firstName `character(1)`. First name.
+#' @param lastName `character(1)`. Last name.
+#' @param email `character(1)` or `NA`. E-mail address.
+#' @param labName `character(1)` or `NA`. Laboratory or organization name.
+#' @param labAddress `character(1)` or `NA`. Laboratory postal address.
+#'
 #' @format An S7 class.
 #'
 #' @section Properties:
@@ -43,6 +50,9 @@ experimenterType <- S7::new_class(
 #'  note is referenced by several samples, targets, runs, or experiments.
 #'  Inherits from `rdmlBaseType`.
 #'
+#' @param id `idType`. Unique documentation identifier.
+#' @param text `character(1)` or `NA`. Documentation text.
+#'
 #' @format An S7 class.
 #'
 #' @section Properties:
@@ -72,6 +82,9 @@ documentationType <- S7::new_class(
 #' dyeChemistryType S7 enumeration
 #'
 #' Fluorescence chemistry used by a dye or detection system.
+#'
+#' @param value `character(1)`. Enumeration value; must be one of the allowed values listed
+#'   below.
 #'
 #' @format An S7 class.
 #'
@@ -108,6 +121,10 @@ dyeChemistryType <-
 #'
 #' Description of a fluorescent dye or reporter used to detect a target. Inherits from `rdmlBaseType`.
 #'
+#' @param id `idType`. Unique dye identifier.
+#' @param description `character(1)` or `NA`. Human-readable dye description.
+#' @param dyeChemistry `dyeChemistryType` or `NA`. Detection chemistry.
+#'
 #' @format An S7 class.
 #'
 #' @section Properties:
@@ -132,11 +149,11 @@ dyeType <- S7::new_class(
         if (.isSingleNA(value)) {
           return(NULL)
         }
-
+        
         if (S7::S7_inherits(value, dyeChemistryType)) {
           return(NULL)
         }
-
+        
         "must be NA or a single dyeChemistryType"
       },
       default = NA
@@ -151,6 +168,9 @@ dyeType <- S7::new_class(
 #' xRefType S7 class
 #'
 #' External database or ontology cross-reference. Inherits from `rdmlBaseType`.
+#'
+#' @param name `character(1)` or `NA`. Name of the external reference system.
+#' @param id `character(1)` or `NA`. Identifier in that reference system.
 #'
 #' @format An S7 class.
 #'
@@ -180,6 +200,9 @@ xRefType <- S7::new_class(
 #'
 #' Free-form property/value annotation attached to a sample. Inherits from `rdmlBaseType`.
 #'
+#' @param property `character(1)` or `NA`. Annotation property name.
+#' @param value `character(1)` or `NA`. Annotation value.
+#'
 #' @format An S7 class.
 #'
 #' @section Properties:
@@ -190,7 +213,6 @@ xRefType <- S7::new_class(
 #'
 #' @seealso `sampleType`
 #' @export
-
 annotationType <- S7::new_class(
   "annotationType",
   parent = rdmlBaseType,
@@ -205,6 +227,9 @@ annotationType <- S7::new_class(
 #' sampleTypeType S7 enumeration
 #'
 #' Role of a sample for a particular target.
+#'
+#' @param value `character(1)`. Enumeration value; must be one of the allowed values listed
+#'   below.
 #'
 #' @format An S7 class.
 #'
@@ -236,6 +261,10 @@ sampleTypeType <- .newEnumClass(
 #'
 #' Sample role, optionally restricted to a target. If `targetId` is `NA`, the role applies to all targets unless a target-specific role overrides it. Inherits from `rdmlBaseType`.
 #'
+#' @param targetId `idReferenceType` or `NA`. Optional target reference; `NA` means that the
+#'   sample role is target-independent.
+#' @param sampleType `sampleTypeType`. Role of the sample for that target.
+#'
 #' @format An S7 class.
 #'
 #' @section Properties:
@@ -266,6 +295,9 @@ sampleTargetType <- S7::new_class(
 #' quantityUnitType S7 enumeration
 #'
 #' Unit used for a target-specific sample quantity.
+#'
+#' @param value `character(1)`. Enumeration value; must be one of the allowed values listed
+#'   below.
 #'
 #' @format An S7 class.
 #'
@@ -300,6 +332,10 @@ classQuantityUnitTypeNonemptySingle <- S7::new_property(
 #'
 #' Target-specific quantity assigned to a sample. Inherits from `rdmlBaseType`.
 #'
+#' @param targetId `idReferenceType`. Reference to the target.
+#' @param value `numeric(1)`. Quantity value.
+#' @param unit `quantityUnitType`. Unit of the quantity.
+#'
 #' @format An S7 class.
 #'
 #' @section Properties:
@@ -325,6 +361,9 @@ quantityType <- S7::new_class(
 #' primingMethodType S7 enumeration
 #'
 #' Priming strategy used for cDNA synthesis.
+#'
+#' @param value `character(1)`. Enumeration value; must be one of the allowed values listed
+#'   below.
 #'
 #' @format An S7 class.
 #'
@@ -355,6 +394,12 @@ primingMethodType <- .newEnumClass(
 #'
 #' Description of reverse-transcription/cDNA-synthesis conditions. Inherits from `rdmlBaseType`.
 #'
+#' @param enzyme `character(1)` or `NA`. Reverse-transcriptase/enzyme description.
+#' @param primingMethod `primingMethodType` or `NA`. Priming strategy.
+#' @param dnaseTreatment `logical(1)` or `NA`. Whether DNase treatment was performed.
+#' @param thermalCyclingConditions `idReferenceType` or `NA`. Reference to the thermal program
+#'   used for cDNA synthesis.
+#'
 #' @format An S7 class.
 #'
 #' @section Properties:
@@ -383,6 +428,9 @@ cdnaSynthesisMethodType <- S7::new_class(
 #'
 #' Nucleic-acid type of the template material.
 #'
+#' @param value `character(1)`. Enumeration value; must be one of the allowed values listed
+#'   below.
+#'
 #' @format An S7 class.
 #'
 #' @section Allowed values:
@@ -404,6 +452,9 @@ nucleotideType <- .newEnumClass(
 #' templateQuantityType S7 class
 #'
 #' Total template concentration together with the template nucleotide type. Inherits from `rdmlBaseType`.
+#'
+#' @param conc `numeric(1)`. Template concentration.
+#' @param nucleotide `nucleotideType`. Nucleic-acid type.
 #'
 #' @format An S7 class.
 #'
@@ -435,6 +486,21 @@ templateQuantityType <- S7::new_class(
 #' sampleType S7 class
 #'
 #' A qPCR sample/template solution. Dilutions with different concentrations are represented as different samples; technical replicates normally reference the same sample id, while biological replicates normally use different sample ids. Inherits from `rdmlBaseType`.
+#'
+#' @param id `idType`. Unique sample identifier.
+#' @param description `character(1)` or `NA`. Sample description.
+#' @param documentation List of `idReferenceType` objects or `NA`. References to reusable
+#'   documentation.
+#' @param xRef List of `xRefType` objects or `NA`. External references.
+#' @param annotation List of `annotationType` objects or `NA`. Sample annotations.
+#' @param type List of `sampleTargetType` objects or `NA`. Roles may be target-independent or
+#'   target-specific.
+#' @param interRunCalibrator `logical(1)` or `NA`. Marks an inter-run calibrator.
+#' @param quantity Target-keyed list of `quantityType` objects or `NA`. Target-specific
+#'   quantities.
+#' @param calibratorSample `logical(1)` or `NA`. Marks a calibrator sample.
+#' @param cdnaSynthesisMethod `cdnaSynthesisMethodType` or `NA`. cDNA synthesis metadata.
+#' @param templateQuantity `templateQuantityType` or `NA`. Template concentration/type.
 #'
 #' @format An S7 class.
 #'
@@ -481,6 +547,10 @@ sampleType <- S7::new_class(
 #'
 #' Oligonucleotide sequence used for a primer, probe, or amplicon definition. Inherits from `rdmlBaseType`.
 #'
+#' @param threePrimeTag `character(1)` or `NA`. Optional 3-prime modification/tag.
+#' @param fivePrimeTag `character(1)` or `NA`. Optional 5-prime modification/tag.
+#' @param sequence `character(1)`. Nucleotide sequence.
+#'
 #' @format An S7 class.
 #'
 #' @section Properties:
@@ -506,6 +576,12 @@ oligoType <- S7::new_class(
 #' sequencesType S7 class
 #'
 #' Primer, probe, and amplicon sequences associated with a target. Inherits from `rdmlBaseType`.
+#'
+#' @param forwardPrimer `oligoType` or `NA`. Forward primer.
+#' @param reversePrimer `oligoType` or `NA`. Reverse primer.
+#' @param probe1 `oligoType` or `NA`. First probe.
+#' @param probe2 `oligoType` or `NA`. Second probe.
+#' @param amplicon `oligoType` or `NA`. Amplicon sequence.
 #'
 #' @format An S7 class.
 #'
@@ -538,6 +614,9 @@ sequencesType <- S7::new_class(
 #'
 #' Commercial assay identification. Inherits from `rdmlBaseType`.
 #'
+#' @param company `character(1)`. Manufacturer/company.
+#' @param orderNumber `character(1)`. Catalogue or order number.
+#'
 #' @format An S7 class.
 #'
 #' @section Properties:
@@ -562,6 +641,9 @@ commercialAssayType <- S7::new_class(
 #'
 #' Functional role of a target.
 #'
+#' @param value `character(1)`. Enumeration value; must be one of the allowed values listed
+#'   below.
+#'
 #' @format An S7 class.
 #'
 #' @section Allowed values:
@@ -581,6 +663,22 @@ targetTypeType <-  .newEnumClass(
 #' targetType S7 class
 #'
 #' Description of a qPCR target, including dye, efficiency, sequence, and assay metadata. Inherits from `rdmlBaseType`.
+#'
+#' @param id `idType`. Unique target identifier.
+#' @param description `character(1)` or `NA`. Target description.
+#' @param documentation List of `idReferenceType` objects or `NA`. Documentation references.
+#' @param xRef List of `xRefType` objects or `NA`. External references.
+#' @param type `targetTypeType`. Reference target or target of interest.
+#' @param amplificationEfficiencyMethod `character(1)` or `NA`. Method used to determine
+#'   amplification efficiency.
+#' @param amplificationEfficiency `numeric(1)` or `NA`. Amplification efficiency.
+#' @param amplificationEfficiencySE `numeric(1)` or `NA`. Standard error of amplification
+#'   efficiency.
+#' @param meltingTemperature `numeric(1)` or `NA`. Expected target melting temperature.
+#' @param detectionLimit `numeric(1)` or `NA`. Detection limit.
+#' @param dyeId `idReferenceType`. Reference to the detection dye.
+#' @param sequences `sequencesType` or `NA`. Primers/probes/amplicon.
+#' @param commercialAssay `commercialAssayType` or `NA`. Commercial assay metadata.
 #'
 #' @format An S7 class.
 #'
@@ -631,6 +729,9 @@ targetType <- S7::new_class(
 #'
 #' Fluorescence measurement mode used in a thermal-cycling step.
 #'
+#' @param value `character(1)`. Enumeration value; must be one of the allowed values listed
+#'   below.
+#'
 #' @format An S7 class.
 #'
 #' @section Allowed values:
@@ -651,6 +752,12 @@ measureType <-  .newEnumClass(
 #' temperatureBaseType S7 class
 #'
 #' Base class for thermal steps with duration, measurement, ramp, and per-cycle changes. Inherits from `rdmlBaseType`.
+#'
+#' @param duration Positive integer. Step duration.
+#' @param temperatureChange `numeric(1)` or `NA`. Temperature increment/decrement per cycle.
+#' @param durationChange `integer(1)` or `NA`. Duration increment/decrement per cycle.
+#' @param measure `measureType` or `NA`. Fluorescence measurement mode.
+#' @param ramp `numeric(1)` or `NA`. Ramp rate.
 #'
 #' @format An S7 class.
 #'
@@ -682,6 +789,13 @@ temperatureBaseType <- S7::new_class(
 #'
 #' Fixed-temperature thermal-cycling step. Inherits from `temperatureBaseType`.
 #'
+#' @param duration Positive integer. Step duration.
+#' @param temperatureChange `numeric(1)` or `NA`. Temperature increment/decrement per cycle.
+#' @param durationChange `integer(1)` or `NA`. Duration increment/decrement per cycle.
+#' @param measure `measureType` or `NA`. Fluorescence measurement mode.
+#' @param ramp `numeric(1)` or `NA`. Ramp rate.
+#' @param temperature `numeric(1)`. Step temperature.
+#'
 #' @format An S7 class.
 #'
 #' @section Properties:
@@ -703,6 +817,14 @@ temperatureType <- S7::new_class(
 #' gradientType S7 class
 #'
 #' Temperature-gradient step. Inherits from `temperatureBaseType`.
+#'
+#' @param duration Positive integer. Step duration.
+#' @param temperatureChange `numeric(1)` or `NA`. Temperature increment/decrement per cycle.
+#' @param durationChange `integer(1)` or `NA`. Duration increment/decrement per cycle.
+#' @param measure `measureType` or `NA`. Fluorescence measurement mode.
+#' @param ramp `numeric(1)` or `NA`. Ramp rate.
+#' @param highTemperature `numeric(1)`. High end of the gradient.
+#' @param lowTemperature `numeric(1)`. Low end of the gradient.
 #'
 #' @format An S7 class.
 #'
@@ -728,6 +850,9 @@ gradientType <- S7::new_class(
 #'
 #' Loop instruction in a thermal-cycling program. Inherits from `rdmlBaseType`.
 #'
+#' @param goto Positive integer. Number of the step to return to.
+#' @param repeat Positive integer. Number of loop repetitions.
+#'
 #' @format An S7 class.
 #'
 #' @section Properties:
@@ -751,6 +876,8 @@ loopType <- S7::new_class(
 #' pauseType S7 class
 #'
 #' Pause instruction at a specified temperature. Inherits from `rdmlBaseType`.
+#'
+#' @param temperature `numeric(1)`. Pause temperature.
 #'
 #' @format An S7 class.
 #'
@@ -792,6 +919,14 @@ lidOpenType <- S7::new_class(
 #'
 #' One numbered step of a thermal-cycling program. Exactly one of the action properties normally describes the operation performed by the step. Inherits from `rdmlBaseType`.
 #'
+#' @param nr Positive integer. Step number.
+#' @param description `character(1)` or `NA`. Step description.
+#' @param temperature `temperatureType` or `NA`. Fixed-temperature action.
+#' @param gradient `gradientType` or `NA`. Gradient action.
+#' @param loop `loopType` or `NA`. Loop action.
+#' @param pause `pauseType` or `NA`. Pause action.
+#' @param lidOpen `lidOpenType` or `NA`. Lid-open action.
+#'
 #' @format An S7 class.
 #'
 #' @section Properties:
@@ -825,6 +960,13 @@ stepType <- S7::new_class(
 #' thermalCyclingConditionsType S7 class
 #'
 #' A reusable thermal-cycling program referenced by runs or cDNA-synthesis metadata. Inherits from `rdmlBaseType`.
+#'
+#' @param id `idType`. Unique program identifier.
+#' @param description `character(1)` or `NA`. Program description.
+#' @param documentation List of `idReferenceType` objects or `NA`. Documentation references.
+#' @param lidTemperature `numeric(1)` or `NA`. Heated-lid temperature.
+#' @param experimenter List of `idReferenceType` objects or `NA`. Experimenter references.
+#' @param step List of `stepType` objects. Ordered program steps.
 #'
 #' @format An S7 class.
 #'
@@ -861,6 +1003,8 @@ thermalCyclingConditionsType <- S7::new_class(
 #'
 #' Amplification fluorescence curve. Inherits from `rdmlBaseType`.
 #'
+#' @param fpoints `data.table` containing `cyc` and `fluor`, with optional per-cycle `tmp`.
+#'
 #' @format An S7 class.
 #'
 #' @section Properties:
@@ -888,6 +1032,8 @@ dpAmpCurveType <- S7::new_class(
 #' dpMeltingCurveType S7 class
 #'
 #' Melting fluorescence curve. Inherits from `rdmlBaseType`.
+#'
+#' @param fpoints `data.table` containing `tmp` and `fluor`.
 #'
 #' @format An S7 class.
 #'
@@ -922,6 +1068,24 @@ dpMeltingCurveType <- S7::new_class(
 #'
 #' Target-specific qPCR result data for one reaction. It stores calculated results and optional amplification and melting fluorescence curves. Inherits from `rdmlBaseType`.
 #'
+#' @param targetId `idReferenceType`. Reference to the target.
+#' @param cq `numeric(1)` or `NA`. Quantification cycle (Cq).
+#' @param N0 `numeric(1)` or `NA`. Estimated initial template quantity.
+#' @param ampEffMet `character(1)` or `NA`. Amplification-efficiency method.
+#' @param ampEff `numeric(1)` or `NA`. Amplification efficiency.
+#' @param ampEffSE `numeric(1)` or `NA`. Standard error of amplification efficiency.
+#' @param corrF `numeric(1)` or `NA`. Fluorescence correction factor.
+#' @param corrP `numeric(1)` or `NA`. Correction parameter.
+#' @param meltTemp Numeric vector or `NA`. One or more melting temperatures.
+#' @param excl `character(1)` or `NA`. Exclusion information.
+#' @param note `character(1)` or `NA`. Free-text note.
+#' @param adp `dpAmpCurveType` or `NA`. Amplification curve.
+#' @param mdp `dpMeltingCurveType` or `NA`. Melting curve.
+#' @param endPt `numeric(1)` or `NA`. End-point fluorescence/result.
+#' @param bgFluor `numeric(1)` or `NA`. Background fluorescence.
+#' @param bgFluorSlp `numeric(1)` or `NA`. Background-fluorescence slope.
+#' @param quantFluor `numeric(1)` or `NA`. Quantification fluorescence.
+#'
 #' @format An S7 class.
 #'
 #' @section Properties:
@@ -950,28 +1114,28 @@ dpMeltingCurveType <- S7::new_class(
 
 dataType <- 
   S7::new_class("dataType",
-            parent = rdmlBaseType,
-            properties = list(
-              targetId = .testClass("idReferenceType"),
-              cq = classNumberNASingle,
-              N0 = classNumberNASingle,
-              ampEffMet = classCharacterNANonemptySingle,
-              ampEff = classNumberNASingle,
-              ampEffSE = classNumberNASingle,
-              corrF = classNumberNASingle,
-              corrP = classNumberNASingle,
-              # Package extension: RDES can represent multiple measured Tm
-              # values while the RDML schema has a single meltTemp element.
-              meltTemp = classNumberNAVector,
-              excl = classCharacterNANonemptySingle,
-              note = classCharacterNANonemptySingle,
-              adp = .testClassNA("dpAmpCurveType"),
-              mdp = .testClassNA("dpMeltingCurveType"),
-              endPt = classNumberNASingle,
-              bgFluor = classNumberNASingle,
-              bgFluorSlp = classNumberNASingle,
-              quantFluor = classNumberNASingle
-            ))
+                parent = rdmlBaseType,
+                properties = list(
+                  targetId = .testClass("idReferenceType"),
+                  cq = classNumberNASingle,
+                  N0 = classNumberNASingle,
+                  ampEffMet = classCharacterNANonemptySingle,
+                  ampEff = classNumberNASingle,
+                  ampEffSE = classNumberNASingle,
+                  corrF = classNumberNASingle,
+                  corrP = classNumberNASingle,
+                  # Package extension: RDES can represent multiple measured Tm
+                  # values while the RDML schema has a single meltTemp element.
+                  meltTemp = classNumberNAVector,
+                  excl = classCharacterNANonemptySingle,
+                  note = classCharacterNANonemptySingle,
+                  adp = .testClassNA("dpAmpCurveType"),
+                  mdp = .testClassNA("dpMeltingCurveType"),
+                  endPt = classNumberNASingle,
+                  bgFluor = classNumberNASingle,
+                  bgFluorSlp = classNumberNASingle,
+                  quantFluor = classNumberNASingle
+                ))
 
 
 # partitionDataType -------------------------------------------------------
@@ -979,6 +1143,15 @@ dataType <-
 #' partitionDataType S7 class
 #'
 #' Target-specific digital-PCR partition result data. Inherits from `rdmlBaseType`.
+#'
+#' @param targetId `idReferenceType`. Reference to the target.
+#' @param excluded `character(1)` or `NA`. Exclusion information.
+#' @param note `character(1)` or `NA`. Note.
+#' @param pos Positive integer. Positive partitions.
+#' @param neg Positive integer. Negative partitions.
+#' @param undef Positive integer or `NA`. Undefined partitions.
+#' @param excl Positive integer or `NA`. Excluded partitions.
+#' @param conc `numeric(1)` or `NA`. Calculated concentration.
 #'
 #' @format An S7 class.
 #'
@@ -999,17 +1172,17 @@ dataType <-
 
 partitionDataType <- 
   S7::new_class("partitionDataType",
-            parent = rdmlBaseType,
-            properties = list(
-              targetId = .testClass("idReferenceType"),
-              excluded = classCharacterNANonemptySingle,
-              note = classCharacterNANonemptySingle,
-              pos = classPositiveIntegerSingle,
-              neg = classPositiveIntegerSingle,
-              undef = classPositiveIntegerNASingle,
-              excl = classPositiveIntegerNASingle,
-              conc = classNumberNASingle
-            ))
+                parent = rdmlBaseType,
+                properties = list(
+                  targetId = .testClass("idReferenceType"),
+                  excluded = classCharacterNANonemptySingle,
+                  note = classCharacterNANonemptySingle,
+                  pos = classPositiveIntegerSingle,
+                  neg = classPositiveIntegerSingle,
+                  undef = classPositiveIntegerNASingle,
+                  excl = classPositiveIntegerNASingle,
+                  conc = classNumberNASingle
+                ))
 
 
 # partitionsType ----------------------------------------------------------
@@ -1017,6 +1190,10 @@ partitionDataType <-
 #' partitionsType S7 class
 #'
 #' Digital-PCR partition metadata and target-specific partition results. Inherits from `rdmlBaseType`.
+#'
+#' @param volume `numeric(1)`. Partition volume.
+#' @param endPtTable `character(1)` or `NA`. Optional endpoint-table representation/reference.
+#' @param data Target-keyed list of `partitionDataType` objects or `NA`.
 #'
 #' @format An S7 class.
 #'
@@ -1051,6 +1228,11 @@ partitionsType <- S7::new_class(
 #' reactType S7 class
 #'
 #' One reaction/well within a run. It references a sample and stores target-specific qPCR or digital-PCR results. Inherits from `rdmlBaseType`.
+#'
+#' @param id `idType`. Reaction identifier or well position.
+#' @param sample `idReferenceType`. Reference to the sample.
+#' @param data Target-keyed list of `dataType` objects or `NA`.
+#' @param partitions List of `partitionsType` objects or `NA`.
 #'
 #' @format An S7 class.
 #'
@@ -1089,6 +1271,9 @@ reactType <- S7::new_class(
 #'
 #' Software used by the instrument to collect qPCR data. Inherits from `rdmlBaseType`.
 #'
+#' @param name `character(1)`. Software name.
+#' @param version `character(1)`. Software version.
+#'
 #' @format An S7 class.
 #'
 #' @section Properties:
@@ -1102,11 +1287,11 @@ reactType <- S7::new_class(
 
 dataCollectionSoftwareType <- 
   S7::new_class("dataCollectionSoftwareType",
-            parent = rdmlBaseType,
-            properties = list(
-              name = classCharacterNonemptySingle,
-              version = classCharacterNonemptySingle
-            ))
+                parent = rdmlBaseType,
+                properties = list(
+                  name = classCharacterNonemptySingle,
+                  version = classCharacterNonemptySingle
+                ))
 
 
 
@@ -1115,6 +1300,9 @@ dataCollectionSoftwareType <-
 #' labelFormatType S7 enumeration
 #'
 #' Labeling convention used for plate rows or columns.
+#'
+#' @param value `character(1)`. Enumeration value; must be one of the allowed values listed
+#'   below.
 #'
 #' @format An S7 class.
 #'
@@ -1142,6 +1330,11 @@ labelFormatType <-
 #'
 #' PCR plate or reaction-layout dimensions and labeling conventions. Inherits from `rdmlBaseType`.
 #'
+#' @param rows Positive integer. Number of rows.
+#' @param columns Positive integer. Number of columns.
+#' @param rowLabel `labelFormatType`. Row-label convention.
+#' @param columnLabel `labelFormatType`. Column-label convention.
+#'
 #' @format An S7 class.
 #'
 #' @section Properties:
@@ -1157,19 +1350,22 @@ labelFormatType <-
 
 pcrFormatType <- 
   S7::new_class("pcrFormatType",
-            parent = rdmlBaseType,
-            properties = list(
-              rows = classPositiveIntegerSingle,
-              columns = classPositiveIntegerSingle,
-              rowLabel = .testClass("labelFormatType"),
-              columnLabel = .testClass("labelFormatType")
-            ))
+                parent = rdmlBaseType,
+                properties = list(
+                  rows = classPositiveIntegerSingle,
+                  columns = classPositiveIntegerSingle,
+                  rowLabel = .testClass("labelFormatType"),
+                  columnLabel = .testClass("labelFormatType")
+                ))
 
 # cqDetectionMethodType ---------------------------------------------------
 
 #' cqDetectionMethodType S7 enumeration
 #'
 #' Method used to determine Cq values.
+#'
+#' @param value `character(1)`. Enumeration value; must be one of the allowed values listed
+#'   below.
 #'
 #' @format An S7 class.
 #'
@@ -1186,10 +1382,10 @@ pcrFormatType <-
 
 cqDetectionMethodType <-
   .newEnumClass("cqDetectionMethodType",
-                 c("automated threshold and baseline settings",
-                   "manual threshold and baseline settings",
-                   "second derivative maximum",
-                   "other")
+                c("automated threshold and baseline settings",
+                  "manual threshold and baseline settings",
+                  "second derivative maximum",
+                  "other")
   )
 
 # runType -----------------------------------------------------------------
@@ -1197,6 +1393,20 @@ cqDetectionMethodType <-
 #' runType S7 class
 #'
 #' One qPCR instrument run within an experiment. A run contains instrument/acquisition metadata and reactions. Inherits from `rdmlBaseType`.
+#'
+#' @param id `idType`. Unique run identifier within the experiment.
+#' @param description `character(1)` or `NA`. Run description.
+#' @param documentation List of `idReferenceType` objects or `NA`. Documentation references.
+#' @param experimenter List of `idReferenceType` objects or `NA`. Experimenter references.
+#' @param instrument `character(1)` or `NA`. Instrument description.
+#' @param dataCollectionSoftware `dataCollectionSoftwareType` or `NA`. Acquisition software.
+#' @param backgroundDeterminationMethod `character(1)` or `NA`. Background determination method.
+#' @param cqDetectionMethod `cqDetectionMethodType` or `NA`. Cq calculation method.
+#' @param thermalCyclingConditions `idReferenceType` or `NA`. Reference to thermal cycling
+#'   conditions.
+#' @param pcrFormat `pcrFormatType` or `NA`. Plate/layout format.
+#' @param runDate Date-time value or `NA`. Date/time of the run.
+#' @param react Reaction-id-keyed list of `reactType` objects or `NA`.
 #'
 #' @format An S7 class.
 #'
@@ -1249,6 +1459,11 @@ runType <- S7::new_class(
 #'
 #' A qPCR experiment. One experiment may contain several instrument runs. Inherits from `rdmlBaseType`.
 #'
+#' @param id `idType`. Unique experiment identifier.
+#' @param description `character(1)` or `NA`. Experiment description.
+#' @param documentation List of `idReferenceType` objects or `NA`. Documentation references.
+#' @param run Run-id-keyed list of `runType` objects or `NA`.
+#'
 #' @format An S7 class.
 #'
 #' @section Properties:
@@ -1284,6 +1499,10 @@ experimentType <- S7::new_class(
 #'
 #' Publisher identifier for an RDML document. Inherits from `rdmlBaseType`.
 #'
+#' @param publisher `character(1)`. Publisher/producer identifier.
+#' @param serialNumber `character(1)`. Serial number assigned by the publisher.
+#' @param MD5Hash `character(1)` or `NA`. Optional MD5 hash.
+#'
 #' @format An S7 class.
 #'
 #' @section Properties:
@@ -1298,12 +1517,12 @@ experimentType <- S7::new_class(
 
 rdmlIdType <- 
   S7::new_class("rdmlIdType",
-            parent = rdmlBaseType,
-            properties = list(
-              publisher = classCharacterNonemptySingle,
-              serialNumber = classCharacterNonemptySingle,
-              MD5Hash = classCharacterNANonemptySingle
-            ))
+                parent = rdmlBaseType,
+                properties = list(
+                  publisher = classCharacterNonemptySingle,
+                  serialNumber = classCharacterNonemptySingle,
+                  MD5Hash = classCharacterNANonemptySingle
+                ))
 
 
 
@@ -1313,6 +1532,18 @@ rdmlIdType <-
 #' rdmlType S7 class
 #'
 #' Top-level container representing one RDML document. Its structure mirrors the RDML schema and stores reusable metadata together with experiments and runs. Inherits from `rdmlBaseType`.
+#'
+#' @param dateMade Date-time value or `NA`. Document creation date.
+#' @param dateUpdated Date-time value or `NA`. Last update date.
+#' @param id List of `rdmlIdType` objects or `NA`. Publisher identifiers.
+#' @param experimenter Experimenter-id-keyed list of `experimenterType` objects or `NA`.
+#' @param documentation Documentation-id-keyed list of `documentationType` objects or `NA`.
+#' @param dye Dye-id-keyed list of `dyeType` objects or `NA`.
+#' @param sample Sample-id-keyed list of `sampleType` objects or `NA`.
+#' @param target Target-id-keyed list of `targetType` objects or `NA`.
+#' @param thermalCyclingConditions Id-keyed list of `thermalCyclingConditionsType` objects or
+#'   `NA`.
+#' @param experiment Experiment-id-keyed list of `experimentType` objects or `NA`.
 #'
 #' @format An S7 class.
 #'

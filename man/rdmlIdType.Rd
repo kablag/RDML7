@@ -13,6 +13,13 @@ rdmlIdType(
   MD5Hash = NA_character_
 )
 }
+\arguments{
+\item{publisher}{`character(1)`. Publisher/producer identifier.}
+
+\item{serialNumber}{`character(1)`. Serial number assigned by the publisher.}
+
+\item{MD5Hash}{`character(1)` or `NA`. Optional MD5 hash.}
+}
 \description{
 Publisher identifier for an RDML document. Inherits from `rdmlBaseType`.
 }

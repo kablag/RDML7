@@ -14,6 +14,15 @@ pcrFormatType(
   columnLabel = NA
 )
 }
+\arguments{
+\item{rows}{Positive integer. Number of rows.}
+
+\item{columns}{Positive integer. Number of columns.}
+
+\item{rowLabel}{`labelFormatType`. Row-label convention.}
+
+\item{columnLabel}{`labelFormatType`. Column-label convention.}
+}
 \description{
 PCR plate or reaction-layout dimensions and labeling conventions. Inherits from `rdmlBaseType`.
 }

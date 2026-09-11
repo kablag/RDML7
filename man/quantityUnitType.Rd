@@ -9,6 +9,10 @@ An S7 class.
 \usage{
 quantityUnitType(value = "")
 }
+\arguments{
+\item{value}{`character(1)`. Enumeration value; must be one of the allowed values listed
+below.}
+}
 \description{
 Unit used for a target-specific sample quantity.
 }

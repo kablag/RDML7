@@ -9,6 +9,13 @@ An S7 class.
 \usage{
 dyeType(id = NULL, description = NA_character_, dyeChemistry = NA)
 }
+\arguments{
+\item{id}{`idType`. Unique dye identifier.}
+
+\item{description}{`character(1)` or `NA`. Human-readable dye description.}
+
+\item{dyeChemistry}{`dyeChemistryType` or `NA`. Detection chemistry.}
+}
 \description{
 Description of a fluorescent dye or reporter used to detect a target. Inherits from `rdmlBaseType`.
 }

@@ -20,6 +20,28 @@ rdmlType(
   experiment = NA
 )
 }
+\arguments{
+\item{dateMade}{Date-time value or `NA`. Document creation date.}
+
+\item{dateUpdated}{Date-time value or `NA`. Last update date.}
+
+\item{id}{List of `rdmlIdType` objects or `NA`. Publisher identifiers.}
+
+\item{experimenter}{Experimenter-id-keyed list of `experimenterType` objects or `NA`.}
+
+\item{documentation}{Documentation-id-keyed list of `documentationType` objects or `NA`.}
+
+\item{dye}{Dye-id-keyed list of `dyeType` objects or `NA`.}
+
+\item{sample}{Sample-id-keyed list of `sampleType` objects or `NA`.}
+
+\item{target}{Target-id-keyed list of `targetType` objects or `NA`.}
+
+\item{thermalCyclingConditions}{Id-keyed list of `thermalCyclingConditionsType` objects or
+`NA`.}
+
+\item{experiment}{Experiment-id-keyed list of `experimentType` objects or `NA`.}
+}
 \description{
 Top-level container representing one RDML document. Its structure mirrors the RDML schema and stores reusable metadata together with experiments and runs. Inherits from `rdmlBaseType`.
 }

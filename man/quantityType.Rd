@@ -9,6 +9,13 @@ An S7 class.
 \usage{
 quantityType(targetId = NA, value = integer(0), unit = quantityUnitType())
 }
+\arguments{
+\item{targetId}{`idReferenceType`. Reference to the target.}
+
+\item{value}{`numeric(1)`. Quantity value.}
+
+\item{unit}{`quantityUnitType`. Unit of the quantity.}
+}
 \description{
 Target-specific quantity assigned to a sample. Inherits from `rdmlBaseType`.
 }

@@ -14,6 +14,15 @@ experimentType(
   run = NA
 )
 }
+\arguments{
+\item{id}{`idType`. Unique experiment identifier.}
+
+\item{description}{`character(1)` or `NA`. Experiment description.}
+
+\item{documentation}{List of `idReferenceType` objects or `NA`. Documentation references.}
+
+\item{run}{Run-id-keyed list of `runType` objects or `NA`.}
+}
 \description{
 A qPCR experiment. One experiment may contain several instrument runs. Inherits from `rdmlBaseType`.
 }

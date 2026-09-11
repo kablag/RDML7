@@ -2,15 +2,6 @@
 % Please edit documentation in R/schema-docs.R
 \name{rdml-thermal-types}
 \alias{rdml-thermal-types}
-\alias{measureType}
-\alias{temperatureBaseType}
-\alias{temperatureType}
-\alias{gradientType}
-\alias{loopType}
-\alias{pauseType}
-\alias{lidOpenType}
-\alias{stepType}
-\alias{thermalCyclingConditionsType}
 \title{Thermal-cycling schema types}
 \description{
 S7 types used to represent PCR and melting thermal programs.

@@ -9,6 +9,12 @@ An S7 class.
 \usage{
 sampleTargetType(targetId = NA, sampleType = sampleTypeType())
 }
+\arguments{
+\item{targetId}{`idReferenceType` or `NA`. Optional target reference; `NA` means that the
+sample role is target-independent.}
+
+\item{sampleType}{`sampleTypeType`. Role of the sample for that target.}
+}
 \description{
 Sample role, optionally restricted to a target. If `targetId` is `NA`, the role applies to all targets unless a target-specific role overrides it. Inherits from `rdmlBaseType`.
 }

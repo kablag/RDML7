@@ -15,6 +15,17 @@ temperatureBaseType(
   ramp = NA_real_
 )
 }
+\arguments{
+\item{duration}{Positive integer. Step duration.}
+
+\item{temperatureChange}{`numeric(1)` or `NA`. Temperature increment/decrement per cycle.}
+
+\item{durationChange}{`integer(1)` or `NA`. Duration increment/decrement per cycle.}
+
+\item{measure}{`measureType` or `NA`. Fluorescence measurement mode.}
+
+\item{ramp}{`numeric(1)` or `NA`. Ramp rate.}
+}
 \description{
 Base class for thermal steps with duration, measurement, ramp, and per-cycle changes. Inherits from `rdmlBaseType`.
 }

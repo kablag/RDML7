@@ -18,6 +18,23 @@ partitionDataType(
   conc = NA_real_
 )
 }
+\arguments{
+\item{targetId}{`idReferenceType`. Reference to the target.}
+
+\item{excluded}{`character(1)` or `NA`. Exclusion information.}
+
+\item{note}{`character(1)` or `NA`. Note.}
+
+\item{pos}{Positive integer. Positive partitions.}
+
+\item{neg}{Positive integer. Negative partitions.}
+
+\item{undef}{Positive integer or `NA`. Undefined partitions.}
+
+\item{excl}{Positive integer or `NA`. Excluded partitions.}
+
+\item{conc}{`numeric(1)` or `NA`. Calculated concentration.}
+}
 \description{
 Target-specific digital-PCR partition result data. Inherits from `rdmlBaseType`.
 }

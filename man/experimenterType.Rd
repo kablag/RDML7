@@ -16,6 +16,19 @@ experimenterType(
   labAddress = NA_character_
 )
 }
+\arguments{
+\item{id}{`idType`. Unique experimenter identifier.}
+
+\item{firstName}{`character(1)`. First name.}
+
+\item{lastName}{`character(1)`. Last name.}
+
+\item{email}{`character(1)` or `NA`. E-mail address.}
+
+\item{labName}{`character(1)` or `NA`. Laboratory or organization name.}
+
+\item{labAddress}{`character(1)` or `NA`. Laboratory postal address.}
+}
 \description{
 Contact details of an experimenter associated with an RDML document or
  thermal cycling conditions. Inherits from `rdmlBaseType`.

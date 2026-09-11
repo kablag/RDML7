@@ -17,6 +17,21 @@ stepType(
   lidOpen = NA
 )
 }
+\arguments{
+\item{nr}{Positive integer. Step number.}
+
+\item{description}{`character(1)` or `NA`. Step description.}
+
+\item{temperature}{`temperatureType` or `NA`. Fixed-temperature action.}
+
+\item{gradient}{`gradientType` or `NA`. Gradient action.}
+
+\item{loop}{`loopType` or `NA`. Loop action.}
+
+\item{pause}{`pauseType` or `NA`. Pause action.}
+
+\item{lidOpen}{`lidOpenType` or `NA`. Lid-open action.}
+}
 \description{
 One numbered step of a thermal-cycling program. Exactly one of the action properties normally describes the operation performed by the step. Inherits from `rdmlBaseType`.
 }

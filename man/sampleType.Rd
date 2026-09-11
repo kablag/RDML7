@@ -21,6 +21,32 @@ sampleType(
   templateQuantity = NA
 )
 }
+\arguments{
+\item{id}{`idType`. Unique sample identifier.}
+
+\item{description}{`character(1)` or `NA`. Sample description.}
+
+\item{documentation}{List of `idReferenceType` objects or `NA`. References to reusable
+documentation.}
+
+\item{xRef}{List of `xRefType` objects or `NA`. External references.}
+
+\item{annotation}{List of `annotationType` objects or `NA`. Sample annotations.}
+
+\item{type}{List of `sampleTargetType` objects or `NA`. Roles may be target-independent or
+target-specific.}
+
+\item{interRunCalibrator}{`logical(1)` or `NA`. Marks an inter-run calibrator.}
+
+\item{quantity}{Target-keyed list of `quantityType` objects or `NA`. Target-specific
+quantities.}
+
+\item{calibratorSample}{`logical(1)` or `NA`. Marks a calibrator sample.}
+
+\item{cdnaSynthesisMethod}{`cdnaSynthesisMethodType` or `NA`. cDNA synthesis metadata.}
+
+\item{templateQuantity}{`templateQuantityType` or `NA`. Template concentration/type.}
+}
 \description{
 A qPCR sample/template solution. Dilutions with different concentrations are represented as different samples; technical replicates normally reference the same sample id, while biological replicates normally use different sample ids. Inherits from `rdmlBaseType`.
 }

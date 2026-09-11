@@ -9,6 +9,11 @@ An S7 class.
 \usage{
 loopType(goto = integer(0), `repeat` = integer(0))
 }
+\arguments{
+\item{goto}{Positive integer. Number of the step to return to.}
+
+\item{repeat}{Positive integer. Number of loop repetitions.}
+}
 \description{
 Loop instruction in a thermal-cycling program. Inherits from `rdmlBaseType`.
 }

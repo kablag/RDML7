@@ -9,6 +9,10 @@ An S7 class.
 \usage{
 measureType(value = "")
 }
+\arguments{
+\item{value}{`character(1)`. Enumeration value; must be one of the allowed values listed
+below.}
+}
 \description{
 Fluorescence measurement mode used in a thermal-cycling step.
 }
