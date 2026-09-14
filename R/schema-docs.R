@@ -19,6 +19,7 @@
 #' }
 #'
 #' @seealso `idType`, `idReferenceType`, `rdmlType`
+#' @name metadata-schema-types
 NULL
 
 

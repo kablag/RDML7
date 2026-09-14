@@ -79,7 +79,7 @@ Each `dataType` becomes one row.
 The recommended API uses `columns` to select built-in columns and named
 expressions in `...` to add custom columns. `namePattern` may be a string
 template such as
-`"{expId}_{position}_{sample}_{sampleType}_{target}"`.
+`"\{expId\}_\{position\}_\{sample\}_\{sampleType\}_\{target\}"`.
 
 Two levels of values are available when creating table columns.
 
@@ -105,7 +105,7 @@ available to `namePattern` under the custom column name.
 For example:
 
 `asTable(x, cq = S7::prop(data, "cq"),
-  namePattern = "{expId}_{position}_{sample}_{cq}_{target}")`
+  namePattern = "\{expId\}_\{position\}_\{sample\}_\{cq\}_\{target\}")`
 
 `default` and `addColumns` are retained for compatibility with earlier
 versions. New code should use `columns` and `...`.
