@@ -7,9 +7,9 @@
 rdmlKeyedList(x = list(), key = "id")
 }
 \arguments{
-\item{key}{Property used as the virtual key.}
+\item{x}{List of schema objects.}
 
-\item{data}{List of schema objects.}
+\item{key}{Property used as the virtual key.}
 }
 \value{
 An `rdmlKeyedList` S7 object.

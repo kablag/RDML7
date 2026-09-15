@@ -18,9 +18,9 @@ setFData(
 )
 }
 \arguments{
-\item{x}{`rdmlType`.}
+\item{x}{Object to modify.}
 
-\item{...}{Reserved for extensions.}
+\item{...}{Method-specific arguments.}
 
 \item{fdata}{Matrix/data.frame/data.table. First column is `cyc` or `tmp`;
 remaining fluorescence columns are matched to `description$fdataName`.}
@@ -34,14 +34,17 @@ schema objects are created.}
 \item{conflict}{`"error"`, `"keep"`, or `"replace"`.}
 }
 \value{
-Modified `rdmlType`; assign it back to keep changes.
-
-Modified `rdmlType`.
+The modified object; assign it back to keep changes.
 }
 \description{
+Add or replace fluorescence data
+}
+\section{`rdmlType` method}{
+
 Missing experiments, runs, reactions, samples, targets, and dyes are
 created as needed. RDML uses value semantics, so assign the returned object.
 }
+
 \seealso{
 `buildRDMLFromFData()`, `asTable()`, `getFData()`
 }

@@ -6,6 +6,9 @@
 \usage{
 idType(id = character(0))
 }
+\arguments{
+\item{id}{Character identifier.}
+}
 \description{
 Stores one character identifier used as a schema key. `as.character()`
 extracts the identifier and `print()` displays it directly.

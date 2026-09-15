@@ -78,7 +78,7 @@
 #' Derives virtual element names from a property such as `id` or `targetId`
 #' and enables nested `$` / `[[` access without storing physical list names.
 #'
-#' @param data List of schema objects.
+#' @param x List of schema objects.
 #' @param key Property used as the virtual key.
 #' @return An `rdmlKeyedList` S7 object.
 #' @seealso `rdmlType`, `idType`

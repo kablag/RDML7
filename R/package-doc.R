@@ -47,6 +47,6 @@
 #' `readRDML()`, `writeRDML()`, `asTable()`, `getFData()`, `setFData()`,
 #' `validateRDML()`, `summary()`, `listRDMLFormats()`
 #'
-#' @name RDML-package
+#' @name RDML7-package
 #' @keywords internal
 "_PACKAGE"

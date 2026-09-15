@@ -6,6 +6,9 @@
 \usage{
 idReferenceType(id = character(0))
 }
+\arguments{
+\item{id}{Character identifier of the referenced RDML element.}
+}
 \description{
 Extends `idType` for references between RDML elements, for example sample,
 target, dye, documentation, and thermal-program references.

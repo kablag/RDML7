@@ -11,21 +11,24 @@ asDendrogram(x, ...)
 asDendrogram(x, plotDendrogram = TRUE, ...)
 }
 \arguments{
-\item{x}{`rdmlType`.}
+\item{x}{Object to represent as a dendrogram.}
 
-\item{...}{Reserved for future extensions.}
+\item{...}{Method-specific arguments.}
 
 \item{plotDendrogram}{Plot the dendrogram when `TRUE`.}
 }
 \value{
 Dendrogram representation invisibly.
-
-A base R `dendrogram` object.
 }
 \description{
+Represent RDML structure as a dendrogram
+}
+\section{`rdmlType` method}{
+
 Groups entries by experiment, run, target, sample type, and fluorescence
 data type using the metadata produced by `asTable()`.
 }
+
 \seealso{
 `summary()`
 }

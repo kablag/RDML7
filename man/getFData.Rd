@@ -22,9 +22,9 @@ getFData(
 )
 }
 \arguments{
-\item{x}{`rdmlType`.}
+\item{x}{Object from which to extract fluorescence data.}
 
-\item{...}{Reserved for method compatibility.}
+\item{...}{Method-specific arguments.}
 
 \item{dpType}{`"adp"` or `"mdp"`.}
 
@@ -38,22 +38,24 @@ wide form.}
 data type is absent.}
 }
 \value{
-A `data.table`.
+A tabular representation of the fluorescence data.
+}
+\description{
+Extract fluorescence data
+}
+\section{`dataType` method}{
 
 Amplification output contains `cyc`, optional `tmp`, and `fluor`;
 melting output contains `tmp` and `fluor`. Missing curves return an empty
 table with the appropriate columns.
+}
 
-A `data.table`. In long form, rows without the selected curve are
+\section{`rdmlType` method}{
+
+Returns a `data.table`. In long form, rows without the selected curve are
 retained only when `includeMissing = TRUE`.
 }
-\description{
-Extract fluorescence data
 
-Extract fluorescence from one data element
-
-Extract fluorescence from an RDML object
-}
 \seealso{
 `asTable()`, `setFData()`
 }

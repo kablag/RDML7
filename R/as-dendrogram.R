@@ -1,14 +1,10 @@
-#' Build or plot a dendrogram of RDML content
+#' @rdname asDendrogram
 #'
+#' @param plotDendrogram Plot the dendrogram when `TRUE`.
+#'
+#' @section `rdmlType` method:
 #' Groups entries by experiment, run, target, sample type, and fluorescence
 #' data type using the metadata produced by `asTable()`.
-#'
-#' @param x `rdmlType`.
-#' @param plotDendrogram Plot the dendrogram when `TRUE`.
-#' @param ... Reserved for future extensions.
-#' @return A base R `dendrogram` object.
-#' @rdname asDendrogram
-#' @export
 S7::method(asDendrogram, rdmlType) <- function(
     x,
     plotDendrogram = TRUE,

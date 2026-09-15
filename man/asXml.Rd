@@ -11,7 +11,7 @@ asXML(x, ...)
 asXML(x, fileName, loss = c("warn", "error", "allow"))
 }
 \arguments{
-\item{x}{`rdmlType`.}
+\item{x}{Object to serialize.}
 
 \item{...}{Method-specific arguments.}
 
@@ -24,14 +24,17 @@ standard RDML XML: `"warn"`, `"error"`, or `"allow"`.}
 }
 \value{
 XML text or output path invisibly.
-
-XML text, invisibly when a file is written.
 }
 \description{
+Serialize an RDML object to XML
+}
+\section{`rdmlType` method}{
+
 Standard schema properties are serialized to RDML XML. Package-only
 extension fields such as `meltTemp` are kept in memory but are not emitted
 as non-standard XML elements.
 }
+
 \seealso{
 `writeRDML()`
 }

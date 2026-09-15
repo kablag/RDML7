@@ -97,6 +97,7 @@ S7::method(as.character, rdmlEnum) <- function(x, ...) {
 #' Stores one character identifier used as a schema key. `as.character()`
 #' extracts the identifier and `print()` displays it directly.
 #'
+#' @param id Character identifier.
 #' @seealso `idReferenceType`, `rdmlKeyedList`, `rdmlType`
 #' @export
 idType <- S7::new_class(
@@ -135,6 +136,7 @@ classId <- S7::new_property(
 #' Extends `idType` for references between RDML elements, for example sample,
 #' target, dye, documentation, and thermal-program references.
 #'
+#' @param id Character identifier of the referenced RDML element.
 #' @seealso `idType`, `validateRDML`
 #' @export
 idReferenceType <- S7::new_class(

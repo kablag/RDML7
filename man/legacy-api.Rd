@@ -87,6 +87,41 @@ asXml(...)
 
 rdmlLossRecord(...)
 }
+\arguments{
+\item{x}{RDML object or data element passed to the canonical API.}
+
+\item{.default}{Named list of expressions defining legacy output columns.}
+
+\item{name.pattern}{Expression defining legacy fluorescence-data names.}
+
+\item{add.columns}{Named list of additional column expressions.}
+
+\item{treat.null.as.na}{Convert `NULL` expression results to `NA`.}
+
+\item{include.hidden}{Include experiments whose id starts with `.`.}
+
+\item{...}{Additional arguments passed to the canonical API.}
+
+\item{request}{Metadata table describing curves to extract.}
+
+\item{dp.type}{Fluorescence type: `"adp"` or `"mdp"`.}
+
+\item{long.table}{Return long rather than wide fluorescence data.}
+
+\item{fdata}{Fluorescence matrix or table.}
+
+\item{description}{Metadata table describing `fdata` columns.}
+
+\item{fdata.type}{Fluorescence type: `"adp"` or `"mdp"`.}
+
+\item{conflict}{Conflict policy passed to `setFData()`.}
+
+\item{plot.dendrogram}{Plot the generated dendrogram.}
+
+\item{to.merge}{List of RDML objects to merge.}
+
+\item{data.conflict}{Policy for conflicting data during a merge.}
+}
 \description{
 These functions preserve public names, dotted argument names, and (where
 applicable) dotted output-column names used by previous RDML releases. New
@@ -108,5 +143,5 @@ Legacy `AsTable()` returns names such as `fdata.name`, `exp.id`, `run.id`,
 `fdataName`, `expId`, `runId`, `reactId`, `sampleType`, and `targetDyeId`.
 }
 \seealso{
-`RDML-package`
+`RDML7-package`
 }

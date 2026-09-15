@@ -1,13 +1,11 @@
-#' Extract fluorescence from one data element
+#' @rdname getFData
 #'
-#' @param x `dataType`.
 #' @param dpType `"adp"` or `"mdp"`.
-#' @param ... Reserved for method compatibility.
-#' @return Amplification output contains `cyc`, optional `tmp`, and `fluor`;
+#'
+#' @section `dataType` method:
+#' Amplification output contains `cyc`, optional `tmp`, and `fluor`;
 #' melting output contains `tmp` and `fluor`. Missing curves return an empty
 #' table with the appropriate columns.
-#' @rdname getFData
-#' @export
 S7::method(getFData, dataType) <- function(x, dpType = "adp", ...) {
   checkmate::assertChoice(dpType, c("adp", "mdp"))
 
@@ -69,21 +67,18 @@ S7::method(getFData, dataType) <- function(x, dpType = "adp", ...) {
 }
 
 
-#' Extract fluorescence from an RDML object
+#' @rdname getFData
 #'
-#' @param x `rdmlType`.
 #' @param request Table produced by `asTable()`. If omitted, `asTable(x)` is
 #' used.
-#' @param dpType `"adp"` or `"mdp"`.
 #' @param longTable Return long form joined to request metadata instead of
 #' wide form.
 #' @param includeMissing Keep metadata rows whose selected fluorescence
 #'   data type is absent.
-#' @param ... Reserved for method compatibility.
-#' @return A `data.table`. In long form, rows without the selected curve are
+#'
+#' @section `rdmlType` method:
+#' Returns a `data.table`. In long form, rows without the selected curve are
 #' retained only when `includeMissing = TRUE`.
-#' @rdname getFData
-#' @export
 S7::method(getFData, rdmlType) <- function(
     x,
     request,

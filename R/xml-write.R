@@ -469,21 +469,18 @@ NULL
 }
 
 
-#' Serialize an RDML object as XML or an RDML archive
+#' @rdname asXML
 #'
-#' Standard schema properties are serialized to RDML XML. Package-only
-#' extension fields such as `meltTemp` are kept in memory but are not emitted
-#' as non-standard XML elements.
-#'
-#' @param x `rdmlType`.
 #' @param fileName Optional destination. If omitted, return XML text. A `.xml`
 #' destination writes plain XML; other destinations use the RDML zip/archive
 #' serializer.
 #' @param loss Loss policy for package data that cannot be represented in
 #' standard RDML XML: `"warn"`, `"error"`, or `"allow"`.
-#' @return XML text, invisibly when a file is written.
-#' @rdname asXML
-#' @export
+#'
+#' @section `rdmlType` method:
+#' Standard schema properties are serialized to RDML XML. Package-only
+#' extension fields such as `meltTemp` are kept in memory but are not emitted
+#' as non-standard XML elements.
 S7::method(asXML, rdmlType) <- function(
     x,
     fileName,

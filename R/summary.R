@@ -151,6 +151,7 @@
 #' @param ... Additional arguments. Currently unused.
 #'
 #' @return An object of class `summary.rdmlType`.
+#' @aliases summary
 #'
 #' @examples
 #' \dontrun{

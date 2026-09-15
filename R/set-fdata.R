@@ -1,9 +1,5 @@
-#' Add or replace fluorescence data
+#' @rdname setFData
 #'
-#' Missing experiments, runs, reactions, samples, targets, and dyes are
-#' created as needed. RDML uses value semantics, so assign the returned object.
-#'
-#' @param x `rdmlType`.
 #' @param fdata Matrix/data.frame/data.table. First column is `cyc` or `tmp`;
 #' remaining fluorescence columns are matched to `description$fdataName`.
 #' @param description CamelCase metadata table. Required: `fdataName`, `expId`,
@@ -11,10 +7,10 @@
 #' schema objects are created.
 #' @param fdataType `"adp"` or `"mdp"`.
 #' @param conflict `"error"`, `"keep"`, or `"replace"`.
-#' @param ... Reserved for extensions.
-#' @return Modified `rdmlType`.
-#' @rdname setFData
-#' @export
+#'
+#' @section `rdmlType` method:
+#' Missing experiments, runs, reactions, samples, targets, and dyes are
+#' created as needed. RDML uses value semantics, so assign the returned object.
 S7::method(setFData, rdmlType) <- function(
     x,
     fdata,

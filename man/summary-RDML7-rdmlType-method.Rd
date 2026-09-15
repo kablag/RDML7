@@ -2,6 +2,7 @@
 % Please edit documentation in R/summary.R
 \name{summary,RDML7::rdmlType-method}
 \alias{summary,RDML7::rdmlType-method}
+\alias{summary}
 \title{Summarize an RDML object}
 \usage{
 ## S7 method for class <RDML7::rdmlType>
