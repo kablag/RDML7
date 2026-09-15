@@ -1,4 +1,5 @@
-#' @rdname setFData
+#' Add or replace fluorescence data in an `rdmlType` object
+#' @noRd
 #'
 #' @param fdata Matrix/data.frame/data.table. First column is `cyc` or `tmp`;
 #' remaining fluorescence columns are matched to `description$fdataName`.

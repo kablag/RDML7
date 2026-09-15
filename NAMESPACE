@@ -91,3 +91,8 @@ export(unregisterRDMLFormat)
 export(validateRDML)
 export(writeRDML)
 export(xRefType)
+importFrom(lubridate,
+  ymd,
+  ymd_hms
+)
+importFrom(utils,globalVariables)

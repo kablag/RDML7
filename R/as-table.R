@@ -379,7 +379,8 @@
 }
 
 
-#' @rdname asTable
+#' Build a metadata table from an `rdmlType` object
+#' @noRd
 #'
 #' @param default Deprecated compatibility argument. A named list of
 #'   expressions defining the base output columns. When supplied, `columns`

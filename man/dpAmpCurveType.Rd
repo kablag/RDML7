@@ -7,22 +7,7 @@
 An S7 class.
 }
 \usage{
-dpAmpCurveType(
-  fpoints = (function (.data = list(), row.names = NULL) 
- {
-     if (is.null(row.names))
-    {
-         list2DF(.data)
-     }
-     else {
-         out <- list2DF(.data,
-    length(row.names))
-         attr(out, "row.names") <- row.names
-         out
-     }
-
-    })()
-)
+dpAmpCurveType(fpoints = NULL)
 }
 \arguments{
 \item{fpoints}{`data.table` containing `cyc` and `fluor`, with optional per-cycle `tmp`.}

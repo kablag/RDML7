@@ -19,10 +19,10 @@ classDateTimeNA <- S7::new_property(
     }
 
     parsedDatetime <- suppressWarnings(
-      lubridate::ymd_hms(value, quiet = TRUE)
+      ymd_hms(value, quiet = TRUE)
     )
     parsedDate <- suppressWarnings(
-      lubridate::ymd(value, quiet = TRUE)
+      ymd(value, quiet = TRUE)
     )
 
     if (is.na(parsedDatetime) && is.na(parsedDate)) {
@@ -94,7 +94,13 @@ classFlag <- S7::new_property(
 # data.table inherits data.frame; keeping the property typed as data.frame
 # accepts both without a setter that is coupled to a particular property name.
 classDataTable <- S7::new_property(
-  S7::class_data.frame
+  S7::class_any,
+  validator = function(value) {
+    if (!is.null(value) && !is.data.frame(value)) {
+      "must be a data.frame"
+    }
+  },
+  default = NULL
 )
 
 classNumberNASingle <- S7::new_property(

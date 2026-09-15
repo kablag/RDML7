@@ -49,4 +49,20 @@
 #'
 #' @name RDML7-package
 #' @keywords internal
+#' @importFrom lubridate ymd ymd_hms
+#' @importFrom utils globalVariables
 "_PACKAGE"
+
+globalVariables(c(
+  ".", "..keep", ".N", ".SD", ":=", "IsOmit", "N", "Well", "adp",
+  "background", "builtin", "code", "columns", "cq", "cyc", "data",
+  "dateMade", "dateUpdated", "description", "details", "documentation",
+  "double.eps", "dye", "expId", "experiment", "experimenter", "extensions",
+  "fdata", "fdata.name", "fdataName", "fdataType", "fluor", "fpoints", "id",
+  "mdp", "meltTemp", "metric", "nDyes", "name", "nSamples", "ns", "nTypes",
+  "path", "pcrFormat", "position", "react", "reactId", "reader", "run", "runId",
+  "severity", "size", "target", "targetDyeId", "targetId",
+  "thermalCyclingConditions", "tmp", "totalAdp", "totalData", "totalDyes",
+  "totalExperiments", "totalMdp", "totalReacts", "totalRuns", "totalSamples",
+  "totalTargets", "totalThermalCyclingConditions", "type", "unit", "well", "writer"
+))

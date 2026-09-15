@@ -1,4 +1,5 @@
-#' @rdname getFData
+#' Extract fluorescence data from a `dataType` object
+#' @noRd
 #'
 #' @param dpType `"adp"` or `"mdp"`.
 #'
@@ -67,7 +68,8 @@ S7::method(getFData, dataType) <- function(x, dpType = "adp", ...) {
 }
 
 
-#' @rdname getFData
+#' Extract fluorescence data from an `rdmlType` object
+#' @noRd
 #'
 #' @param request Table produced by `asTable()`. If omitted, `asTable(x)` is
 #' used.

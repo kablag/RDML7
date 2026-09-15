@@ -1,4 +1,5 @@
-#' @rdname asDendrogram
+#' Represent an `rdmlType` object as a dendrogram
+#' @noRd
 #'
 #' @param plotDendrogram Plot the dendrogram when `TRUE`.
 #'

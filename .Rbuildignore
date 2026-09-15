@@ -4,5 +4,9 @@
 ^docs$
 ^vignettes$
 ^\.claude$
+^\.github$
+^\.lintr$
+^\.vscode$
+^_pkgdown\.yml$
 ^doc$
 ^Meta$

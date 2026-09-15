@@ -34,6 +34,14 @@ rdmlImportSeries <- S7::new_class(
     description = classDataTable
   ),
   validator = function(self) {
+    if (is.null(self@fdata)) {
+      return("@fdata must be a data.frame")
+    }
+
+    if (is.null(self@description)) {
+      return("@description must be a data.frame")
+    }
+
     if (ncol(self@fdata) < 2L) {
       return("@fdata must contain a coordinate column and fluorescence data")
     }

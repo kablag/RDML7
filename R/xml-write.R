@@ -469,7 +469,8 @@ NULL
 }
 
 
-#' @rdname asXML
+#' Serialize an `rdmlType` object to XML
+#' @noRd
 #'
 #' @param fileName Optional destination. If omitted, return XML text. A `.xml`
 #' destination writes plain XML; other destinations use the RDML zip/archive
