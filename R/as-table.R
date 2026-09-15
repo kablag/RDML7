@@ -379,59 +379,13 @@
 }
 
 
-#' Build an RDML metadata table
+#' @rdname asTable
 #'
-#' Each `dataType` becomes one row.
-#'
-#' The recommended API uses `columns` to select built-in columns and named
-#' expressions in `...` to add custom columns. `namePattern` may be a string
-#' template such as
-#' `"\{expId\}_\{position\}_\{sample\}_\{sampleType\}_\{target\}"`.
-#'
-#' Two levels of values are available when creating table columns.
-#'
-#' The first level consists of ready-to-use scalar fields:
-#' `expId`, `runId`, `reactId`, `position`, `sample`, `target`,
-#' `targetDyeId`, `sampleType`, `adp` (logical - contains adp)
-#'  and `mdp` (logical - contains mdp).
-#'
-#' These fields may be used directly in expressions supplied through `...`
-#' and in `namePattern` templates.
-#'
-#' The second level exposes the current RDML objects for advanced custom
-#' extraction through `...`:
-#' `experiment`, `run`, `react`, `data`, `samples`, `targets`,
-#' `dateMade`, `dateUpdated`, `id`, `experimenter`, `documentation`,
-#' `dye`, and `thermalCyclingConditions`.
-#'
-#' These objects are intentionally not available as `{field}` placeholders
-#' in `namePattern`, because they are structured RDML/S7 objects rather than
-#' scalar values. Values extracted from them in a named `...` expression are
-#' available to `namePattern` under the custom column name.
-#'
-#' For example:
-#'
-#' `asTable(x, cq = S7::prop(data, "cq"),
-#'   namePattern = "\{expId\}_\{position\}_\{sample\}_\{cq\}_\{target\}")`
-#'
-#' `default` and `addColumns` are retained for compatibility with earlier
-#' versions. New code should use `columns` and `...`.
-#'
-#' @param x `rdmlType`.
 #' @param default Deprecated compatibility argument. A named list of
 #'   expressions defining the base output columns. When supplied, `columns`
 #'   must not be used.
 #' @param namePattern Character template or expression producing one
 #'   `fdataName` value per `dataType`.
-#'
-#'   In a character template, fields are inserted using `{field}` syntax.
-#'   Available built-in template fields are `expId`, `runId`, `reactId`,
-#'   `position`, `sample`, `target`, `targetDyeId`, `sampleType`, `adp`,
-#'   and `mdp`. Named custom columns supplied through `...` are also
-#'   available as template fields.
-#'
-#'   Example:
-#'   `"{expId}_{runId}_{position}_{sample}_{sampleType}_{target}"`.
 #' @param addColumns Deprecated compatibility argument. Named list of
 #'   additional expressions. New code should pass named expressions in `...`.
 #' @param treatNullAsNa Convert `NULL` expression results to `NA`.
@@ -441,24 +395,43 @@
 #'   `expId`, `runId`, `reactId`, `position`, `sample`, `target`,
 #'   `targetDyeId`, `sampleType`, `adp`, and `mdp`.
 #'   Custom columns supplied in `...` are appended automatically.
-#' @param ... Named expressions defining custom columns. Expressions are
-#'   evaluated once per `dataType`.
 #'
-#'   Ready-to-use scalar fields available directly in these expressions are
-#'   `expId`, `runId`, `reactId`, `position`, `sample`, `target`,
-#'   `targetDyeId`, `sampleType`, `adp`, and `mdp`.
+#' @section `rdmlType` method:
+#' Each `dataType` becomes one row in a keyed `data.table`.
 #'
-#'   For advanced extraction, the current RDML objects are also available:
-#'   `experiment`, `run`, `react`, `data`, `samples`, `targets`,
-#'   `dateMade`, `dateUpdated`, `id`, `experimenter`, `documentation`,
-#'   `dye`, and `thermalCyclingConditions`.
+#' The recommended API uses `columns` to select built-in columns and named
+#' expressions in `...` to add custom columns. `default` and `addColumns` are
+#' retained for compatibility with earlier versions.
 #'
-#'   Examples:
-#'   `short = paste(sample, target, sep = "_")`
-#'   or `cq = data$cq`.
-#' @return Keyed `data.table`, one row per `dataType`.
-#' @rdname asTable
-#' @export
+#' In a character `namePattern` template, fields are inserted using
+#' `\{field\}` syntax. Available built-in template fields are `expId`, `runId`,
+#' `reactId`, `position`, `sample`, `target`, `targetDyeId`, `sampleType`,
+#' `adp`, and `mdp`. Named custom columns are also available as template
+#' fields. For example:
+#' `"\{expId\}_\{runId\}_\{position\}_\{sample\}_\{sampleType\}_\{target\}"`.
+#'
+#' @section Custom columns:
+#' For the `rdmlType` method, named expressions supplied through `...` define
+#' custom columns and are evaluated once per `dataType`.
+#'
+#' Ready-to-use scalar values are `expId`, `runId`, `reactId`, `position`,
+#' `sample`, `target`, `targetDyeId`, `sampleType`, `adp`, and `mdp`.
+#'
+#' The current RDML objects `experiment`, `run`, `react`, `data`, `samples`,
+#' `targets`, `dateMade`, `dateUpdated`, `id`, `experimenter`, `documentation`,
+#' `dye`, and `thermalCyclingConditions` are also available. Because these are
+#' structured RDML/S7 objects, they are not available directly as
+#' `\{field\}` placeholders. Values extracted into named custom columns are
+#' available to `namePattern` under the custom column name.
+#'
+#' @examples
+#' \dontrun{
+#' asTable(
+#'   x,
+#'   cq = data$cq,
+#'   short = paste(sample, target, sep = "_")
+#' )
+#' }
 S7::method(asTable, rdmlType) <- function(
     x,
     default = NULL,

@@ -4,7 +4,7 @@
 #'
 #' @param x Object to convert.
 #' @param ... Method-specific arguments.
-#' @return A `data.table` for `rdmlType`.
+#' @return A tabular representation of `x`.
 #' @seealso `getFData()`, `setFData()`
 #' @export
 asTable <- S7::new_generic("asTable", "x")
