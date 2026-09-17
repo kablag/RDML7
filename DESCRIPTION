@@ -70,6 +70,7 @@ Collate:
     'rdml-edit.R'
     'zzz.R'
 Suggests:
+    knitr,
     chipPCR,
     magrittr,
     reshape2,
@@ -89,5 +90,6 @@ Suggests:
     rmarkdown,
     pkgdown,
     plotly
+VignetteBuilder: knitr
 Config/roxygen2/version: 8.1.0
 Config/testthat/edition: 3

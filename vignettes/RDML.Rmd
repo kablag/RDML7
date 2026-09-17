@@ -85,7 +85,7 @@ issues <- validateRDML(x)
 isValidRDML(x)
 ```
 
-Validation can focus on structure, references, curves, or the full object:
+Validation can focus on structure, references, curve data, or the full object:
 
 ```r
 validateRDML(x, level = "structure")

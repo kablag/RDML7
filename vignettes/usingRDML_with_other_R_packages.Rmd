@@ -2,12 +2,11 @@
 title: "Using RDML with other R packages"
 author: "Konstantin A. Blagodatskikh, Micha&#322; Burdukiewicz, Stefan R&ouml;diger, Andrej-Nikolai Spiess"
 date: "`r Sys.Date()`"
-output: 
-rmarkdown::html_vignette:
-toc: true
-pandoc_args: [
-"--number-sections"
-]
+output:
+  rmarkdown::html_vignette:
+    toc: true
+    pandoc_args:
+      - "--number-sections"
 bibliography: "RDML.bib"
 vignette: >
   %\VignetteIndexEntry{Using RDML with other R packages}
@@ -18,11 +17,11 @@ vignette: >
 knitr::opts_chunk$set(collapse = TRUE, comment = "#>", warning = FALSE, message = FALSE)
 ```
 
-# A Practical Example for Usage of the **RMDL7** package
+# A Practical Example for Usage of the **RDML7** package
 
-A key benefit of the **RMDL7** package is that it enables further statistical 
+A key benefit of the **RDML7** package is that it enables further statistical
 analysis of RDML data. This section describes **R** packages 
-that link with the **RMDL7** package. It will provide examples on how 
+that link with the **RDML7** package. It will provide examples on how
 other packages allow the manipulation of RDML objects.
 
 In this example we will employ the **qpcR** package [@ritz_qpcr_2008] to calculate Cq values after the selection of an optimal sigmoidal model, as suggested by the Akaike's An Information Criterion. The Cq values will then be used to calculate the amplification efficiency from a calibration curve, based on the `effcalc` function of the **chipPCR** package [@roediger2015chippcr].

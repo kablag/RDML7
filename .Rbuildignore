@@ -2,7 +2,6 @@
 ^\.Rproj\.user$
 ^\.travis\.yml$
 ^docs$
-^vignettes$
 ^\.claude$
 ^\.github$
 ^\.lintr$
