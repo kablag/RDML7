@@ -60,8 +60,9 @@ Collate:
     'import-excel.R'
     'import-dtprime.R'
     'import-csv.R'
-    'import-fqd.R'
-    'import-rdml.R'
+      'import-fqd.R'
+      'import-qstd.R'
+      'import-rdml.R'
     'import-rdes.R'
     'export-rdes.R'
     'format-registry.R'
@@ -76,6 +77,7 @@ Suggests:
     qpcR,
     dplyr,
     ggplot2,
+    DT,
     kfigr,
     MBmca,
     shiny,
@@ -85,6 +87,7 @@ Suggests:
     V8,
     testthat,
     rmarkdown,
-    pkgdown
+    pkgdown,
+    plotly
 Config/roxygen2/version: 8.1.0
 Config/testthat/edition: 3

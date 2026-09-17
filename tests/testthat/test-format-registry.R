@@ -133,6 +133,43 @@ test_that("built-in overlapping extensions have stable defaults", {
     detectRDMLFormat("x.txt", "write"),
     "rdes"
   )
+
+  expect_identical(
+    detectRDMLFormat("x.qstd", "read"),
+    "innova-qstd"
+  )
+})
+
+
+test_that("Innova QSTD imports plate assignments, curves, and run metadata", {
+  fileName <- system.file("extdata", "innova.qstd", package = "RDML7")
+  expect_true(nzchar(fileName))
+
+  x <- readRDML(fileName, showProgress = FALSE)
+  table <- asTable(x)
+
+  expect_s7_class(x, rdmlType)
+  expect_equal(nrow(table), 160L)
+  expect_equal(sort(unique(table$targetDyeId)), c("FAM", "HEX"))
+  expect_true(all(table$position %in% sprintf(
+    "%s%02d",
+    rep(LETTERS[1:8], each = 10),
+    rep(2:11, times = 8)
+  )))
+  expect_true(all(table$adp))
+  expect_false(any(table$mdp))
+  expect_equal(nrow(getFData(x)), 40L)
+  expect_equal(ncol(getFData(x)), 161L)
+  expect_equal(nrow(validateRDML(x)), 0L)
+
+  experiment <- x$experiment[["innova"]]
+  run <- experiment$run[["2026-09-14 17:24:03"]]
+  expect_match(experiment$description, "О357")
+  expect_match(run$instrument, "IRTP 96-X5")
+  expect_identical(run$dataCollectionSoftware$name, "PCR Analyzer96")
+  expect_identical(run$dataCollectionSoftware$version, "1.1.1")
+  expect_identical(as.character(run$runDate), "2026-09-14 17:24:03")
+  expect_length(run$experimenter, 1L)
 })
 
 

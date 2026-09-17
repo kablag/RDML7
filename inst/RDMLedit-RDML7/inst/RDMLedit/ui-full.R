@@ -307,7 +307,7 @@ rdml7QpcrPanel <- function() {
 
     fluidRow(
       column(
-        6,
+        4,
         wellPanel(
           fluidRow(
             column(
@@ -347,7 +347,7 @@ rdml7QpcrPanel <- function() {
       ),
 
       column(
-        6,
+        4,
         wellPanel(
           selectInput(
             "hookMethod",
@@ -359,6 +359,16 @@ rdml7QpcrPanel <- function() {
               "Both" = "both"
             )
           )
+        )
+      ),
+
+      column(
+        4,
+        actionButton(
+          "recalcQpcrBtn",
+          "Recalc",
+          class = "btn-primary",
+          width = "100%"
         )
       )
     ),
@@ -607,6 +617,13 @@ rdml7MeltingPanel <- function() {
       fluidRow(
         column(
           6,
+          plotly::plotlyOutput(
+            "meltingPlot",
+            height = "620px"
+          )
+        ),
+        column(
+          6,
           wellPanel(
             fluidRow(
               column(
@@ -633,13 +650,6 @@ rdml7MeltingPanel <- function() {
               "With shinyMolBio installed this is the original interactive PCR plate. ",
               "Otherwise a multiple position selector is shown."
             )
-          )
-        ),
-        column(
-          6,
-          plotly::plotlyOutput(
-            "meltingPlot",
-            height = "620px"
           )
         )
       )

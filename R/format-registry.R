@@ -745,6 +745,21 @@ detectRDMLFormat <- function(
   )
 
   .rdmlRegisterFormat(
+    name = "innova-qstd",
+    extensions = "qstd",
+    reader = function(
+        fileName,
+        showProgress = TRUE,
+        ...) {
+      .rdmlImportQstd(
+        fileName,
+        showProgress
+      )
+    },
+    builtin = TRUE
+  )
+
+  .rdmlRegisterFormat(
     name = "rdes",
     extensions = c(
       "tsv",

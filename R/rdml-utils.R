@@ -119,9 +119,48 @@
 }
 
 
+#' Return the canonical position of an RDML reaction
+#'
+#' Converts the schema-level reaction identifier to a human-readable plate
+#' position using the run PCR format. Conventional alphabetic-row positions
+#' always use two-digit columns (for example, `A01`, never `A1`).
+#'
+#' @param react A [reactType] object.
+#' @param pcrFormat A [pcrFormatType] object, or a missing value when the
+#'   reaction identifier already contains the position.
+#' @return A character scalar containing the canonical reaction position.
+#' @export
+reactPosition <- function(react, pcrFormat = NULL) {
+  .rdmlReactPosition(react, pcrFormat)
+}
+
+
+.rdmlCanonicalPosition <- function(position) {
+  if (
+    !is.character(position) ||
+    length(position) != 1L ||
+    is.na(position)
+  ) {
+    return(position)
+  }
+
+  position <- sub(
+    "^([A-Za-z]+)([0-9])$",
+    "\\1 0\\2",
+    position
+  )
+  gsub(
+    pattern = " ",
+    replacement = "",
+    x = position,
+    fixed = TRUE
+  )
+}
+
+
 # Human-readable well position. reactType in rdml7 intentionally stores only
 # the RDML reaction id; position is derived from run$pcrFormat when needed.
-.rdmlReactPosition <- function(react, pcrFormat) {
+.rdmlReactPosition <- function(react, pcrFormat = NULL) {
   
   id <- .rdmlIdChr(S7::prop(react, "id"))
   
@@ -134,8 +173,7 @@
   )
   
   if (is.na(n) || .rdmlIsMissing(pcrFormat)) {
-    # Imported hand-labelled ids are already human-readable.
-    return(id)
+    return(.rdmlCanonicalPosition(id))
   }
   
   rows <- S7::prop(pcrFormat, "rows")
@@ -204,7 +242,7 @@
   }
   
   # A1a1 and other formats are not reconstructed yet; keep the RDML id.
-  id
+  .rdmlCanonicalPosition(id)
 }
 
 

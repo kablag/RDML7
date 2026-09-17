@@ -1384,6 +1384,15 @@ output$thLevelsUI <- renderUI({
             target
           )
         )
+        current_value <- isolate(input[[id]])
+
+        if (is.null(current_value) || !length(current_value)) {
+          current_value <- values$thresholds[[target]]
+        }
+
+        if (is.null(current_value) || !length(current_value)) {
+          current_value <- 0
+        }
 
         numericInput(
           id,
@@ -1394,7 +1403,7 @@ output$thLevelsUI <- renderUI({
               scale_text
             )
           ),
-          value = 0,
+          value = current_value,
           step = 0.01
         )
       }
@@ -1416,8 +1425,14 @@ thresholdForTarget <- function(target) {
     is.null(value) ||
     !length(value)
   ) {
+    value <- values$thresholds[[target]]
+  }
+
+  if (is.null(value) || !length(value)) {
     value <- 0
   }
+
+  values$thresholds[[target]] <- as.numeric(value)
 
   if (isTRUE(input$logScale)) {
     10 ^ as.numeric(
@@ -1430,17 +1445,7 @@ thresholdForTarget <- function(target) {
   }
 }
 
-qPCRProcessingTrigger <- reactive({
-  list(
-    preprocess = input$preprocessqPCR,
-    smooth = input$smoothqPCRmethod,
-    normalize = input$normqPCRmethod
-  )
-})
-
-observeEvent(
-  qPCRProcessingTrigger(),
-  {
+preprocessQpcr <- function() {
     req(
       values$rdml
     )
@@ -1513,9 +1518,7 @@ observeEvent(
     )
 
     commitActive()
-  },
-  ignoreInit = TRUE
-)
+}
 
 observeEvent(
   input$restoreRawAdpBtn,
@@ -1532,39 +1535,7 @@ observeEvent(
   }
 )
 
-cqTrigger <- reactive({
-  catalog <- qPCRCatalog()
-
-  thresholds <- if (
-    input$cqMethod == "th" &&
-    !isTRUE(input$autoThLevel)
-  ) {
-    setNames(
-      lapply(
-        unique(
-          catalog$target
-        ),
-        thresholdForTarget
-      ),
-      unique(
-        catalog$target
-      )
-    )
-  } else {
-    NULL
-  }
-
-  list(
-    method = input$cqMethod,
-    auto = input$autoThLevel,
-    thresholds = thresholds,
-    preprocessing = qPCRProcessingTrigger()
-  )
-})
-
-observeEvent(
-  cqTrigger(),
-  {
+calculateQpcrCq <- function(thresholds = NULL) {
     req(
       values$rdml
     )
@@ -1605,9 +1576,14 @@ observeEvent(
             editor_calc_cq(
               points,
               method = input$cqMethod,
-              threshold = thresholdForTarget(
-                meta$target[[1L]]
-              ),
+              threshold = if (
+                !is.null(thresholds) &&
+                meta$target[[1L]] %in% names(thresholds)
+              ) {
+                thresholds[[meta$target[[1L]]]]
+              } else {
+                thresholdForTarget(meta$target[[1L]])
+              },
               auto_threshold = isTRUE(
                 input$autoThLevel
               )
@@ -1636,22 +1612,19 @@ observeEvent(
     )
 
     commitActive()
-  },
-  ignoreInit = TRUE
-)
+}
 
-observeEvent(
-  input$hookMethod,
-  {
+detectQpcrHook <- function() {
     req(
       values$rdml
     )
+
+    values$hookResults <- list()
 
     if (
       is.null(input$hookMethod) ||
       input$hookMethod == "none"
     ) {
-      values$hookResults <- list()
       return()
     }
 
@@ -1696,6 +1669,26 @@ observeEvent(
         }
       }
     )
+}
+
+observeEvent(
+  input$recalcQpcrBtn,
+  {
+    req(values$rdml)
+
+    catalog <- editor_curve_catalog(values$rdml, "adp")
+    thresholds <- setNames(
+      vapply(
+        unique(catalog$target),
+        thresholdForTarget,
+        numeric(1)
+      ),
+      unique(catalog$target)
+    )
+
+    preprocessQpcr()
+    detectQpcrHook()
+    calculateQpcrCq(thresholds)
   },
   ignoreInit = TRUE
 )
@@ -1732,10 +1725,15 @@ editorPlateDescription <- function(catalog) {
       data.frame(
         position = position,
         react.id = part$reactId[[1L]],
+        fdata.name = part$curveKey[[1L]],
         sample = part$sample[[1L]],
         sampleType = part$sampleType[[1L]],
         target = paste(
           unique(part$target),
+          collapse = ", "
+        ),
+        target.dyeId = paste(
+          unique(part$targetDyeId),
           collapse = ", "
         ),
         targets = paste(
@@ -1835,6 +1833,9 @@ output$qPCRPlateUI <- renderUI({
     return(NULL)
   }
 
+  if (
+    editor_can_use_shinyMolBio()
+  ) {
     plate_description <- editorPlateDescription(
       filtered
     )
@@ -1856,9 +1857,14 @@ output$qPCRPlateUI <- renderUI({
         interactive = TRUE
       )
     )
-  
+  }
 
-  
+  selectInput(
+    "showqPCRPositionsFallback",
+    "Plate positions",
+    choices = unique(filtered$position),
+    multiple = TRUE
+  )
 })
 
 output$meltingPlateUI <- renderUI({
@@ -2098,7 +2104,11 @@ output$qPCRPlot <- plotly::renderPlotly({
     )
   )
 
-  p
+  editor_compact_plotly_legend(
+    p,
+    color_by = color_by,
+    line_by = dash_by
+  )
 })
 
 output$qPCRDt <- DT::renderDT({
@@ -2483,12 +2493,19 @@ output$meltingPlot <- plotly::renderPlotly({
     showlegend = FALSE
   )
 
-  plotly::subplot(
+  p <- plotly::subplot(
     p1,
     p2,
     nrows = 2,
     shareX = TRUE,
     titleY = TRUE
+  )
+
+  editor_compact_plotly_legend(
+    p,
+    color_by = color_by,
+    line_by = shape_by,
+    keep_names = character()
   )
 })
 

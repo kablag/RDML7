@@ -34,6 +34,30 @@ testthat::test_that("schema uses corrected property names", {
 })
 
 
+testthat::test_that("reaction positions use canonical zero-padded columns", {
+  makeReact <- function(id) {
+    reactType(
+      id = idType(id),
+      sample = idReferenceType("S1"),
+      data = list(),
+      partitions = list()
+    )
+  }
+
+  plate <- pcrFormatType(
+    rows = 8L,
+    columns = 12L,
+    rowLabel = labelFormatType("ABC"),
+    columnLabel = labelFormatType("123")
+  )
+
+  testthat::expect_identical(reactPosition(makeReact("1"), plate), "A01")
+  testthat::expect_identical(reactPosition(makeReact("A1")), "A01")
+  testthat::expect_identical(reactPosition(makeReact("A10")), "A10")
+  testthat::expect_identical(reactPosition(makeReact("17")), "17")
+})
+
+
 testthat::test_that("keyed list supports targetId and rename", {
   e <- experimentType(
     id = idType("old"),

@@ -395,7 +395,7 @@ editor_value_chr <- function(x, default = "") {
   if (editor_is_s7(x)) {
     properties <- editor_s7_props(x)
     
-    for (property in c("value", "id", "type", "name")) {
+    for (property in c("value", "id", "sampleType", "type", "name")) {
       if (
         !is.null(properties) &&
         property %in% names(properties)
@@ -440,13 +440,20 @@ editor_value_chr <- function(x, default = "") {
     return(default)
   }
   
-  if (is.list(x) && length(x) == 1L) {
-    return(
-      editor_value_chr(
-        x[[1L]],
-        default
-      )
+  if (is.list(x)) {
+    values <- vapply(
+      x,
+      editor_value_chr,
+      character(1),
+      default = default
     )
+    values <- unique(values[nzchar(values)])
+
+    if (!length(values)) {
+      return(default)
+    }
+
+    return(paste(values, collapse = ", "))
   }
   
   value <- x[[1L]]
@@ -460,6 +467,36 @@ editor_value_chr <- function(x, default = "") {
   }
   
   as.character(value)
+}
+
+editor_sample_type_chr <- function(sample, target_id, default = "") {
+  types <- editor_list_prop(sample, "type")
+
+  if (!length(types)) {
+    return(default)
+  }
+
+  target_ids <- vapply(
+    types,
+    function(type) {
+      editor_id_chr(editor_prop(type, "targetId"))
+    },
+    character(1)
+  )
+  selected <- which(target_ids == target_id)
+
+  if (!length(selected)) {
+    selected <- which(!nzchar(target_ids))
+  }
+
+  if (!length(selected)) {
+    selected <- 1L
+  }
+
+  editor_value_chr(
+    editor_prop(types[[selected[[1L]]]], "sampleType"),
+    default
+  )
 }
 
 editor_make_id_ref <- function(id) {
@@ -563,6 +600,10 @@ editor_curve_catalog <- function(
     
     for (run_id in names(runs)) {
       run <- runs[[run_id]]
+      pcr_format <- editor_prop(
+        run,
+        "pcrFormat"
+      )
       reacts <- editor_list_prop(
         run,
         "react"
@@ -581,13 +622,6 @@ editor_curve_catalog <- function(
           x,
           "sample",
           sample_id
-        )
-        
-        sample_type <- editor_value_chr(
-          editor_prop(
-            sample_obj,
-            "type"
-          )
         )
         
         data_list <- editor_list_prop(
@@ -631,6 +665,11 @@ editor_curve_catalog <- function(
           if (!nzchar(target_id)) {
             target_id <- target_key
           }
+
+          sample_type <- editor_sample_type_chr(
+            sample_obj,
+            target_id
+          )
           
           target_obj <- editor_collection_get(
             x,
@@ -651,7 +690,10 @@ editor_curve_catalog <- function(
             expId = exp_id,
             runId = run_id,
             reactId = react_id,
-            position = react_id,
+            position = RDML7:::.rdmlReactPosition(
+              react,
+              pcr_format
+            ),
             sample = sample_id,
             sampleType = sample_type,
             target = target_id,
@@ -1119,6 +1161,31 @@ editor_preprocess_adp <- function(
   out
 }
 
+editor_validate_cq <- function(cq, quant_fluor, cycles) {
+  valid_cycles <- as.numeric(cycles)
+  valid_cycles <- valid_cycles[is.finite(valid_cycles)]
+  max_cycle <- if (length(valid_cycles)) {
+    max(valid_cycles)
+  } else {
+    NA_real_
+  }
+
+  if (
+    !length(cq) ||
+    !is.finite(cq) ||
+    !is.finite(max_cycle) ||
+    cq > max_cycle
+  ) {
+    return(list(cq = NA_real_, quantFluor = NA_real_))
+  }
+
+  if (!length(quant_fluor) || !is.finite(quant_fluor)) {
+    quant_fluor <- NA_real_
+  }
+
+  list(cq = cq, quantFluor = quant_fluor)
+}
+
 editor_calc_cq <- function(
     points,
     method = c(
@@ -1148,13 +1215,24 @@ editor_calc_cq <- function(
   y <- as.numeric(
     points$fluor
   )
-  
+
   if (method == "th") {
     editor_require_package(
       "chipPCR",
       "threshold Cq calculation"
     )
     
+    if (
+      !isTRUE(auto_threshold) &&
+      (
+        !is.finite(threshold) ||
+        threshold < min(y, na.rm = TRUE) ||
+        threshold > max(y, na.rm = TRUE)
+      )
+    ) {
+      return(list(cq = NA_real_, quantFluor = NA_real_))
+    }
+
     result <- chipPCR::th.cyc(
       x,
       y,
@@ -1175,20 +1253,7 @@ editor_calc_cq <- function(
       NA_real_
     }
     
-    if (!is.finite(cq)) {
-      cq <- NA_real_
-    }
-    
-    if (!is.finite(quant_fluor)) {
-      quant_fluor <- NA_real_
-    }
-    
-    return(
-      list(
-        cq = cq,
-        quantFluor = quant_fluor
-      )
-    )
+    return(editor_validate_cq(cq, quant_fluor, x))
   }
   
   editor_require_package(
@@ -1212,12 +1277,7 @@ editor_calc_cq <- function(
   )
   
   if (!length(cq) || !is.finite(cq)) {
-    return(
-      list(
-        cq = NA_real_,
-        quantFluor = NA_real_
-      )
-    )
+    return(editor_validate_cq(cq, NA_real_, x))
   }
   
   quant_fluor <- stats::approx(
@@ -1227,10 +1287,7 @@ editor_calc_cq <- function(
     rule = 2
   )$y[[1L]]
   
-  list(
-    cq = cq,
-    quantFluor = quant_fluor
-  )
+  editor_validate_cq(cq, quant_fluor, x)
 }
 
 editor_detect_hook <- function(
@@ -1335,6 +1392,23 @@ editor_preprocess_mdp <- function(
   y <- as.numeric(
     points$fluor
   )
+
+  # MBmca multiplies the automatically selected spline degrees of freedom by
+  # df.fact without checking smooth.spline()'s upper bound. At the upper end
+  # of the UI range this can exceed the number of unique temperatures.
+  valid_spline_points <- is.finite(x) & is.finite(y)
+  spline_df <- stats::smooth.spline(
+    x[valid_spline_points],
+    y[valid_spline_points]
+  )$df
+  max_df <- length(unique(x[valid_spline_points]))
+  safe_df_fact <- max(
+    0.6,
+    min(
+      as.numeric(df_fact),
+      (max_df - sqrt(.Machine$double.eps)) / spline_df
+    )
+  )
   
   bg <- if (
     isTRUE(background_adjust)
@@ -1356,9 +1430,7 @@ editor_preprocess_mdp <- function(
     minmax = isTRUE(
       min_max
     ),
-    df.fact = as.numeric(
-      df_fact
-    )
+    df.fact = safe_df_fact
   )
   
   signal <- editor_extract_signal(
@@ -1435,6 +1507,52 @@ editor_melting_derivative <- function(points) {
     slope[[1L]],
     slope
   )
+}
+
+editor_compact_plotly_legend <- function(
+    plot,
+    color_by = "none",
+    line_by = "none",
+    keep_names = "Cq") {
+  plot <- plotly::plotly_build(plot)
+  aesthetics <- unique(c(color_by, line_by))
+  aesthetic_count <- sum(aesthetics != "none")
+  seen <- character()
+
+  for (i in seq_along(plot$x$data)) {
+    trace <- plot$x$data[[i]]
+    trace_name <- trace$name
+
+    if (
+      is.null(trace_name) ||
+      !length(trace_name) ||
+      trace_name %in% keep_names
+    ) {
+      next
+    }
+
+    if (!aesthetic_count) {
+      plot$x$data[[i]]$showlegend <- FALSE
+      next
+    }
+
+    parts <- strsplit(
+      trace_name,
+      "<br\\s*/?>",
+      perl = TRUE
+    )[[1L]]
+    legend_name <- paste(
+      head(parts, aesthetic_count),
+      collapse = " / "
+    )
+
+    plot$x$data[[i]]$name <- legend_name
+    plot$x$data[[i]]$legendgroup <- legend_name
+    plot$x$data[[i]]$showlegend <- !(legend_name %in% seen)
+    seen <- unique(c(seen, legend_name))
+  }
+
+  plot
 }
 
 editor_curve_table_stats <- function(catalog) {
@@ -1605,12 +1723,12 @@ editor_plate_dimensions_from_positions <- function(positions) {
     row_number <- function(label) {
       chars <- utf8ToInt(label) - utf8ToInt("A") + 1L
       
-      sum(
+      as.integer(sum(
         chars *
           26L ^ rev(
             seq_along(chars) - 1L
           )
-      )
+      ))
     }
     
     max_row <- max(

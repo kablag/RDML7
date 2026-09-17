@@ -31,7 +31,8 @@ shinyServer(function(input, output, session) {
     rdml = NULL,
     log = character(),
     rawCurves = list(),
-    hookResults = list()
+    hookResults = list(),
+    thresholds = list()
   )
 
   updLog <- function(message) {
@@ -257,6 +258,7 @@ shinyServer(function(input, output, session) {
           n <- nrow(
             input$rdmlFiles
           )
+          last_key <- NULL
 
           for (i in seq_len(n)) {
             original_name <- input$rdmlFiles$name[[i]]
@@ -305,6 +307,7 @@ shinyServer(function(input, output, session) {
               )
 
               values$RDMLs[[key]] <- object
+              last_key <- key
             }
 
             incProgress(
@@ -312,7 +315,13 @@ shinyServer(function(input, output, session) {
             )
           }
 
-          refreshFileSelectors()
+          refreshFileSelectors(
+            selected = last_key
+          )
+
+          if (!is.null(last_key)) {
+            loadActive(last_key)
+          }
         }
       )
     },
@@ -493,17 +502,12 @@ shinyServer(function(input, output, session) {
       values$rdml
     )
 
-    dendro <- runSafe(
+    runSafe(
       RDML7::asDendrogram(
-        values$rdml
+        values$rdml,
+        plotDendrogram = TRUE
       )
     )
-
-    if (!is.null(dendro)) {
-      plot(
-        dendro
-      )
-    }
   })
 
 
@@ -1189,7 +1193,7 @@ shinyServer(function(input, output, session) {
       updateSelectInput(
         session,
         "sampleTypeSlct",
-        selected = editor_display(
+        selected = editor_value_chr(
           object$type
         )
       )
@@ -1255,9 +1259,32 @@ shinyServer(function(input, output, session) {
       )
 
       if (!is.null(sample_type)) {
-        values_to_set$type <- RDML7::sampleTypeType(
+        sample_type_value <- RDML7::sampleTypeType(
           sample_type
         )
+        existing_types <- editor_list_prop(
+          existing,
+          "type"
+        )
+
+        if (length(existing_types)) {
+          values_to_set$type <- lapply(
+            existing_types,
+            function(type) {
+              editor_construct_or_update(
+                type,
+                RDML7::sampleTargetType,
+                list(sampleType = sample_type_value)
+              )
+            }
+          )
+        } else {
+          values_to_set$type <- list(
+            RDML7::sampleTargetType(
+              sampleType = sample_type_value
+            )
+          )
+        }
       }
 
       object <- runSafe(
