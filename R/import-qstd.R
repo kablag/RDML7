@@ -91,10 +91,10 @@
 
 
 .qstdSampleType <- function(sample) {
-  if (grepl("(^|[^[:alnum:]])(ntc|negative|neg|к-)", sample, ignore.case = TRUE)) {
+  if (grepl("(^|[^[:alnum:]])(ntc|negative|neg|\u043a-)", sample, ignore.case = TRUE)) {
     return("ntc")
   }
-  if (grepl("(^|[^[:alnum:]])(positive|pos|пко)", sample, ignore.case = TRUE)) {
+  if (grepl("(^|[^[:alnum:]])(positive|pos|\u043f\u043a\u043e)", sample, ignore.case = TRUE)) {
     return("pos")
   }
   "unkn"
@@ -168,51 +168,51 @@
 
 .qstdEnrichRDML <- function(x, parsed) {
   experiments <- .rdmlPropKeyed(x, "experiment")
-  experiment <- experiments[[parsed$expId]]
+  experiment <- experiments[[parsed[["expId"]]]]
   runs <- .rdmlPropKeyed(experiment, "run")
-  run <- runs[[parsed$runId]]
+  run <- runs[[parsed[["runId"]]]]
 
-  S7::prop(experiment, "description") <- parsed$title
+  S7::prop(experiment, "description") <- parsed[["title"]]
   S7::prop(run, "description") <- paste(
     c(
-      parsed$title,
-      if (nzchar(parsed$operator)) paste0("Operator: ", parsed$operator),
-      if (nzchar(parsed$duration)) paste0("Duration: ", parsed$duration),
-      if (nzchar(parsed$sourceDirectory)) {
-        paste0("Source directory: ", parsed$sourceDirectory)
+      parsed[["title"]],
+      if (nzchar(parsed[["operator"]])) paste0("Operator: ", parsed[["operator"]]),
+      if (nzchar(parsed[["duration"]])) paste0("Duration: ", parsed[["duration"]]),
+      if (nzchar(parsed[["sourceDirectory"]])) {
+        paste0("Source directory: ", parsed[["sourceDirectory"]])
       }
     ),
     collapse = "; "
   )
-  S7::prop(run, "instrument") <- parsed$instrument
+  S7::prop(run, "instrument") <- parsed[["instrument"]]
   S7::prop(run, "dataCollectionSoftware") <- dataCollectionSoftwareType(
     name = "PCR Analyzer96",
-    version = parsed$softwareVersion
+    version = parsed[["softwareVersion"]]
   )
 
   operatorId <- NULL
-  if (nzchar(parsed$operator)) {
-    operatorId <- make.names(parsed$operator)
+  if (nzchar(parsed[["operator"]])) {
+    operatorId <- make.names(parsed[["operator"]])
     S7::prop(run, "experimenter") <- list(idReferenceType(operatorId))
   }
 
   runDate <- suppressWarnings(
-    as.POSIXct(parsed$startDate, format = "%Y-%m-%d %H:%M:%S", tz = "UTC")
+    as.POSIXct(parsed[["startDate"]], format = "%Y-%m-%d %H:%M:%S", tz = "UTC")
   )
   if (!is.na(runDate)) {
     S7::prop(run, "runDate") <- runDate
   }
 
-  runs[[parsed$runId]] <- run
+  runs[[parsed[["runId"]]]] <- run
   experiment <- .rdmlSetPropList(experiment, "run", runs)
-  experiments[[parsed$expId]] <- experiment
+  experiments[[parsed[["expId"]]]] <- experiment
   x <- .rdmlSetPropList(x, "experiment", experiments)
 
   if (!is.null(operatorId)) {
     experimenters <- .rdmlPropKeyed(x, "experimenter")
     experimenters[[operatorId]] <- experimenterType(
       id = idType(operatorId),
-      firstName = parsed$operator,
+      firstName = parsed[["operator"]],
       lastName = "Innova operator"
     )
     x <- .rdmlSetPropList(x, "experimenter", experimenters)
@@ -237,91 +237,91 @@
   }
 
   strings <- .qstdStrings(bytes, to = min(length(bytes) - 4L, 60000L))
-  wellRows <- strings[grepl("^[A-Z]+[1-9][0-9]*$", strings$value), , drop = FALSE]
-  wellRows <- wellRows[!duplicated(wellRows$value), , drop = FALSE]
+  wellRows <- strings[grepl("^[A-Z]+[1-9][0-9]*$", strings[["value"]]), , drop = FALSE]
+  wellRows <- wellRows[!duplicated(wellRows[["value"]]), , drop = FALSE]
 
   if (nrow(wellRows) < 2L) {
     .qstdAbort("QSTD plate layout was not found", fileName)
   }
 
-  positions <- wellRows$value
+  positions <- wellRows[["value"]]
   positionIds <- suppressWarnings(
     vapply(positions, .fromPositionToId, numeric(1))
   )
   orderIndex <- order(positionIds)
   wellRows <- wellRows[orderIndex, , drop = FALSE]
-  positions <- wellRows$value
+  positions <- wellRows[["value"]]
   positionIds <- positionIds[orderIndex]
 
   if (anyNA(positionIds) || anyDuplicated(positionIds)) {
     .qstdAbort("Invalid QSTD well identifiers", fileName)
   }
 
-  headerStrings <- strings[strings$offset < min(wellRows$offset), , drop = FALSE]
-  dateValues <- headerStrings$value[
-    grepl("^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}$", headerStrings$value)
+  headerStrings <- strings[strings[["offset"]] < min(wellRows[["offset"]]), , drop = FALSE]
+  dateValues <- headerStrings[["value"]][
+    grepl("^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}$", headerStrings[["value"]])
   ]
-  title <- headerStrings$value[[1L]]
-  sourceDirectory <- headerStrings$value[
-    grepl("PCR Analyzer", headerStrings$value, fixed = TRUE)
+  title <- headerStrings[["value"]][[1L]]
+  sourceDirectory <- headerStrings[["value"]][
+    grepl("PCR Analyzer", headerStrings[["value"]], fixed = TRUE)
   ]
-  instrumentValues <- headerStrings$value[
-    grepl("IRTP", headerStrings$value, ignore.case = TRUE)
+  instrumentValues <- headerStrings[["value"]][
+    grepl("IRTP", headerStrings[["value"]], ignore.case = TRUE)
   ]
-  serialValues <- headerStrings$value[
-    grepl("^[A-Z]{2}[0-9A-Z]{8,}$", headerStrings$value)
+  serialValues <- headerStrings[["value"]][
+    grepl("^[A-Z]{2}[0-9A-Z]{8,}$", headerStrings[["value"]])
   ]
-  durationValues <- headerStrings$value[
-    grepl("minutes?|seconds?", headerStrings$value, ignore.case = TRUE)
+  durationValues <- headerStrings[["value"]][
+    grepl("minutes?|seconds?", headerStrings[["value"]], ignore.case = TRUE)
   ]
-  pathIndex <- which(grepl("PCR Analyzer", headerStrings$value, fixed = TRUE))
+  pathIndex <- which(grepl("PCR Analyzer", headerStrings[["value"]], fixed = TRUE))
   operator <- if (
     length(pathIndex) && pathIndex[[1L]] < nrow(headerStrings)
-  ) headerStrings$value[[pathIndex[[1L]] + 1L]] else ""
+  ) headerStrings[["value"]][[pathIndex[[1L]] + 1L]] else ""
 
   dyePattern <- paste0(
     "^(FAM|SYBR|EvaGreen|VIC|JOE|HEX|TET|ABY|NED|TAMRA|Cy3|JUN|ROX|Texas Red|Mustang Purple|Cy5|LIZ|Cy5\\.5)$"
   )
   firstRecordStrings <- strings[
-    strings$offset >= wellRows$offset[[1L]] &
-      strings$offset < wellRows$offset[[2L]],
+    strings[["offset"]] >= wellRows[["offset"]][[1L]] &
+      strings[["offset"]] < wellRows[["offset"]][[2L]],
     ,
     drop = FALSE
   ]
-  configuredDyes <- unique(firstRecordStrings$value[
-    grepl(dyePattern, firstRecordStrings$value, ignore.case = TRUE)
+  configuredDyes <- unique(firstRecordStrings[["value"]][
+    grepl(dyePattern, firstRecordStrings[["value"]], ignore.case = TRUE)
   ])
 
-  protocolRows <- strings[strings$value == "Segment1", , drop = FALSE]
-  metadataEnd <- if (nrow(protocolRows)) min(protocolRows$offset) else 60000L
+  protocolRows <- strings[strings[["value"]] == "Segment1", , drop = FALSE]
+  metadataEnd <- if (nrow(protocolRows)) min(protocolRows[["offset"]]) else 60000L
   records <- vector("list", nrow(wellRows))
-  lastMetadataOffset <- max(wellRows$offset)
+  lastMetadataOffset <- max(wellRows[["offset"]])
 
   for (i in seq_len(nrow(wellRows))) {
-    start <- wellRows$offset[[i]]
-    end <- if (i < nrow(wellRows)) wellRows$offset[[i + 1L]] else metadataEnd
+    start <- wellRows[["offset"]][[i]]
+    end <- if (i < nrow(wellRows)) wellRows[["offset"]][[i + 1L]] else metadataEnd
     recordStrings <- strings[
-      strings$offset >= start & strings$offset < end,
+      strings[["offset"]] >= start & strings[["offset"]] < end,
       ,
       drop = FALSE
     ]
-    dyeRows <- recordStrings[grepl(dyePattern, recordStrings$value, ignore.case = TRUE), , drop = FALSE]
-    firstDye <- if (nrow(dyeRows)) min(dyeRows$offset) else end
-    sampleCandidates <- recordStrings$value[
-      recordStrings$offset > start &
-        recordStrings$offset < firstDye &
-        !grepl("^[0-9]{4}-", recordStrings$value)
+    dyeRows <- recordStrings[grepl(dyePattern, recordStrings[["value"]], ignore.case = TRUE), , drop = FALSE]
+    firstDye <- if (nrow(dyeRows)) min(dyeRows[["offset"]]) else end
+    sampleCandidates <- recordStrings[["value"]][
+      recordStrings[["offset"]] > start &
+        recordStrings[["offset"]] < firstDye &
+        !grepl("^[0-9]{4}-", recordStrings[["value"]])
     ]
     sample <- if (length(sampleCandidates)) sampleCandidates[[1L]] else ""
 
     targets <- vector("list", 0L)
     if (nrow(dyeRows)) {
       for (j in seq_len(nrow(dyeRows))) {
-        targetOffset <- dyeRows$offset[[j]] + 4L + 2L * dyeRows$size[[j]]
+        targetOffset <- dyeRows[["offset"]][[j]] + 4L + 2L * dyeRows[["size"]][[j]]
         target <- .qstdQString(bytes, targetOffset, maxChars = 256L)
         if (!is.null(target) && nzchar(target)) {
           targets[[length(targets) + 1L]] <- data.frame(
-            dye = dyeRows$value[[j]],
+            dye = dyeRows[["value"]][[j]],
             target = target,
             stringsAsFactors = FALSE
           )
@@ -359,8 +359,8 @@
 
   curveChannelCount <- .qstdCurveChannelCount(
     bytes,
-    curveOffset = curveInfo$offset,
-    cycles = curveInfo$cycles,
+    curveOffset = curveInfo[["offset"]],
+    cycles = curveInfo[["cycles"]],
     wellCount = nrow(wellRows),
     configuredDyes = length(configuredDyes)
   )
@@ -368,19 +368,19 @@
     .qstdAbort("QSTD fluorescence channel layout is not supported", fileName)
   }
 
-  cursor <- curveInfo$offset + 12L
+  cursor <- curveInfo[["offset"]] + 12L
   curveData <- vector("list", nrow(wellRows))
   for (wellIndex in seq_len(nrow(wellRows))) {
     curveData[[wellIndex]] <- vector("list", curveChannelCount)
     for (dyeIndex in seq_len(curveChannelCount)) {
       coordinateCount <- .qstdUInt32(bytes, cursor)
-      if (coordinateCount != curveInfo$cycles) {
+      if (coordinateCount != curveInfo[["cycles"]]) {
         .qstdAbort("Invalid QSTD cycle vector", fileName)
       }
       cursor <- cursor + 4L + 4L * coordinateCount
 
       fluorCount <- .qstdUInt32(bytes, cursor)
-      if (fluorCount != curveInfo$cycles) {
+      if (fluorCount != curveInfo[["cycles"]]) {
         .qstdAbort("Invalid QSTD fluorescence vector", fileName)
       }
       fluor <- vapply(
@@ -396,7 +396,7 @@
   expId <- tools::file_path_sans_ext(basename(fileName))
   runId <- if (length(dateValues)) dateValues[[1L]] else "Innova run"
   descriptionRows <- vector("list", 0L)
-  fluorescence <- data.frame(cyc = seq_len(curveInfo$cycles), check.names = FALSE)
+  fluorescence <- data.frame(cyc = seq_len(curveInfo[["cycles"]]), check.names = FALSE)
 
   for (i in seq_along(records)) {
     record <- records[[i]]
@@ -460,7 +460,7 @@
       )
     ),
     publisher = "INNOVA Bio-Meditech",
-    serialNumber = parsed$serialNumber,
+    serialNumber = parsed[["serialNumber"]],
     format = "innova-qstd",
     metadata = parsed
   )
