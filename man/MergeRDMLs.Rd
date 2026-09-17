@@ -48,34 +48,28 @@ accumulated base object when the same key is present in both objects.
 - `"error"`: stop at the first duplicate data target.
 }
 \examples{
-\dontrun{
-file1 <- "experiment1.rdml"
-file2 <- "experiment2.rdml"
+amplificationFile <- system.file(
+  "extdata", "lc96_bACTXY.rdml", package = "RDML7"
+)
+meltingFile <- system.file(
+  "extdata", "BioRad_qPCR_melt.rdml", package = "RDML7"
+)
 
-base <- readRDML(file1)
-incoming <- readRDML(file2)
+amplification <- readRDML(amplificationFile, showProgress = FALSE)
+melting <- readRDML(meltingFile, showProgress = FALSE)
 
 # Separate arguments
 merged <- mergeRDMLs(
-  base,
-  incoming,
+  amplification,
+  melting,
   dataConflict = "error"
 )
 
-# Several objects
-merged <- mergeRDMLs(
-  rdml1,
-  rdml2,
-  rdml3,
-  dataConflict = "incoming"
-)
-
 # A list is also accepted
-merged <- mergeRDMLs(
-  list(rdml1, rdml2, rdml3),
+mergedFromList <- mergeRDMLs(
+  list(amplification, melting),
   dataConflict = "base"
 )
-}
 
 }
 \seealso{

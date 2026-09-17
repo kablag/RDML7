@@ -7,20 +7,82 @@
 getFData(x, ...)
 }
 \arguments{
-\item{x}{Object from which to extract fluorescence data.}
+\item{x}{A [dataType] containing one target-specific result, or an
+[rdmlType] containing complete experiments.}
 
-\item{...}{Method-specific arguments.}
+\item{...}{Reserved for method-specific extensions.}
 }
 \value{
-A tabular representation of the fluorescence data.
+A [data.table::data.table]. See **Output columns** for the shape
+  returned by each method and argument combination.
 }
 \description{
-Extract fluorescence data
+Extracts amplification or melting curves either from one [dataType] object
+or from a selection of curves in an [rdmlType] object.
 }
-\details{
-The `dataType` and `rdmlType` methods accept `dpType` to select
-  amplification or melting data. The `rdmlType` method additionally accepts
-  `request`, `longTable`, and `includeMissing`.
+\section{Method arguments}{
+
+\describe{
+  \item{`dpType`}{Character scalar accepted by both methods: `"adp"` for
+  amplification data or `"mdp"` for melting data. Defaults to `"adp"`.}
+  \item{`request`}{For an `rdmlType`, a data frame normally produced by
+  [asTable()]. It must contain `fdataName`, `expId`, `runId`, `reactId`, and
+  `target`. Additional columns are retained in long output. If omitted,
+  `asTable(x)` selects every stored target result.}
+  \item{`longTable`}{For an `rdmlType`, return one row per measured point
+  with request metadata repeated (`TRUE`), or a wide table with one
+  fluorescence column per `fdataName` (`FALSE`, the default).}
+  \item{`includeMissing`}{In long form, retain requested metadata rows that
+  have no curve of the selected `dpType`, filling point columns with `NA`?
+  Defaults to `FALSE`. It has no effect on wide output.}
+}
+}
+
+\section{Output columns}{
+
+For a single `dataType`, amplification output has `cyc`, optional `tmp`, and
+`fluor`; melting output has `tmp` and `fluor`. A missing curve returns an
+empty table with the appropriate coordinate and `fluor` columns.
+
+For an `rdmlType`, wide amplification output begins with `cyc` and may
+include `tmp` when temperature is unambiguous for every cycle. Wide melting
+output begins with `tmp`. Remaining columns are named by `fdataName` in the
+order requested. Long output joins the request columns to `cyc`/`tmp` and
+`fluor`.
+
+Duplicate `fdataName` values are replaced by unique names constructed from
+`expId`, `runId`, `reactId`, and `target`, with a warning.
+}
+
+\examples{
+rdmlFile <- system.file("extdata", "lc96_bACTXY.rdml", package = "RDML7")
+rdml <- readRDML(rdmlFile, showProgress = FALSE)
+meta <- asTable(
+  rdml,
+  columns = c(
+    "expId", "runId", "reactId", "position", "sample", "target", "adp"
+  )
+)
+
+# All amplification curves as one wide table.
+amplification <- getFData(rdml, dpType = "adp")
+
+# Selected curves with metadata repeated for every cycle.
+selected <- getFData(
+  rdml,
+  request = meta[seq_len(min(2L, nrow(meta))), ],
+  dpType = "adp",
+  longTable = TRUE
+)
+
+# Keep metadata even when melting data are absent.
+melting <- getFData(
+  rdml,
+  request = meta,
+  dpType = "mdp",
+  longTable = TRUE,
+  includeMissing = TRUE
+)
 }
 \seealso{
 `asTable()`, `setFData()`

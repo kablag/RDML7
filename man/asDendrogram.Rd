@@ -7,18 +7,35 @@
 asDendrogram(x, ...)
 }
 \arguments{
-\item{x}{Object to represent as a dendrogram.}
+\item{x}{An [rdmlType] object.}
 
-\item{...}{Method-specific arguments.}
+\item{...}{Reserved for method-specific extensions.}
 }
 \value{
-Dendrogram representation invisibly.
+A base R `dendrogram` object. An empty RDML object returns an empty
+  dendrogram; plotting it produces a warning.
 }
 \description{
-Represent RDML structure as a dendrogram
+Groups stored data hierarchically by experiment, run, target, sample type,
+and curve type (`adp` or `mdp`). Leaf labels contain the number of matching
+reactions.
 }
-\details{
-The `rdmlType` method accepts `plotDendrogram` to control plotting.
+\section{Arguments for the `rdmlType` method}{
+
+\describe{
+  \item{`plotDendrogram`}{Logical. Plot the dendrogram immediately? Defaults
+  to `TRUE`. Use `FALSE` to build the object without opening a graphics
+  device.}
+}
+}
+
+\examples{
+rdmlFile <- system.file(
+  "extdata", "BioRad_qPCR_melt.rdml", package = "RDML7"
+)
+rdml <- readRDML(rdmlFile, showProgress = FALSE)
+tree <- asDendrogram(rdml, plotDendrogram = FALSE)
+tree
 }
 \seealso{
 `summary()`

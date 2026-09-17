@@ -7,20 +7,69 @@
 setFData(x, ...)
 }
 \arguments{
-\item{x}{Object to modify.}
+\item{x}{An [rdmlType] object to modify.}
 
-\item{...}{Method-specific arguments.}
+\item{...}{Reserved for method-specific extensions.}
 }
 \value{
-The modified object; assign it back to keep changes.
+The updated [rdmlType] object.
 }
 \description{
-Add or replace fluorescence data
+Adds wide fluorescence data and its metadata to an [rdmlType]. Missing
+experiments, runs, reactions, samples, targets, and dyes are created when
+enough metadata are supplied.
 }
 \details{
-The `rdmlType` method accepts `fdata`, `description`, `fdataType`,
-  and `conflict` to supply fluorescence and metadata tables, select the curve
-  type, and resolve existing data.
+New runs receive a conventional 96-well format, or a 384-well format when
+numeric reaction identifiers exceed 96. Each fluorescence column must have
+exactly one matching description row; undescribed columns are skipped with
+a warning and duplicate descriptions are an error.
+
+RDML objects use value semantics: this function does not modify `x` in
+place. Assign the returned value.
+}
+\section{Arguments for the `rdmlType` method}{
+
+\describe{
+  \item{`fdata`}{A matrix, data frame, or [data.table::data.table]. The first
+  column contains the coordinate (`cyc` for amplification or `tmp` for
+  melting); every other fluorescence column is matched to a row of
+  `description` through `fdataName`. For amplification data, an optional
+  column named `tmp` is stored as per-cycle temperature unless explicitly
+  described as a fluorescence series.}
+  \item{`description`}{A metadata table with one row per fluorescence
+  column. Required columns are `fdataName`, `expId`, `runId`, `reactId`, and
+  `target`. `sample` is required when creating a new reaction, and
+  `targetDyeId` is required when creating a new target. Recognized optional
+  columns include `sampleType`, `targetType`, `cq`, `meltTemp`, and
+  `quantity`.}
+  \item{`fdataType`}{Character scalar: `"adp"` for amplification data or
+  `"mdp"` for melting data. Defaults to `"adp"`.}
+  \item{`conflict`}{How to handle metadata that disagree with existing RDML
+  objects: `"error"` (default) stops, `"keep"` retains existing metadata,
+  and `"replace"` updates it. Fluorescence curves supplied in `fdata` are
+  written for their selected `fdataType`.}
+}
+}
+
+\examples{
+rdmlFile <- system.file("extdata", "lc96_bACTXY.rdml", package = "RDML7")
+source <- readRDML(rdmlFile, showProgress = FALSE)
+metadata <- asTable(source)
+metadata <- metadata[seq_len(min(2L, nrow(metadata))), ]
+curves <- getFData(
+  source,
+  request = metadata,
+  dpType = "adp"
+)
+
+copied <- setFData(
+  rdmlType(),
+  fdata = curves,
+  description = metadata,
+  fdataType = "adp"
+)
+asTable(copied)
 }
 \seealso{
 `buildRDMLFromFData()`, `asTable()`, `getFData()`

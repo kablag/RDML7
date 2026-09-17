@@ -4,9 +4,9 @@
 \name{RDML7-package}
 \alias{RDML7}
 \alias{RDML7-package}
-\title{RDML: qPCR data import, conversion, validation, and export}
+\title{RDML7: qPCR data import, conversion, validation, and export}
 \description{
-`RDML` provides S7 classes and a functional API for Real-time PCR Data
+`RDML7` provides S7 classes and a functional API for Real-time PCR Data
 Markup Language (RDML) data and several instrument/vendor formats. The
 canonical API uses lower camel case and value semantics: functions that
 modify an object return a new `rdmlType` that should be assigned back.
@@ -30,7 +30,7 @@ Use `listRDMLFormats()` to list registered file formats and their capabilities.
 RDML objects are S7 value objects, not mutable R6 environments. Therefore:
 
 ```
-x <- setFData(x, fdata, description)
+rdml <- setFData(rdml, fdata, description)
 ```
 
 rather than relying on in-place reference mutation.
@@ -70,7 +70,7 @@ Authors:
 \itemize{
   \item Konstantin A. Blagodatskikh \email{k.blag@yandex.ru}
   \item Stefan Roediger \email{stefan.roediger@b-tu.de}
-  \item Michal Burdukiewicz \email{michalburdukiewicz@gmail.com} (\href{https://orcid.org/0000-0001-8926-582X}{ORCID})
+  \item Michal Burdukiewicz \email{michalburdukiewicz@gmail.com}
   \item Andrej-Nikolai Spiess \email{a.spiess@uke.de}
 }
 

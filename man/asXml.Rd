@@ -7,20 +7,41 @@
 asXML(x, ...)
 }
 \arguments{
-\item{x}{Object to serialize.}
+\item{x}{An [rdmlType] object.}
 
-\item{...}{Method-specific arguments.}
+\item{...}{Arguments passed to the method.}
 }
 \value{
-XML text or output path invisibly.
+Without `fileName`, a character scalar containing XML. With
+  `fileName`, the serialized XML is returned invisibly after the file is
+  written.
 }
 \description{
-Serialize an RDML object to XML
+Serializes standard RDML properties. Package-only extension fields are kept
+in memory but are not emitted as non-standard XML elements.
 }
-\details{
-The `rdmlType` method accepts an optional `fileName` output path and
-  a `loss` policy (`"warn"`, `"error"`, or `"allow"`) for package data that
-  standard RDML XML cannot represent.
+\section{Arguments for the `rdmlType` method}{
+
+\describe{
+  \item{`fileName`}{Optional output path. If omitted, return the complete
+  XML document as a character scalar. A `.xml` path writes plain XML; other
+  extensions, normally `.rdml`, write a ZIP-based RDML archive.}
+  \item{`loss`}{Policy for package data that standard RDML XML cannot
+  represent: `"warn"` (default), `"error"`, or `"allow"`.}
+}
+}
+
+\examples{
+rdmlFile <- system.file("extdata", "lc96_bACTXY.rdml", package = "RDML7")
+rdml <- readRDML(rdmlFile, showProgress = FALSE)
+
+xml <- asXML(rdml, loss = "allow")
+substr(xml, 1L, 80L)
+
+output <- tempfile(fileext = ".rdml")
+invisible(asXML(rdml, fileName = output, loss = "allow"))
+file.exists(output)
+unlink(output)
 }
 \seealso{
 `writeRDML()`

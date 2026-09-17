@@ -28,8 +28,7 @@ curves (`mdp`).
 The historical `totalMultiTm` field is no longer calculated or returned.
 }
 \examples{
-\dontrun{
-x <- readRDML("example.rdml")
-summary(x)
-}
+rdmlFile <- system.file("extdata", "lc96_bACTXY.rdml", package = "RDML7")
+rdml <- readRDML(rdmlFile, showProgress = FALSE)
+summary(rdml)
 }

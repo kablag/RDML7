@@ -7,21 +7,64 @@
 asTable(x, ...)
 }
 \arguments{
-\item{x}{Object to convert.}
+\item{x}{An [rdmlType] object.}
 
-\item{...}{Method-specific arguments.}
+\item{...}{Named expressions defining additional columns. Expressions are
+evaluated once per `dataType`; see **Custom columns** below.}
 }
 \value{
-A tabular representation of `x`.
+A keyed [data.table::data.table] with `fdataName` followed by the
+  selected built-in and custom columns. Positions use canonical plate
+  labels such as `A01`.
 }
 \description{
-Build a metadata table from an RDML object
+Creates one metadata row for every target-specific `dataType` stored in an
+RDML object. This table can be inspected directly or supplied as `request`
+to [getFData()].
 }
-\details{
-The `rdmlType` method supports selecting built-in columns with
-  `columns`, adding named expressions through `...`, controlling hidden
-  experiments with `includeHidden`, and compatibility arguments `default`,
-  `namePattern`, `addColumns`, and `treatNullAsNa`.
+\section{Arguments for the `rdmlType` method}{
+
+\describe{
+  \item{`columns`}{Character vector selecting built-in columns, or `NULL`
+  for all built-in columns. Available values are `expId`, `runId`,
+  `reactId`, `position`, `sample`, `target`, `targetDyeId`, `sampleType`,
+  `adp`, and `mdp`.}
+  \item{`namePattern`}{Character template or expression used to create the
+  unique `fdataName` for each curve. Character templates use `\{field\}`
+  placeholders, for example `"\{position\}_\{target\}"`.}
+  \item{`includeHidden`}{Logical. Include experiments whose identifiers
+  start with `.`? Defaults to `FALSE`.}
+  \item{`treatNullAsNa`}{Logical. Convert `NULL` results from custom
+  expressions to `NA`? Defaults to `FALSE`.}
+  \item{`default`, `addColumns`}{Deprecated compatibility arguments for
+  named lists of base and additional expressions. New code should use
+  `columns` and named expressions in `...`.}
+}
+}
+
+\section{Custom columns}{
+
+Expressions in `...` can use the scalar values `expId`, `runId`, `reactId`,
+`position`, `sample`, `target`, `targetDyeId`, `sampleType`, `adp`, and
+`mdp`. They can also inspect the current `experiment`, `run`, `react`, and
+`data` objects and the top-level `samples`, `targets`, `dateMade`,
+`dateUpdated`, `id`, `experimenter`, `documentation`, `dye`, and
+`thermalCyclingConditions` collections.
+
+Named custom columns may be referenced by `namePattern` placeholders.
+}
+
+\examples{
+rdmlFile <- system.file("extdata", "lc96_bACTXY.rdml", package = "RDML7")
+rdml <- readRDML(rdmlFile, showProgress = FALSE)
+
+meta <- asTable(
+  rdml,
+  columns = c("position", "sample", "target", "adp"),
+  cq = data$cq,
+  namePattern = "{position}_{target}"
+)
+head(meta)
 }
 \seealso{
 `getFData()`, `setFData()`

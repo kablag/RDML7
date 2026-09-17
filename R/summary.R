@@ -154,10 +154,9 @@
 #' @aliases summary
 #'
 #' @examples
-#' \dontrun{
-#' x <- readRDML("example.rdml")
-#' summary(x)
-#' }
+#' rdmlFile <- system.file("extdata", "lc96_bACTXY.rdml", package = "RDML7")
+#' rdml <- readRDML(rdmlFile, showProgress = FALSE)
+#' summary(rdml)
 S7::method(
   summary,
   rdmlType
