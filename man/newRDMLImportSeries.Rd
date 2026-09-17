@@ -19,6 +19,20 @@ newRDMLImportSeries(fdataType, fdata, description)
 \description{
 Create an importer fluorescence-series object
 }
+\examples{
+rdmlFile <- system.file("extdata", "lc96_bACTXY.rdml", package = "RDML7")
+rdml <- readRDML(rdmlFile, showProgress = FALSE)
+description <- asTable(rdml)
+description <- description[seq_len(min(2L, nrow(description))), ]
+fluorescence <- getFData(rdml, request = description, dpType = "adp")
+
+series <- newRDMLImportSeries(
+  fdataType = "adp",
+  fdata = fluorescence,
+  description = description
+)
+series$fdataType
+}
 \seealso{
 [newRDMLImportData()], [buildRDMLImport()]
 }

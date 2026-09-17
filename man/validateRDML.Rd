@@ -13,7 +13,9 @@ validateRDML(
 \arguments{
 \item{x}{`rdmlType`.}
 
-\item{level}{`"structure"`, `"references"`, `"curves"`, or `"full"`.}
+\item{level}{Validation scope: `"structure"` checks duplicate identifiers,
+`"references"` checks links between RDML objects, `"data"` checks curve
+coordinates, and `"full"` performs all checks.}
 
 \item{action}{`"return"`, `"warn"`, or `"error"`.}
 }
@@ -23,6 +25,13 @@ A `data.table` of class `rdmlValidation` describing issues.
 \description{
 Checks duplicate keys, dangling references, and fluorescence-curve
 consistency in addition to S7 property validation.
+}
+\examples{
+rdmlFile <- system.file("extdata", "lc96_bACTXY.rdml", package = "RDML7")
+rdml <- readRDML(rdmlFile, showProgress = FALSE)
+
+issues <- validateRDML(rdml, level = "full", action = "return")
+issues
 }
 \seealso{
 `isValidRDML`, `rdmlSummary`

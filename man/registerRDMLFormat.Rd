@@ -30,6 +30,24 @@ If several formats support the same extension and operation, the first
 registered matching format is used by default. Users can select another
 registered format explicitly with `format = "name"`.
 }
+\examples{
+rdmlFile <- system.file("extdata", "lc96_bACTXY.rdml", package = "RDML7")
+demoFile <- tempfile(fileext = ".rdmldemo")
+file.copy(rdmlFile, demoFile)
+
+registerRDMLFormat(
+  name = "rdml-demo",
+  extensions = "rdmldemo",
+  reader = function(fileName, ...) {
+    readRDML(fileName, format = "rdml", ...)
+  }
+)
+detectRDMLFormat(demoFile, "read")
+demo <- readRDML(demoFile, showProgress = FALSE)
+
+unregisterRDMLFormat("rdml-demo")
+unlink(demoFile)
+}
 \seealso{
 `loadRDMLModule`, `listRDMLFormats`, `readRDML`
 }

@@ -403,68 +403,9 @@ MergeRDMLs <- function(
   )
 }
 
-# Previous RDML7 canonical names -------------------------------------------
-#
-# Kept for source compatibility. Documentation and vignettes use the
-# verb-first API above.
-
-#' @rdname legacy-api
-#' @export
-rdmlRead <- function(...) readRDML(...)
-
-#' @rdname legacy-api
-#' @export
-rdmlWrite <- function(...) writeRDML(...)
-
-#' @rdname legacy-api
-#' @export
-rdmlRegisterFormat <- function(...) registerRDMLFormat(...)
-
-#' @rdname legacy-api
-#' @export
-rdmlUnregisterFormat <- function(...) unregisterRDMLFormat(...)
-
-#' @rdname legacy-api
-#' @export
-rdmlDetectFormat <- function(...) detectRDMLFormat(...)
-
-#' @rdname legacy-api
-#' @export
-rdmlFormats <- function(...) listRDMLFormats(...)
-
-#' @rdname legacy-api
-#' @export
-rdmlLoadModule <- function(...) loadRDMLModule(...)
-
-#' @rdname legacy-api
-#' @export
-rdmlBuildImport <- function(...) buildRDMLImport(...)
-
-#' @rdname legacy-api
-#' @export
-rdmlFromFData <- function(...) buildRDMLFromFData(...)
-
-#' @rdname legacy-api
-#' @export
-rdmlValidate <- function(...) validateRDML(...)
-
-#' @rdname legacy-api
-#' @export
-rdmlIsValid <- function(...) isValidRDML(...)
+# Original RDML compatibility ----------------------------------------------
 
 #' @rdname legacy-api
 #' @export
 rdmlEdit <- function(...) editRDML(...)
-
-#' @rdname legacy-api
-#' @export
-mergeRdmls <- function(...) mergeRDMLs(...)
-
-#' @rdname legacy-api
-#' @export
-asXml <- function(...) asXML(...)
-
-#' @rdname legacy-api
-#' @export
-rdmlLossRecord <- function(...) newRDMLLossRecord(...)
 

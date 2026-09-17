@@ -7,21 +7,7 @@
 \alias{SetFData}
 \alias{AsDendrogram}
 \alias{MergeRDMLs}
-\alias{rdmlRead}
-\alias{rdmlWrite}
-\alias{rdmlRegisterFormat}
-\alias{rdmlUnregisterFormat}
-\alias{rdmlDetectFormat}
-\alias{rdmlFormats}
-\alias{rdmlLoadModule}
-\alias{rdmlBuildImport}
-\alias{rdmlFromFData}
-\alias{rdmlValidate}
-\alias{rdmlIsValid}
 \alias{rdmlEdit}
-\alias{mergeRdmls}
-\alias{asXml}
-\alias{rdmlLossRecord}
 \title{Legacy API compatibility wrappers}
 \usage{
 AsTable(
@@ -57,35 +43,7 @@ AsDendrogram(x, plot.dendrogram = TRUE, ...)
 
 MergeRDMLs(to.merge, data.conflict = c("incoming", "base", "error"))
 
-rdmlRead(...)
-
-rdmlWrite(...)
-
-rdmlRegisterFormat(...)
-
-rdmlUnregisterFormat(...)
-
-rdmlDetectFormat(...)
-
-rdmlFormats(...)
-
-rdmlLoadModule(...)
-
-rdmlBuildImport(...)
-
-rdmlFromFData(...)
-
-rdmlValidate(...)
-
-rdmlIsValid(...)
-
 rdmlEdit(...)
-
-mergeRdmls(...)
-
-asXml(...)
-
-rdmlLossRecord(...)
 }
 \arguments{
 \item{x}{An [rdmlType] object, or a [dataType] for `GetFData()`.}
@@ -133,8 +91,7 @@ or `"error"`.}
 `AsTable()` and `GetFData()` return [data.table::data.table]
   objects with legacy dotted column names where applicable. `SetFData()`
   and `MergeRDMLs()` return [rdmlType] objects. `AsDendrogram()` returns a
-  `dendrogram`. Alias functions return exactly what their canonical
-  counterparts return.
+  `dendrogram`. `rdmlEdit()` launches the editor like [editRDML()].
 }
 \description{
 These functions preserve public names, dotted argument names, and (where
@@ -148,34 +105,13 @@ Legacy \tab Canonical \cr
 `GetFData()` \tab `getFData()` \cr
 `SetFData()` \tab `setFData()` \cr
 `AsDendrogram()` \tab `asDendrogram()` \cr
-`asXML()` \tab `asXML()` \cr
 `MergeRDMLs()` \tab `mergeRDMLs()` \cr
+`rdmlEdit()` \tab `editRDML()` \cr
 }
 
 Legacy `AsTable()` returns names such as `fdata.name`, `exp.id`, `run.id`,
 `react.id`, `sample.type`, and `target.dyeId`; `asTable()` uses
 `fdataName`, `expId`, `runId`, `reactId`, `sampleType`, and `targetDyeId`.
-
-Earlier verb-prefixed aliases are also retained:
-
-\tabular{ll}{
-Alias \tab Canonical \cr
-`rdmlRead()` \tab `readRDML()` \cr
-`rdmlWrite()` \tab `writeRDML()` \cr
-`rdmlRegisterFormat()` \tab `registerRDMLFormat()` \cr
-`rdmlUnregisterFormat()` \tab `unregisterRDMLFormat()` \cr
-`rdmlDetectFormat()` \tab `detectRDMLFormat()` \cr
-`rdmlFormats()` \tab `listRDMLFormats()` \cr
-`rdmlLoadModule()` \tab `loadRDMLModule()` \cr
-`rdmlBuildImport()` \tab `buildRDMLImport()` \cr
-`rdmlFromFData()` \tab `buildRDMLFromFData()` \cr
-`rdmlValidate()` \tab `validateRDML()` \cr
-`rdmlIsValid()` \tab `isValidRDML()` \cr
-`rdmlEdit()` \tab `editRDML()` \cr
-`mergeRdmls()` \tab `mergeRDMLs()` \cr
-`asXml()` \tab `asXML()` \cr
-`rdmlLossRecord()` \tab `newRDMLLossRecord()` \cr
-}
 }
 \examples{
 amplificationFile <- system.file(
@@ -184,8 +120,8 @@ amplificationFile <- system.file(
 meltingFile <- system.file(
   "extdata", "BioRad_qPCR_melt.rdml", package = "RDML7"
 )
-amplification <- rdmlRead(amplificationFile, showProgress = FALSE)
-melting <- rdmlRead(meltingFile, showProgress = FALSE)
+amplification <- readRDML(amplificationFile, showProgress = FALSE)
+melting <- readRDML(meltingFile, showProgress = FALSE)
 
 legacyMeta <- AsTable(amplification)
 legacyCurves <- GetFData(
@@ -205,5 +141,5 @@ merged <- MergeRDMLs(list(amplification, melting), data.conflict = "base")
 }
 \seealso{
 [asTable()], [getFData()], [setFData()], [asDendrogram()],
-  [asXML()], [mergeRDMLs()], `RDML7-package`
+  [mergeRDMLs()], [editRDML()], `RDML7-package`
 }

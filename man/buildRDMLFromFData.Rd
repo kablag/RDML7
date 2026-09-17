@@ -32,6 +32,21 @@ buildRDMLFromFData(
 \description{
 Create an RDML object from fluorescence and metadata tables
 }
+\examples{
+rdmlFile <- system.file("extdata", "lc96_bACTXY.rdml", package = "RDML7")
+source <- readRDML(rdmlFile, showProgress = FALSE)
+description <- asTable(source)
+description <- description[seq_len(min(2L, nrow(description))), ]
+fluorescence <- getFData(source, request = description, dpType = "adp")
+
+rebuilt <- buildRDMLFromFData(
+  fdata = fluorescence,
+  description = description,
+  fdataType = "adp",
+  publisher = "RDML7 example"
+)
+asTable(rebuilt)
+}
 \seealso{
 `setFData`, `rdmlImportData`
 }

@@ -224,6 +224,21 @@ S7::method(`$<-`, rdmlImportData) <- function(x, name, value) {
 #' @param ... Additional arguments forwarded to `setFData()`.
 #' @return `rdmlType`.
 #' @seealso `readRDML`, `rdmlImportData`
+#' @examples
+#' rdmlFile <- system.file("extdata", "lc96_bACTXY.rdml", package = "RDML7")
+#' source <- readRDML(rdmlFile, showProgress = FALSE)
+#' description <- asTable(source)
+#' description <- description[seq_len(min(2L, nrow(description))), ]
+#' fluorescence <- getFData(source, request = description, dpType = "adp")
+#'
+#' series <- newRDMLImportSeries("adp", fluorescence, description)
+#' importData <- newRDMLImportData(
+#'   series = list(series),
+#'   publisher = "RDML7 example",
+#'   format = "rdml"
+#' )
+#' imported <- buildRDMLImport(importData, loss = "allow")
+#' asTable(imported)
 #' @export
 buildRDMLImport <- function(
     importData,
@@ -277,6 +292,19 @@ buildRDMLImport <- function(
 #' @param description Description table accepted by `setFData()`.
 #' @return `rdmlImportSeries`.
 #' @seealso [newRDMLImportData()], [buildRDMLImport()]
+#' @examples
+#' rdmlFile <- system.file("extdata", "lc96_bACTXY.rdml", package = "RDML7")
+#' rdml <- readRDML(rdmlFile, showProgress = FALSE)
+#' description <- asTable(rdml)
+#' description <- description[seq_len(min(2L, nrow(description))), ]
+#' fluorescence <- getFData(rdml, request = description, dpType = "adp")
+#'
+#' series <- newRDMLImportSeries(
+#'   fdataType = "adp",
+#'   fdata = fluorescence,
+#'   description = description
+#' )
+#' series$fdataType
 #' @export
 newRDMLImportSeries <- function(
     fdataType,
@@ -305,6 +333,25 @@ newRDMLImportSeries <- function(
 #' @param losses List of loss records.
 #' @return `rdmlImportData`.
 #' @seealso [newRDMLImportSeries()], [buildRDMLImport()]
+#' @examples
+#' rdmlFile <- system.file(
+#'   "extdata", "BioRad_qPCR_melt.rdml", package = "RDML7"
+#' )
+#' rdml <- readRDML(rdmlFile, showProgress = FALSE)
+#' description <- asTable(rdml)
+#' description <- description[description$mdp %in% TRUE, ]
+#' description <- description[seq_len(min(2L, nrow(description))), ]
+#' fluorescence <- getFData(rdml, request = description, dpType = "mdp")
+#' series <- newRDMLImportSeries("mdp", fluorescence, description)
+#'
+#' importData <- newRDMLImportData(
+#'   series = list(series),
+#'   publisher = "Bio-Rad",
+#'   serialNumber = "example",
+#'   format = "rdml",
+#'   metadata = list(source = basename(rdmlFile))
+#' )
+#' names(importData)
 #' @export
 newRDMLImportData <- function(
     series,

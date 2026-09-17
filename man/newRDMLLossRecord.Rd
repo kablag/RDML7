@@ -22,6 +22,18 @@ An `newRDMLLossRecord`.
 Importers/exporters use these records for information that cannot be
 represented exactly in the destination model.
 }
+\examples{
+rdmlFile <- system.file(
+  "extdata", "BioRad_qPCR_melt.rdml", package = "RDML7"
+)
+loss <- newRDMLLossRecord(
+  code = "unsupportedMetadata",
+  message = "Vendor metadata is retained only in the importer record",
+  path = rdmlFile,
+  details = list(format = detectRDMLFormat(rdmlFile, "read"))
+)
+loss
+}
 \seealso{
 `readRDML`, `writeRDML`, `rdmlImportData`
 }

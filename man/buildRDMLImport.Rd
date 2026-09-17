@@ -20,6 +20,22 @@ buildRDMLImport(importData, loss = c("warn", "error", "allow"), ...)
 \description{
 Build rdmlType from canonical importer data
 }
+\examples{
+rdmlFile <- system.file("extdata", "lc96_bACTXY.rdml", package = "RDML7")
+source <- readRDML(rdmlFile, showProgress = FALSE)
+description <- asTable(source)
+description <- description[seq_len(min(2L, nrow(description))), ]
+fluorescence <- getFData(source, request = description, dpType = "adp")
+
+series <- newRDMLImportSeries("adp", fluorescence, description)
+importData <- newRDMLImportData(
+  series = list(series),
+  publisher = "RDML7 example",
+  format = "rdml"
+)
+imported <- buildRDMLImport(importData, loss = "allow")
+asTable(imported)
+}
 \seealso{
 `readRDML`, `rdmlImportData`
 }

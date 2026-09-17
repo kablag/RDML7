@@ -175,6 +175,23 @@ assign(
 #' @param writer Writer function or `NULL`.
 #' @return Registered format specification invisibly.
 #' @seealso `loadRDMLModule`, `listRDMLFormats`, `readRDML`
+#' @examples
+#' rdmlFile <- system.file("extdata", "lc96_bACTXY.rdml", package = "RDML7")
+#' demoFile <- tempfile(fileext = ".rdmldemo")
+#' file.copy(rdmlFile, demoFile)
+#'
+#' registerRDMLFormat(
+#'   name = "rdml-demo",
+#'   extensions = "rdmldemo",
+#'   reader = function(fileName, ...) {
+#'     readRDML(fileName, format = "rdml", ...)
+#'   }
+#' )
+#' detectRDMLFormat(demoFile, "read")
+#' demo <- readRDML(demoFile, showProgress = FALSE)
+#'
+#' unregisterRDMLFormat("rdml-demo")
+#' unlink(demoFile)
 #' @export
 registerRDMLFormat <- function(
     name,
@@ -437,6 +454,15 @@ listRDMLFormats <- function() {
 #' @param operation `"read"` or `"write"`.
 #' @return Registered format name.
 #' @seealso `listRDMLFormats`, `readRDML`, `writeRDML`
+#' @examples
+#' amplificationFile <- system.file(
+#'   "extdata", "lc96_bACTXY.rdml", package = "RDML7"
+#' )
+#' meltingFile <- system.file(
+#'   "extdata", "BioRad_qPCR_melt.rdml", package = "RDML7"
+#' )
+#' detectRDMLFormat(amplificationFile, operation = "read")
+#' detectRDMLFormat(meltingFile, operation = "write")
 #' @export
 detectRDMLFormat <- function(
     fileName,
@@ -1043,6 +1069,20 @@ writeRDML <- function(
 #' @param ... Additional arguments forwarded to `buildRDMLImport()`.
 #' @return `rdmlType`.
 #' @seealso `setFData`, `rdmlImportData`
+#' @examples
+#' rdmlFile <- system.file("extdata", "lc96_bACTXY.rdml", package = "RDML7")
+#' source <- readRDML(rdmlFile, showProgress = FALSE)
+#' description <- asTable(source)
+#' description <- description[seq_len(min(2L, nrow(description))), ]
+#' fluorescence <- getFData(source, request = description, dpType = "adp")
+#'
+#' rebuilt <- buildRDMLFromFData(
+#'   fdata = fluorescence,
+#'   description = description,
+#'   fdataType = "adp",
+#'   publisher = "RDML7 example"
+#' )
+#' asTable(rebuilt)
 #' @export
 buildRDMLFromFData <- function(
     fdata,

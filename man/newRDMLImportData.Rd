@@ -35,6 +35,26 @@ newRDMLImportData(
 \description{
 Create canonical importer data
 }
+\examples{
+rdmlFile <- system.file(
+  "extdata", "BioRad_qPCR_melt.rdml", package = "RDML7"
+)
+rdml <- readRDML(rdmlFile, showProgress = FALSE)
+description <- asTable(rdml)
+description <- description[description$mdp \%in\% TRUE, ]
+description <- description[seq_len(min(2L, nrow(description))), ]
+fluorescence <- getFData(rdml, request = description, dpType = "mdp")
+series <- newRDMLImportSeries("mdp", fluorescence, description)
+
+importData <- newRDMLImportData(
+  series = list(series),
+  publisher = "Bio-Rad",
+  serialNumber = "example",
+  format = "rdml",
+  metadata = list(source = basename(rdmlFile))
+)
+names(importData)
+}
 \seealso{
 [newRDMLImportSeries()], [buildRDMLImport()]
 }

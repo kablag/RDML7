@@ -17,6 +17,16 @@ Registered format name.
 \description{
 Detect the format handler selected for a path
 }
+\examples{
+amplificationFile <- system.file(
+  "extdata", "lc96_bACTXY.rdml", package = "RDML7"
+)
+meltingFile <- system.file(
+  "extdata", "BioRad_qPCR_melt.rdml", package = "RDML7"
+)
+detectRDMLFormat(amplificationFile, operation = "read")
+detectRDMLFormat(meltingFile, operation = "write")
+}
 \seealso{
 `listRDMLFormats`, `readRDML`, `writeRDML`
 }

@@ -107,10 +107,18 @@ NULL
 #' consistency in addition to S7 property validation.
 #'
 #' @param x `rdmlType`.
-#' @param level `"structure"`, `"references"`, `"curves"`, or `"full"`.
+#' @param level Validation scope: `"structure"` checks duplicate identifiers,
+#'   `"references"` checks links between RDML objects, `"data"` checks curve
+#'   coordinates, and `"full"` performs all checks.
 #' @param action `"return"`, `"warn"`, or `"error"`.
 #' @return A `data.table` of class `rdmlValidation` describing issues.
 #' @seealso `isValidRDML`, `rdmlSummary`
+#' @examples
+#' rdmlFile <- system.file("extdata", "lc96_bACTXY.rdml", package = "RDML7")
+#' rdml <- readRDML(rdmlFile, showProgress = FALSE)
+#'
+#' issues <- validateRDML(rdml, level = "full", action = "return")
+#' issues
 #' @export
 validateRDML <- function(
     x,
@@ -388,6 +396,13 @@ validateRDML <- function(
 #' @param level Validation level passed to `validateRDML()`.
 #' @return `TRUE` if no validation issue has severity `"error"`.
 #' @seealso `validateRDML`
+#' @examples
+#' rdmlFile <- system.file(
+#'   "extdata", "BioRad_qPCR_melt.rdml", package = "RDML7"
+#' )
+#' rdml <- readRDML(rdmlFile, showProgress = FALSE)
+#'
+#' isValidRDML(rdml, level = "full")
 #' @export
 isValidRDML <- function(x, level = "full") {
   result <- validateRDML(

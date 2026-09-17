@@ -83,6 +83,17 @@
 #' @param details Additional structured metadata.
 #' @return An `newRDMLLossRecord`.
 #' @seealso `readRDML`, `writeRDML`, `rdmlImportData`
+#' @examples
+#' rdmlFile <- system.file(
+#'   "extdata", "BioRad_qPCR_melt.rdml", package = "RDML7"
+#' )
+#' loss <- newRDMLLossRecord(
+#'   code = "unsupportedMetadata",
+#'   message = "Vendor metadata is retained only in the importer record",
+#'   path = rdmlFile,
+#'   details = list(format = detectRDMLFormat(rdmlFile, "read"))
+#' )
+#' loss
 #' @export
 newRDMLLossRecord <- function(
     code,

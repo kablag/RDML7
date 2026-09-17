@@ -90,7 +90,7 @@ Validation can focus on structure, references, curves, or the full object:
 ```r
 validateRDML(x, level = "structure")
 validateRDML(x, level = "references")
-validateRDML(x, level = "curves")
+validateRDML(x, level = "data")
 validateRDML(x, level = "full")
 ```
 

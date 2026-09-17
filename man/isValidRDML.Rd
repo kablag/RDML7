@@ -17,6 +17,14 @@ isValidRDML(x, level = "full")
 \description{
 Test whether an RDML object has semantic errors
 }
+\examples{
+rdmlFile <- system.file(
+  "extdata", "BioRad_qPCR_melt.rdml", package = "RDML7"
+)
+rdml <- readRDML(rdmlFile, showProgress = FALSE)
+
+isValidRDML(rdml, level = "full")
+}
 \seealso{
 `validateRDML`
 }

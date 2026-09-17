@@ -10,34 +10,13 @@
 #' `GetFData()` \tab `getFData()` \cr
 #' `SetFData()` \tab `setFData()` \cr
 #' `AsDendrogram()` \tab `asDendrogram()` \cr
-#' `asXML()` \tab `asXML()` \cr
 #' `MergeRDMLs()` \tab `mergeRDMLs()` \cr
+#' `rdmlEdit()` \tab `editRDML()` \cr
 #' }
 #'
 #' Legacy `AsTable()` returns names such as `fdata.name`, `exp.id`, `run.id`,
 #' `react.id`, `sample.type`, and `target.dyeId`; `asTable()` uses
 #' `fdataName`, `expId`, `runId`, `reactId`, `sampleType`, and `targetDyeId`.
-#'
-#' Earlier verb-prefixed aliases are also retained:
-#'
-#' \tabular{ll}{
-#' Alias \tab Canonical \cr
-#' `rdmlRead()` \tab `readRDML()` \cr
-#' `rdmlWrite()` \tab `writeRDML()` \cr
-#' `rdmlRegisterFormat()` \tab `registerRDMLFormat()` \cr
-#' `rdmlUnregisterFormat()` \tab `unregisterRDMLFormat()` \cr
-#' `rdmlDetectFormat()` \tab `detectRDMLFormat()` \cr
-#' `rdmlFormats()` \tab `listRDMLFormats()` \cr
-#' `rdmlLoadModule()` \tab `loadRDMLModule()` \cr
-#' `rdmlBuildImport()` \tab `buildRDMLImport()` \cr
-#' `rdmlFromFData()` \tab `buildRDMLFromFData()` \cr
-#' `rdmlValidate()` \tab `validateRDML()` \cr
-#' `rdmlIsValid()` \tab `isValidRDML()` \cr
-#' `rdmlEdit()` \tab `editRDML()` \cr
-#' `mergeRdmls()` \tab `mergeRDMLs()` \cr
-#' `asXml()` \tab `asXML()` \cr
-#' `rdmlLossRecord()` \tab `newRDMLLossRecord()` \cr
-#' }
 #'
 #' @param x An [rdmlType] object, or a [dataType] for `GetFData()`.
 #' @param .default Named list of expressions defining the base `AsTable()`
@@ -67,8 +46,7 @@
 #' @return `AsTable()` and `GetFData()` return [data.table::data.table]
 #'   objects with legacy dotted column names where applicable. `SetFData()`
 #'   and `MergeRDMLs()` return [rdmlType] objects. `AsDendrogram()` returns a
-#'   `dendrogram`. Alias functions return exactly what their canonical
-#'   counterparts return.
+#'   `dendrogram`. `rdmlEdit()` launches the editor like [editRDML()].
 #'
 #' @examples
 #' amplificationFile <- system.file(
@@ -77,8 +55,8 @@
 #' meltingFile <- system.file(
 #'   "extdata", "BioRad_qPCR_melt.rdml", package = "RDML7"
 #' )
-#' amplification <- rdmlRead(amplificationFile, showProgress = FALSE)
-#' melting <- rdmlRead(meltingFile, showProgress = FALSE)
+#' amplification <- readRDML(amplificationFile, showProgress = FALSE)
+#' melting <- readRDML(meltingFile, showProgress = FALSE)
 #'
 #' legacyMeta <- AsTable(amplification)
 #' legacyCurves <- GetFData(
@@ -97,5 +75,5 @@
 #'
 #' @name legacy-api
 #' @seealso [asTable()], [getFData()], [setFData()], [asDendrogram()],
-#'   [asXML()], [mergeRDMLs()], `RDML7-package`
+#'   [mergeRDMLs()], [editRDML()], `RDML7-package`
 NULL
