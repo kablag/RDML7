@@ -2,7 +2,7 @@ Package: RDML7
 Type: Package
 Title: Tools for Real-Time PCR (qPCR) Data and RDML Files
 Version: 1.0
-Date: 2026-08-26
+Date: 2026-09-22
 Encoding: UTF-8
 Description: Reads, writes, validates, converts, and manipulates quantitative PCR
     data using Real-time PCR Data Markup Language (RDML) S7 objects. Includes
