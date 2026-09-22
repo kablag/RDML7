@@ -18,7 +18,7 @@ sample and target master records.
 
 The hierarchy editor follows the RDML structure directly:
 
-`experiment → run → react → data`
+`experiment в†’ run в†’ react в†’ data`
 
 The Data panel edits `cq`, vector `meltTemp`, exclusion text, endpoint,
 background fluorescence/slope and quantification fluorescence while preserving
@@ -73,19 +73,3 @@ without modifying RDML7 classes:
 - `DT`: interactive tables.
 
 These packages are GUI dependencies, not part of the RDML7 object model.
-
-
-### shinyMolBio compatibility
-
-`shinyMolBio::pcrPlateInput()` is still implemented against the original R6
-`RDML::pcrFormatType`. RDML7 therefore converts only the plate-format metadata
-to a temporary legacy `pcrFormatType` object for the widget. The edited
-document itself remains an RDML7 S7 object.
-
-For RDES files without `run$pcrFormat`, the editor infers a conventional plate:
-
-- A–H / columns 1–12 → 96-well (8 × 12);
-- up to P / 24 → 384-well (16 × 24);
-- up to AF / 48 → 1536-well (32 × 48).
-
-The compatibility object is never stored in the RDML7 document.

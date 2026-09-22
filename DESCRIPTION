@@ -2,7 +2,6 @@ Package: RDML7
 Type: Package
 Title: Tools for Real-Time PCR (qPCR) Data and RDML Files
 Version: 1.0
-LazyData: true
 Date: 2026-08-26
 Encoding: UTF-8
 Description: Reads, writes, validates, converts, and manipulates quantitative PCR
@@ -22,6 +21,7 @@ Authors@R: c(
       email = "a.spiess@uke.de", role = "ctb"))
 License: MIT + file LICENSE
 URL: https://github.com/kablag/RDML7
+BugReports: https://github.com/kablag/RDML7/issues
 Depends:
     R (>= 4.1.0)
 Imports:
@@ -72,23 +72,17 @@ Collate:
 Suggests:
     knitr,
     chipPCR,
-    magrittr,
     reshape2,
     qpcR,
-    dplyr,
     ggplot2,
     htmltools,
     DT,
-    kfigr,
     MBmca,
+    PCRedux,
     shiny,
-    shinyjs,
     shinythemes,
-    shinyMolBio,
-    V8,
     testthat,
     rmarkdown,
-    pkgdown,
     plotly
 VignetteBuilder: knitr
 Config/roxygen2/version: 8.1.0

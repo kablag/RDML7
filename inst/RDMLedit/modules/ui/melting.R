@@ -146,10 +146,6 @@ rdml7MeltingPanel <- function() {
             ),
             uiOutput(
               "meltingPlateUI"
-            ),
-            tags$small(
-              "With shinyMolBio installed this is the original interactive PCR plate. ",
-              "Otherwise a multiple position selector is shown."
             )
           )
         )

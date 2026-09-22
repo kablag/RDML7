@@ -151,11 +151,11 @@ test_that("bundled RDML editor renders curves and edits metadata", {
     expect_equal(nrow(meltingCatalog()), 1L)
     expect_true(any(nchar(output$qPCRPlateUI) > 0L))
     expect_true(any(nchar(output$meltingPlateUI) > 0L))
-    expect_match(paste(output$meltingPlateUI, collapse = ""), "sample1")
+    expect_match(paste(output$meltingPlateUI, collapse = ""), "A01")
     expect_true(any(nchar(output$qPCRPlot) > 0L))
     expect_true(any(nchar(output$meltingPlot) > 0L))
 
-    session$setInputs(mainPcrPlateQpcr = "A01")
+    session$setInputs(showqPCRPositionsFallback = "A01")
     session$flushReact()
     expect_identical(qPCRSelectedPositions(), "A01")
     expect_equal(nrow(qPCRFilteredCatalog()), 1L)
@@ -336,44 +336,4 @@ test_that("RDML editor opens the bundled RDES amplification example", {
       vapply(originalTypes, function(type) type$targetId$id, character(1))
     )
   })
-})
-
-test_that("RDML editor maps numeric Innova reaction ids onto plate wells", {
-  skip_if_not_installed("shiny")
-  skip_if_not_installed("shinyMolBio")
-
-  appDir <- system.file("RDMLedit", package = "RDML7")
-  fileName <- system.file("extdata", "innova.qstd", package = "RDML7")
-  helperEnv <- new.env(parent = globalenv())
-  sys.source(file.path(appDir, "helpers.R"), envir = helperEnv)
-  sys.source(file.path(appDir, "analysis-helpers.R"), envir = helperEnv)
-
-  x <- readRDML(fileName, showProgress = FALSE)
-  catalog <- helperEnv$editor_curve_catalog(x, "adp")
-
-  expect_true(all(grepl("^[A-H][0-9]{2}$", catalog$position)))
-  expect_true(all(unique(catalog$position) %in% asTable(x)$position))
-
-  firstInWell <- !duplicated(catalog$position)
-  plateDescription <- data.frame(
-    position = catalog$position[firstInWell],
-    react.id = catalog$reactId[firstInWell],
-    fdata.name = catalog$curveKey[firstInWell],
-    sample = "sample",
-    target = "target",
-    target.dyeId = "FAM",
-    stringsAsFactors = FALSE
-  )
-  pcrFormat <- helperEnv$editor_shinyMolBio_pcr_format(
-    x$experiment[["innova"]]$run[["2026-09-14 17:24:03"]]$pcrFormat,
-    catalog$position
-  )
-  plateHtml <- htmltools::renderTags(
-    shinyMolBio::pcrPlateInput(
-      "innovaPlate",
-      plateDescription = plateDescription,
-      pcrFormat = pcrFormat
-    )
-  )$html
-  expect_match(plateHtml, "<td id='A02'", fixed = TRUE)
 })

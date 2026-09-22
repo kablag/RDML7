@@ -492,102 +492,8 @@ observeEvent(
 )
 
 
-editorPlateDescription <- function(catalog) {
-  if (!nrow(catalog)) {
-    return(
-      data.frame(
-        position = character(),
-        sample = character(),
-        target = character(),
-        targets = character(),
-        sampleType = character(),
-        cq = numeric(),
-        stringsAsFactors = FALSE
-      )
-    )
-  }
-
-  positions <- unique(
-    catalog$position
-  )
-
-  rows <- lapply(
-    positions,
-    function(position) {
-      part <- catalog[
-        catalog$position == position,
-        ,
-        drop = FALSE
-      ]
-
-      data.frame(
-        position = position,
-        react.id = part$reactId[[1L]],
-        fdata.name = part$curveKey[[1L]],
-        sample = part$sample[[1L]],
-        sampleType = part$sampleType[[1L]],
-        target = paste(
-          unique(part$target),
-          collapse = ", "
-        ),
-        target.dyeId = paste(
-          unique(part$targetDyeId),
-          collapse = ", "
-        ),
-        targets = paste(
-          unique(part$target),
-          collapse = ", "
-        ),
-        cq = if (
-          all(is.na(part$cq))
-        ) {
-          NA_real_
-        } else {
-          part$cq[
-            which(!is.na(part$cq))[[1L]]
-          ]
-        },
-        stringsAsFactors = FALSE
-      )
-    }
-  )
-
-  do.call(
-    rbind,
-    rows
-  )
-}
-
-editorPcrFormat <- function(
-    exp_id,
-    run_id,
-    positions = character()) {
-
-  run <- editor_get_run(
-    values$rdml,
-    exp_id,
-    run_id
-  )
-
-  rdml7_format <- editor_prop(
-    run,
-    "pcrFormat"
-  )
-
-  editor_shinyMolBio_pcr_format(
-    rdml7_format,
-    positions
-  )
-}
-
 qPCRSelectedPositions <- reactive({
-  if (
-    editor_can_use_shinyMolBio()
-  ) {
-    selected <- input$mainPcrPlateQpcr
-  } else {
-    selected <- input$showqPCRPositionsFallback
-  }
+  selected <- input$showqPCRPositionsFallback
 
   if (
     is.null(selected) ||
@@ -600,13 +506,7 @@ qPCRSelectedPositions <- reactive({
 })
 
 meltingSelectedPositions <- reactive({
-  if (
-    editor_can_use_shinyMolBio()
-  ) {
-    selected <- input$mainPcrPlateMelting
-  } else {
-    selected <- input$showMeltingPositionsFallback
-  }
+  selected <- input$showMeltingPositionsFallback
 
   if (
     is.null(selected) ||
@@ -631,32 +531,6 @@ output$qPCRPlateUI <- renderUI({
     return(NULL)
   }
 
-  if (
-    editor_can_use_shinyMolBio()
-  ) {
-    plate_description <- editorPlateDescription(
-      filtered
-    )
-
-    pcr_format <- editorPcrFormat(
-      input$showqPCRExperiment,
-      input$showqPCRRun,
-      filtered$position
-    )
-
-    return(
-      shinyMolBio::pcrPlateInput(
-        inputId = "mainPcrPlateQpcr",
-        label = "",
-        plateDescription = plate_description,
-        pcrFormat = pcr_format,
-        wellLabelTemplate = "{{sample}}",
-        onHoverWellTextTemplate = "{{position}}\n{{sample}}\n{{targets}}",
-        interactive = TRUE
-      )
-    )
-  }
-
   selectInput(
     "showqPCRPositionsFallback",
     "Plate positions",
@@ -676,32 +550,6 @@ output$meltingPlateUI <- renderUI({
 
   if (!nrow(filtered)) {
     return(NULL)
-  }
-
-  if (
-    editor_can_use_shinyMolBio()
-  ) {
-    plate_description <- editorPlateDescription(
-      filtered
-    )
-
-    pcr_format <- editorPcrFormat(
-      input$showMeltingExperiment,
-      input$showMeltingRun,
-      filtered$position
-    )
-
-    return(
-      shinyMolBio::pcrPlateInput(
-        inputId = "mainPcrPlateMelting",
-        label = "",
-        plateDescription = plate_description,
-        pcrFormat = pcr_format,
-        wellLabelTemplate = "{{sample}}",
-        onHoverWellTextTemplate = "{{position}}\n{{sample}}\n{{targets}}",
-        interactive = TRUE
-      )
-    )
   }
 
   selectInput(

@@ -7,9 +7,6 @@ Suggests:
     DT,
     chipPCR,
     MBmca,
-    PCRedux,
-    shinyMolBio
+    PCRedux
 
 The RDML7 core does not need to import these packages; they are used by rdmlEdit().
-
-shinyMolBio is optional at runtime; without it the editor falls back to a position selector.
