@@ -69,9 +69,13 @@ wrappers. New code should use the camelCase API.
 Authors:
 \itemize{
   \item Konstantin A. Blagodatskikh \email{k.blag@yandex.ru}
-  \item Stefan Roediger \email{stefan.roediger@b-tu.de}
-  \item Michal Burdukiewicz \email{michalburdukiewicz@gmail.com}
-  \item Andrej-Nikolai Spiess \email{a.spiess@uke.de}
+}
+
+Other contributors:
+\itemize{
+  \item Stefan Roediger \email{stefan.roediger@b-tu.de} [contributor]
+  \item Michal Burdukiewicz \email{michalburdukiewicz@gmail.com} [contributor]
+  \item Andrej-Nikolai Spiess \email{a.spiess@uke.de} [contributor]
 }
 
 }
