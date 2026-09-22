@@ -31,12 +31,7 @@ editRDML <- function() {
     )
   }
 
-  appDir <- system.file(
-    "RDMLedit-RDML7",
-    "inst",
-    "RDMLedit",
-    package = "RDML7"
-  )
+  appDir <- system.file("RDMLedit", package = "RDML7")
 
   if (!nzchar(appDir)) {
     stop(

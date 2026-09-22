@@ -1,6 +1,6 @@
 ---
-title: "Using RDML with other R packages"
-author: "Konstantin A. Blagodatskikh, Micha&#322; Burdukiewicz, Stefan R&ouml;diger, Andrej-Nikolai Spiess"
+title: "Using RDML7 with other R packages"
+author: "RDML7 authors"
 date: "`r Sys.Date()`"
 output:
   rmarkdown::html_vignette:

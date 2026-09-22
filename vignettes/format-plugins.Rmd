@@ -1,5 +1,6 @@
 ---
 title: "Writing RDML file-format plugins"
+author: "RDML7 authors"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Writing RDML file-format plugins}

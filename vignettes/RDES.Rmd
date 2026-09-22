@@ -1,5 +1,6 @@
 ---
 title: "Importing and exporting RDES files"
+author: "RDML7 authors"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Importing and exporting RDES files}

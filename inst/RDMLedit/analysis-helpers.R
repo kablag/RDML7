@@ -30,8 +30,8 @@ editor_list_prop <- function(x, name) {
 }
 
 
-# Keep the names used by server-full.R, but route all operations through the
-# single keyed-list-aware implementation in helpers.R.
+# Keep the names used by the analysis server modules, but route operations
+# through the single keyed-list-aware implementation in helpers.R.
 editor_collection_get <- function(x, property, key) {
   editor_get_collection_item(
     x,

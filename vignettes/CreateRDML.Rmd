@@ -1,5 +1,6 @@
 ---
 title: "Creating RDML objects"
+author: "RDML7 authors"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{Creating RDML objects}

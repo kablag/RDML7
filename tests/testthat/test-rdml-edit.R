@@ -10,12 +10,7 @@ test_that("bundled RDML editor renders curves and edits metadata", {
     )
   )
 
-  appDir <- system.file(
-    "RDMLedit-RDML7",
-    "inst",
-    "RDMLedit",
-    package = "RDML7"
-  )
+  appDir <- system.file("RDMLedit", package = "RDML7")
   expect_true(nzchar(appDir))
 
   helperEnv <- new.env(parent = globalenv())
@@ -27,10 +22,12 @@ test_that("bundled RDML editor renders curves and edits metadata", {
     file.path(appDir, "analysis-helpers.R"),
     envir = helperEnv
   )
-  sys.source(
-    file.path(appDir, "ui-full.R"),
-    envir = helperEnv
-  )
+  for (module in c("experiment.R", "qpcr.R", "melting.R")) {
+    sys.source(
+      file.path(appDir, "modules", "ui", module),
+      envir = helperEnv
+    )
+  }
   meltingHtml <- htmltools::renderTags(
     helperEnv$rdml7MeltingPanel()
   )$html
@@ -230,12 +227,7 @@ test_that("RDML editor opens the bundled RDES amplification example", {
     )
   )
 
-  appDir <- system.file(
-    "RDMLedit-RDML7",
-    "inst",
-    "RDMLedit",
-    package = "RDML7"
-  )
+  appDir <- system.file("RDMLedit", package = "RDML7")
   rdesFile <- system.file(
     "extdata",
     "RDES_v1_0_example_amplification.tsv",
@@ -350,9 +342,7 @@ test_that("RDML editor maps numeric Innova reaction ids onto plate wells", {
   skip_if_not_installed("shiny")
   skip_if_not_installed("shinyMolBio")
 
-  appDir <- system.file(
-    "RDMLedit-RDML7", "inst", "RDMLedit", package = "RDML7"
-  )
+  appDir <- system.file("RDMLedit", package = "RDML7")
   fileName <- system.file("extdata", "innova.qstd", package = "RDML7")
   helperEnv <- new.env(parent = globalenv())
   sys.source(file.path(appDir, "helpers.R"), envir = helperEnv)

@@ -14,12 +14,12 @@ Authors@R: c(
     person("Konstantin A.", "Blagodatskikh",
       email = "k.blag@yandex.ru", role = c("cre", "aut")),
     person("Stefan", "Roediger",
-      email = "stefan.roediger@b-tu.de", role = "aut"),
+      email = "stefan.roediger@b-tu.de", role = "ctb"),
     person("Michal", "Burdukiewicz",
       email = "michalburdukiewicz@gmail.com",
-      role = "aut"),
+      role = "ctb"),
     person("Andrej-Nikolai", "Spiess",
-      email = "a.spiess@uke.de", role = "aut"))
+      email = "a.spiess@uke.de", role = "ctb"))
 License: MIT + file LICENSE
 URL: https://github.com/kablag/RDML7
 Depends:
