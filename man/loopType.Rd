@@ -14,6 +14,11 @@ loopType(goto = integer(0), `repeat` = integer(0))
 
 \item{repeat}{Positive integer. Number of loop repetitions.}
 }
+\value{
+An S7 object of class `loopType` representing the documented
+  RDML schema element. Constructor arguments and object properties describe
+  the element's structure and meaning.
+}
 \description{
 Loop instruction in a thermal-cycling program. Inherits from `rdmlBaseType`.
 }

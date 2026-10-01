@@ -14,6 +14,11 @@ xRefType(name = NA_character_, id = NA_character_)
 
 \item{id}{`character(1)` or `NA`. Identifier in that reference system.}
 }
+\value{
+An S7 object of class `xRefType` representing the documented
+  RDML schema element. Constructor arguments and object properties describe
+  the element's structure and meaning.
+}
 \description{
 External database or ontology cross-reference. Inherits from `rdmlBaseType`.
 }

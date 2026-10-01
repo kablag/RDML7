@@ -23,6 +23,11 @@ pcrFormatType(
 
 \item{columnLabel}{`labelFormatType`. Column-label convention.}
 }
+\value{
+An S7 object of class `pcrFormatType` representing the documented
+  RDML schema element. Constructor arguments and object properties describe
+  the element's structure and meaning.
+}
 \description{
 PCR plate or reaction-layout dimensions and labeling conventions. Inherits from `rdmlBaseType`.
 }

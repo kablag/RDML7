@@ -14,6 +14,11 @@ commercialAssayType(company = character(0), orderNumber = character(0))
 
 \item{orderNumber}{`character(1)`. Catalogue or order number.}
 }
+\value{
+An S7 object of class `commercialAssayType` representing the documented
+  RDML schema element. Constructor arguments and object properties describe
+  the element's structure and meaning.
+}
 \description{
 Commercial assay identification. Inherits from `rdmlBaseType`.
 }

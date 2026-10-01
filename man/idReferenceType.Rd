@@ -9,6 +9,10 @@ idReferenceType(id = character(0))
 \arguments{
 \item{id}{Character identifier of the referenced RDML element.}
 }
+\value{
+An S7 object of class `idReferenceType` representing a reference
+  from one RDML schema element to another identified element.
+}
 \description{
 Extends `idType` for references between RDML elements, for example sample,
 target, dye, documentation, and thermal-program references.

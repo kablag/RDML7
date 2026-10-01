@@ -16,6 +16,11 @@ quantityType(targetId = NA, value = integer(0), unit = quantityUnitType())
 
 \item{unit}{`quantityUnitType`. Unit of the quantity.}
 }
+\value{
+An S7 object of class `quantityType` representing the documented
+  RDML schema element. Constructor arguments and object properties describe
+  the element's structure and meaning.
+}
 \description{
 Target-specific quantity assigned to a sample. Inherits from `rdmlBaseType`.
 }

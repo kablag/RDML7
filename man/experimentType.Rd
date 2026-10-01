@@ -23,6 +23,11 @@ experimentType(
 
 \item{run}{Run-id-keyed list of `runType` objects or `NA`.}
 }
+\value{
+An S7 object of class `experimentType` representing the documented
+  RDML schema element. Constructor arguments and object properties describe
+  the element's structure and meaning.
+}
 \description{
 A qPCR experiment. One experiment may contain several instrument runs. Inherits from `rdmlBaseType`.
 }

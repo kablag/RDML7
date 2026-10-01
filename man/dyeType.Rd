@@ -16,6 +16,11 @@ dyeType(id = NULL, description = NA_character_, dyeChemistry = NA)
 
 \item{dyeChemistry}{`dyeChemistryType` or `NA`. Detection chemistry.}
 }
+\value{
+An S7 object of class `dyeType` representing the documented
+  RDML schema element. Constructor arguments and object properties describe
+  the element's structure and meaning.
+}
 \description{
 Description of a fluorescent dye or reporter used to detect a target. Inherits from `rdmlBaseType`.
 }

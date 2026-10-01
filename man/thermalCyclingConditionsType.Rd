@@ -29,6 +29,11 @@ thermalCyclingConditionsType(
 
 \item{step}{List of `stepType` objects. Ordered program steps.}
 }
+\value{
+An S7 object of class `thermalCyclingConditionsType` representing the documented
+  RDML schema element. Constructor arguments and object properties describe
+  the element's structure and meaning.
+}
 \description{
 A reusable thermal-cycling program referenced by runs or cDNA-synthesis metadata. Inherits from `rdmlBaseType`.
 }

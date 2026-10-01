@@ -26,6 +26,11 @@ sequencesType(
 
 \item{amplicon}{`oligoType` or `NA`. Amplicon sequence.}
 }
+\value{
+An S7 object of class `sequencesType` representing the documented
+  RDML schema element. Constructor arguments and object properties describe
+  the element's structure and meaning.
+}
 \description{
 Primer, probe, and amplicon sequences associated with a target. Inherits from `rdmlBaseType`.
 }

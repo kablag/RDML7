@@ -5,11 +5,16 @@
 \title{lidOpenType S7 class}
 \format{
 An S7 class.
-
-This class does not define additional properties.
 }
 \usage{
 lidOpenType()
+}
+\value{
+An S7 object of class `lidOpenType` representing the documented
+  RDML schema element. Constructor arguments and object properties describe
+  the element's structure and meaning.
+
+This class does not define additional properties.
 }
 \description{
 Marker step indicating that the instrument lid is opened. This class has no additional properties. Inherits from `rdmlBaseType`.

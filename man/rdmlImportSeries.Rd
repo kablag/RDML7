@@ -13,6 +13,11 @@ rdmlImportSeries(fdataType = character(0), fdata = NULL, description = NULL)
 
 \item{description}{CamelCase description table accepted by `setFData()`.}
 }
+\value{
+An S7 object of class `rdmlImportSeries` containing one normalized
+  fluorescence series and its associated experiment, run, reaction, sample,
+  and target metadata.
+}
 \description{
 Intermediate representation used by table/vendor parsers.
 }

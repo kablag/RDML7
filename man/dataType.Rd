@@ -62,6 +62,11 @@ dataType(
 
 \item{quantFluor}{`numeric(1)` or `NA`. Quantification fluorescence.}
 }
+\value{
+An S7 object of class `dataType` representing the documented
+  RDML schema element. Constructor arguments and object properties describe
+  the element's structure and meaning.
+}
 \description{
 Target-specific qPCR result data for one reaction. It stores calculated results and optional amplification and melting fluorescence curves. Inherits from `rdmlBaseType`.
 }

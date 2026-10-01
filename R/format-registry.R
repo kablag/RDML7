@@ -638,8 +638,6 @@ detectRDMLFormat <- function(
     files = "rdml_data.xml"
   )
 
-  setwd(oldWd)
-
   if (
     !file.exists(zipFile) ||
     (

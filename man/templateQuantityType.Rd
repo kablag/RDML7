@@ -14,6 +14,11 @@ templateQuantityType(conc = integer(0), nucleotide = nucleotideType())
 
 \item{nucleotide}{`nucleotideType`. Nucleic-acid type.}
 }
+\value{
+An S7 object of class `templateQuantityType` representing the documented
+  RDML schema element. Constructor arguments and object properties describe
+  the element's structure and meaning.
+}
 \description{
 Total template concentration together with the template nucleotide type. Inherits from `rdmlBaseType`.
 }

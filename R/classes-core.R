@@ -98,6 +98,8 @@ S7::method(as.character, rdmlEnum) <- function(x, ...) {
 #' extracts the identifier and `print()` displays it directly.
 #'
 #' @param id Character identifier.
+#' @return An S7 object of class `idType` representing an identifier used as
+#'   a key in the RDML object hierarchy.
 #' @seealso `idReferenceType`, `rdmlKeyedList`, `rdmlType`
 #' @export
 idType <- S7::new_class(
@@ -137,6 +139,8 @@ classId <- S7::new_property(
 #' target, dye, documentation, and thermal-program references.
 #'
 #' @param id Character identifier of the referenced RDML element.
+#' @return An S7 object of class `idReferenceType` representing a reference
+#'   from one RDML schema element to another identified element.
 #' @seealso `idType`, `validateRDML`
 #' @export
 idReferenceType <- S7::new_class(

@@ -29,6 +29,11 @@ temperatureType(
 
 \item{temperature}{`numeric(1)`. Step temperature.}
 }
+\value{
+An S7 object of class `temperatureType` representing the documented
+  RDML schema element. Constructor arguments and object properties describe
+  the element's structure and meaning.
+}
 \description{
 Fixed-temperature thermal-cycling step. Inherits from `temperatureBaseType`.
 }

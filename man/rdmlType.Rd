@@ -42,6 +42,11 @@ rdmlType(
 
 \item{experiment}{Experiment-id-keyed list of `experimentType` objects or `NA`.}
 }
+\value{
+An S7 object of class `rdmlType` representing the documented
+  RDML schema element. Constructor arguments and object properties describe
+  the element's structure and meaning.
+}
 \description{
 Top-level container representing one RDML document. Its structure mirrors the RDML schema and stores reusable metadata together with experiments and runs. Inherits from `rdmlBaseType`.
 }

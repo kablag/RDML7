@@ -14,6 +14,11 @@ annotationType(property = NA_character_, value = NA_character_)
 
 \item{value}{`character(1)` or `NA`. Annotation value.}
 }
+\value{
+An S7 object of class `annotationType` representing the documented
+  RDML schema element. Constructor arguments and object properties describe
+  the element's structure and meaning.
+}
 \description{
 Free-form property/value annotation attached to a sample. Inherits from `rdmlBaseType`.
 }

@@ -12,6 +12,11 @@ pauseType(temperature = integer(0))
 \arguments{
 \item{temperature}{`numeric(1)`. Pause temperature.}
 }
+\value{
+An S7 object of class `pauseType` representing the documented
+  RDML schema element. Constructor arguments and object properties describe
+  the element's structure and meaning.
+}
 \description{
 Pause instruction at a specified temperature. Inherits from `rdmlBaseType`.
 }

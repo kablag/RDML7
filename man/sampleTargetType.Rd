@@ -15,6 +15,11 @@ sample role is target-independent.}
 
 \item{sampleType}{`sampleTypeType`. Role of the sample for that target.}
 }
+\value{
+An S7 object of class `sampleTargetType` representing the documented
+  RDML schema element. Constructor arguments and object properties describe
+  the element's structure and meaning.
+}
 \description{
 Sample role, optionally restricted to a target. If `targetId` is `NA`, the role applies to all targets unless a target-specific role overrides it. Inherits from `rdmlBaseType`.
 }

@@ -47,6 +47,11 @@ quantities.}
 
 \item{templateQuantity}{`templateQuantityType` or `NA`. Template concentration/type.}
 }
+\value{
+An S7 object of class `sampleType` representing the documented
+  RDML schema element. Constructor arguments and object properties describe
+  the element's structure and meaning.
+}
 \description{
 A qPCR sample/template solution. Dilutions with different concentrations are represented as different samples; technical replicates normally reference the same sample id, while biological replicates normally use different sample ids. Inherits from `rdmlBaseType`.
 }

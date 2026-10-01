@@ -29,6 +29,11 @@ experimenterType(
 
 \item{labAddress}{`character(1)` or `NA`. Laboratory postal address.}
 }
+\value{
+An S7 object of class `experimenterType` representing the documented
+  RDML schema element. Constructor arguments and object properties describe
+  the element's structure and meaning.
+}
 \description{
 Contact details of an experimenter associated with an RDML document or
  thermal cycling conditions. Inherits from `rdmlBaseType`.

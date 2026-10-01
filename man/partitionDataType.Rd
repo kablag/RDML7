@@ -35,6 +35,11 @@ partitionDataType(
 
 \item{conc}{`numeric(1)` or `NA`. Calculated concentration.}
 }
+\value{
+An S7 object of class `partitionDataType` representing the documented
+  RDML schema element. Constructor arguments and object properties describe
+  the element's structure and meaning.
+}
 \description{
 Target-specific digital-PCR partition result data. Inherits from `rdmlBaseType`.
 }

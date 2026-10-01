@@ -14,6 +14,9 @@
 #' @param labAddress `character(1)` or `NA`. Laboratory postal address.
 #'
 #' @format An S7 class.
+#' @return An S7 object of class `experimenterType` representing the documented
+#'   RDML schema element. Constructor arguments and object properties describe
+#'   the element's structure and meaning.
 #'
 #' @section Properties:
 #' \describe{
@@ -54,6 +57,9 @@ experimenterType <- S7::new_class(
 #' @param text `character(1)` or `NA`. Documentation text.
 #'
 #' @format An S7 class.
+#' @return An S7 object of class `documentationType` representing the documented
+#'   RDML schema element. Constructor arguments and object properties describe
+#'   the element's structure and meaning.
 #'
 #' @section Properties:
 #' \describe{
@@ -87,6 +93,9 @@ documentationType <- S7::new_class(
 #'   below.
 #'
 #' @format An S7 class.
+#' @return An S7 object of class `dyeChemistryType` representing the documented
+#'   RDML schema element. Constructor arguments and object properties describe
+#'   the element's structure and meaning.
 #'
 #' @section Allowed values:
 #' \describe{
@@ -126,6 +135,9 @@ dyeChemistryType <-
 #' @param dyeChemistry `dyeChemistryType` or `NA`. Detection chemistry.
 #'
 #' @format An S7 class.
+#' @return An S7 object of class `dyeType` representing the documented
+#'   RDML schema element. Constructor arguments and object properties describe
+#'   the element's structure and meaning.
 #'
 #' @section Properties:
 #' \describe{
@@ -173,6 +185,9 @@ dyeType <- S7::new_class(
 #' @param id `character(1)` or `NA`. Identifier in that reference system.
 #'
 #' @format An S7 class.
+#' @return An S7 object of class `xRefType` representing the documented
+#'   RDML schema element. Constructor arguments and object properties describe
+#'   the element's structure and meaning.
 #'
 #' @section Properties:
 #' \describe{
@@ -204,6 +219,9 @@ xRefType <- S7::new_class(
 #' @param value `character(1)` or `NA`. Annotation value.
 #'
 #' @format An S7 class.
+#' @return An S7 object of class `annotationType` representing the documented
+#'   RDML schema element. Constructor arguments and object properties describe
+#'   the element's structure and meaning.
 #'
 #' @section Properties:
 #' \describe{
@@ -232,6 +250,9 @@ annotationType <- S7::new_class(
 #'   below.
 #'
 #' @format An S7 class.
+#' @return An S7 object of class `sampleTypeType` representing the documented
+#'   RDML schema element. Constructor arguments and object properties describe
+#'   the element's structure and meaning.
 #'
 #' @section Allowed values:
 #' \describe{
@@ -266,6 +287,9 @@ sampleTypeType <- .newEnumClass(
 #' @param sampleType `sampleTypeType`. Role of the sample for that target.
 #'
 #' @format An S7 class.
+#' @return An S7 object of class `sampleTargetType` representing the documented
+#'   RDML schema element. Constructor arguments and object properties describe
+#'   the element's structure and meaning.
 #'
 #' @section Properties:
 #' \describe{
@@ -300,6 +324,9 @@ sampleTargetType <- S7::new_class(
 #'   below.
 #'
 #' @format An S7 class.
+#' @return An S7 object of class `quantityUnitType` representing the documented
+#'   RDML schema element. Constructor arguments and object properties describe
+#'   the element's structure and meaning.
 #'
 #' @section Allowed values:
 #' \describe{
@@ -337,6 +364,9 @@ classQuantityUnitTypeNonemptySingle <- S7::new_property(
 #' @param unit `quantityUnitType`. Unit of the quantity.
 #'
 #' @format An S7 class.
+#' @return An S7 object of class `quantityType` representing the documented
+#'   RDML schema element. Constructor arguments and object properties describe
+#'   the element's structure and meaning.
 #'
 #' @section Properties:
 #' \describe{
@@ -366,6 +396,9 @@ quantityType <- S7::new_class(
 #'   below.
 #'
 #' @format An S7 class.
+#' @return An S7 object of class `primingMethodType` representing the documented
+#'   RDML schema element. Constructor arguments and object properties describe
+#'   the element's structure and meaning.
 #'
 #' @section Allowed values:
 #' \describe{
@@ -401,6 +434,9 @@ primingMethodType <- .newEnumClass(
 #'   used for cDNA synthesis.
 #'
 #' @format An S7 class.
+#' @return An S7 object of class `cdnaSynthesisMethodType` representing the documented
+#'   RDML schema element. Constructor arguments and object properties describe
+#'   the element's structure and meaning.
 #'
 #' @section Properties:
 #' \describe{
@@ -432,6 +468,9 @@ cdnaSynthesisMethodType <- S7::new_class(
 #'   below.
 #'
 #' @format An S7 class.
+#' @return An S7 object of class `nucleotideType` representing the documented
+#'   RDML schema element. Constructor arguments and object properties describe
+#'   the element's structure and meaning.
 #'
 #' @section Allowed values:
 #' \describe{
@@ -457,6 +496,9 @@ nucleotideType <- .newEnumClass(
 #' @param nucleotide `nucleotideType`. Nucleic-acid type.
 #'
 #' @format An S7 class.
+#' @return An S7 object of class `templateQuantityType` representing the documented
+#'   RDML schema element. Constructor arguments and object properties describe
+#'   the element's structure and meaning.
 #'
 #' @section Properties:
 #' \describe{
@@ -503,6 +545,9 @@ templateQuantityType <- S7::new_class(
 #' @param templateQuantity `templateQuantityType` or `NA`. Template concentration/type.
 #'
 #' @format An S7 class.
+#' @return An S7 object of class `sampleType` representing the documented
+#'   RDML schema element. Constructor arguments and object properties describe
+#'   the element's structure and meaning.
 #'
 #' @section Properties:
 #' \describe{
@@ -552,6 +597,9 @@ sampleType <- S7::new_class(
 #' @param sequence `character(1)`. Nucleotide sequence.
 #'
 #' @format An S7 class.
+#' @return An S7 object of class `oligoType` representing the documented
+#'   RDML schema element. Constructor arguments and object properties describe
+#'   the element's structure and meaning.
 #'
 #' @section Properties:
 #' \describe{
@@ -584,6 +632,9 @@ oligoType <- S7::new_class(
 #' @param amplicon `oligoType` or `NA`. Amplicon sequence.
 #'
 #' @format An S7 class.
+#' @return An S7 object of class `sequencesType` representing the documented
+#'   RDML schema element. Constructor arguments and object properties describe
+#'   the element's structure and meaning.
 #'
 #' @section Properties:
 #' \describe{
@@ -618,6 +669,9 @@ sequencesType <- S7::new_class(
 #' @param orderNumber `character(1)`. Catalogue or order number.
 #'
 #' @format An S7 class.
+#' @return An S7 object of class `commercialAssayType` representing the documented
+#'   RDML schema element. Constructor arguments and object properties describe
+#'   the element's structure and meaning.
 #'
 #' @section Properties:
 #' \describe{
@@ -645,6 +699,9 @@ commercialAssayType <- S7::new_class(
 #'   below.
 #'
 #' @format An S7 class.
+#' @return An S7 object of class `targetTypeType` representing the documented
+#'   RDML schema element. Constructor arguments and object properties describe
+#'   the element's structure and meaning.
 #'
 #' @section Allowed values:
 #' \describe{
@@ -681,6 +738,9 @@ targetTypeType <-  .newEnumClass(
 #' @param commercialAssay `commercialAssayType` or `NA`. Commercial assay metadata.
 #'
 #' @format An S7 class.
+#' @return An S7 object of class `targetType` representing the documented
+#'   RDML schema element. Constructor arguments and object properties describe
+#'   the element's structure and meaning.
 #'
 #' @section Properties:
 #' \describe{
@@ -733,6 +793,9 @@ targetType <- S7::new_class(
 #'   below.
 #'
 #' @format An S7 class.
+#' @return An S7 object of class `measureType` representing the documented
+#'   RDML schema element. Constructor arguments and object properties describe
+#'   the element's structure and meaning.
 #'
 #' @section Allowed values:
 #' \describe{
@@ -760,6 +823,9 @@ measureType <-  .newEnumClass(
 #' @param ramp `numeric(1)` or `NA`. Ramp rate.
 #'
 #' @format An S7 class.
+#' @return An S7 object of class `temperatureBaseType` representing the documented
+#'   RDML schema element. Constructor arguments and object properties describe
+#'   the element's structure and meaning.
 #'
 #' @section Properties:
 #' \describe{
@@ -797,6 +863,9 @@ temperatureBaseType <- S7::new_class(
 #' @param temperature `numeric(1)`. Step temperature.
 #'
 #' @format An S7 class.
+#' @return An S7 object of class `temperatureType` representing the documented
+#'   RDML schema element. Constructor arguments and object properties describe
+#'   the element's structure and meaning.
 #'
 #' @section Properties:
 #' \describe{
@@ -827,6 +896,9 @@ temperatureType <- S7::new_class(
 #' @param lowTemperature `numeric(1)`. Low end of the gradient.
 #'
 #' @format An S7 class.
+#' @return An S7 object of class `gradientType` representing the documented
+#'   RDML schema element. Constructor arguments and object properties describe
+#'   the element's structure and meaning.
 #'
 #' @section Properties:
 #' \describe{
@@ -854,6 +926,9 @@ gradientType <- S7::new_class(
 #' @param repeat Positive integer. Number of loop repetitions.
 #'
 #' @format An S7 class.
+#' @return An S7 object of class `loopType` representing the documented
+#'   RDML schema element. Constructor arguments and object properties describe
+#'   the element's structure and meaning.
 #'
 #' @section Properties:
 #' \describe{
@@ -880,6 +955,9 @@ loopType <- S7::new_class(
 #' @param temperature `numeric(1)`. Pause temperature.
 #'
 #' @format An S7 class.
+#' @return An S7 object of class `pauseType` representing the documented
+#'   RDML schema element. Constructor arguments and object properties describe
+#'   the element's structure and meaning.
 #'
 #' @section Properties:
 #' \describe{
@@ -902,6 +980,9 @@ pauseType <- S7::new_class(
 #' Marker step indicating that the instrument lid is opened. This class has no additional properties. Inherits from `rdmlBaseType`.
 #'
 #' @format An S7 class.
+#' @return An S7 object of class `lidOpenType` representing the documented
+#'   RDML schema element. Constructor arguments and object properties describe
+#'   the element's structure and meaning.
 #'
 #' This class does not define additional properties.
 #'
@@ -928,6 +1009,9 @@ lidOpenType <- S7::new_class(
 #' @param lidOpen `lidOpenType` or `NA`. Lid-open action.
 #'
 #' @format An S7 class.
+#' @return An S7 object of class `stepType` representing the documented
+#'   RDML schema element. Constructor arguments and object properties describe
+#'   the element's structure and meaning.
 #'
 #' @section Properties:
 #' \describe{
@@ -969,6 +1053,9 @@ stepType <- S7::new_class(
 #' @param step List of `stepType` objects. Ordered program steps.
 #'
 #' @format An S7 class.
+#' @return An S7 object of class `thermalCyclingConditionsType` representing the documented
+#'   RDML schema element. Constructor arguments and object properties describe
+#'   the element's structure and meaning.
 #'
 #' @section Properties:
 #' \describe{
@@ -1006,6 +1093,9 @@ thermalCyclingConditionsType <- S7::new_class(
 #' @param fpoints `data.table` containing `cyc` and `fluor`, with optional per-cycle `tmp`.
 #'
 #' @format An S7 class.
+#' @return An S7 object of class `dpAmpCurveType` representing the documented
+#'   RDML schema element. Constructor arguments and object properties describe
+#'   the element's structure and meaning.
 #'
 #' @section Properties:
 #' \describe{
@@ -1036,6 +1126,9 @@ dpAmpCurveType <- S7::new_class(
 #' @param fpoints `data.table` containing `tmp` and `fluor`.
 #'
 #' @format An S7 class.
+#' @return An S7 object of class `dpMeltingCurveType` representing the documented
+#'   RDML schema element. Constructor arguments and object properties describe
+#'   the element's structure and meaning.
 #'
 #' @section Properties:
 #' \describe{
@@ -1087,6 +1180,9 @@ dpMeltingCurveType <- S7::new_class(
 #' @param quantFluor `numeric(1)` or `NA`. Quantification fluorescence.
 #'
 #' @format An S7 class.
+#' @return An S7 object of class `dataType` representing the documented
+#'   RDML schema element. Constructor arguments and object properties describe
+#'   the element's structure and meaning.
 #'
 #' @section Properties:
 #' \describe{
@@ -1154,6 +1250,9 @@ dataType <-
 #' @param conc `numeric(1)` or `NA`. Calculated concentration.
 #'
 #' @format An S7 class.
+#' @return An S7 object of class `partitionDataType` representing the documented
+#'   RDML schema element. Constructor arguments and object properties describe
+#'   the element's structure and meaning.
 #'
 #' @section Properties:
 #' \describe{
@@ -1196,6 +1295,9 @@ partitionDataType <-
 #' @param data Target-keyed list of `partitionDataType` objects or `NA`.
 #'
 #' @format An S7 class.
+#' @return An S7 object of class `partitionsType` representing the documented
+#'   RDML schema element. Constructor arguments and object properties describe
+#'   the element's structure and meaning.
 #'
 #' @section Properties:
 #' \describe{
@@ -1235,6 +1337,9 @@ partitionsType <- S7::new_class(
 #' @param partitions List of `partitionsType` objects or `NA`.
 #'
 #' @format An S7 class.
+#' @return An S7 object of class `reactType` representing the documented
+#'   RDML schema element. Constructor arguments and object properties describe
+#'   the element's structure and meaning.
 #'
 #' @section Properties:
 #' \describe{
@@ -1275,6 +1380,9 @@ reactType <- S7::new_class(
 #' @param version `character(1)`. Software version.
 #'
 #' @format An S7 class.
+#' @return An S7 object of class `dataCollectionSoftwareType` representing the documented
+#'   RDML schema element. Constructor arguments and object properties describe
+#'   the element's structure and meaning.
 #'
 #' @section Properties:
 #' \describe{
@@ -1305,6 +1413,9 @@ dataCollectionSoftwareType <-
 #'   below.
 #'
 #' @format An S7 class.
+#' @return An S7 object of class `labelFormatType` representing the documented
+#'   RDML schema element. Constructor arguments and object properties describe
+#'   the element's structure and meaning.
 #'
 #' @section Allowed values:
 #' \describe{
@@ -1336,6 +1447,9 @@ labelFormatType <-
 #' @param columnLabel `labelFormatType`. Column-label convention.
 #'
 #' @format An S7 class.
+#' @return An S7 object of class `pcrFormatType` representing the documented
+#'   RDML schema element. Constructor arguments and object properties describe
+#'   the element's structure and meaning.
 #'
 #' @section Properties:
 #' \describe{
@@ -1368,6 +1482,9 @@ pcrFormatType <-
 #'   below.
 #'
 #' @format An S7 class.
+#' @return An S7 object of class `cqDetectionMethodType` representing the documented
+#'   RDML schema element. Constructor arguments and object properties describe
+#'   the element's structure and meaning.
 #'
 #' @section Allowed values:
 #' \describe{
@@ -1409,6 +1526,9 @@ cqDetectionMethodType <-
 #' @param react Reaction-id-keyed list of `reactType` objects or `NA`.
 #'
 #' @format An S7 class.
+#' @return An S7 object of class `runType` representing the documented
+#'   RDML schema element. Constructor arguments and object properties describe
+#'   the element's structure and meaning.
 #'
 #' @section Properties:
 #' \describe{
@@ -1465,6 +1585,9 @@ runType <- S7::new_class(
 #' @param run Run-id-keyed list of `runType` objects or `NA`.
 #'
 #' @format An S7 class.
+#' @return An S7 object of class `experimentType` representing the documented
+#'   RDML schema element. Constructor arguments and object properties describe
+#'   the element's structure and meaning.
 #'
 #' @section Properties:
 #' \describe{
@@ -1504,6 +1627,9 @@ experimentType <- S7::new_class(
 #' @param MD5Hash `character(1)` or `NA`. Optional MD5 hash.
 #'
 #' @format An S7 class.
+#' @return An S7 object of class `rdmlIdType` representing the documented
+#'   RDML schema element. Constructor arguments and object properties describe
+#'   the element's structure and meaning.
 #'
 #' @section Properties:
 #' \describe{
@@ -1546,6 +1672,9 @@ rdmlIdType <-
 #' @param experiment Experiment-id-keyed list of `experimentType` objects or `NA`.
 #'
 #' @format An S7 class.
+#' @return An S7 object of class `rdmlType` representing the documented
+#'   RDML schema element. Constructor arguments and object properties describe
+#'   the element's structure and meaning.
 #'
 #' @section Properties:
 #' \describe{

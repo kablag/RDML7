@@ -12,6 +12,11 @@ dpMeltingCurveType(fpoints = NULL)
 \arguments{
 \item{fpoints}{`data.table` containing `tmp` and `fluor`.}
 }
+\value{
+An S7 object of class `dpMeltingCurveType` representing the documented
+  RDML schema element. Constructor arguments and object properties describe
+  the element's structure and meaning.
+}
 \description{
 Melting fluorescence curve. Inherits from `rdmlBaseType`.
 }

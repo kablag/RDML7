@@ -24,6 +24,11 @@ cdnaSynthesisMethodType(
 \item{thermalCyclingConditions}{`idReferenceType` or `NA`. Reference to the thermal program
 used for cDNA synthesis.}
 }
+\value{
+An S7 object of class `cdnaSynthesisMethodType` representing the documented
+  RDML schema element. Constructor arguments and object properties describe
+  the element's structure and meaning.
+}
 \description{
 Description of reverse-transcription/cDNA-synthesis conditions. Inherits from `rdmlBaseType`.
 }

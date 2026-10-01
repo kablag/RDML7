@@ -16,6 +16,11 @@ partitionsType(volume = integer(0), endPtTable = NA_character_, data = NA)
 
 \item{data}{Target-keyed list of `partitionDataType` objects or `NA`.}
 }
+\value{
+An S7 object of class `partitionsType` representing the documented
+  RDML schema element. Constructor arguments and object properties describe
+  the element's structure and meaning.
+}
 \description{
 Digital-PCR partition metadata and target-specific partition results. Inherits from `rdmlBaseType`.
 }

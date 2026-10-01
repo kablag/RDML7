@@ -14,6 +14,11 @@ dataCollectionSoftwareType(name = character(0), version = character(0))
 
 \item{version}{`character(1)`. Software version.}
 }
+\value{
+An S7 object of class `dataCollectionSoftwareType` representing the documented
+  RDML schema element. Constructor arguments and object properties describe
+  the element's structure and meaning.
+}
 \description{
 Software used by the instrument to collect qPCR data. Inherits from `rdmlBaseType`.
 }

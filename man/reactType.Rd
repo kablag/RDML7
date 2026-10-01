@@ -18,6 +18,11 @@ reactType(id = NULL, sample = NA, data = NA, partitions = NA)
 
 \item{partitions}{List of `partitionsType` objects or `NA`.}
 }
+\value{
+An S7 object of class `reactType` representing the documented
+  RDML schema element. Constructor arguments and object properties describe
+  the element's structure and meaning.
+}
 \description{
 One reaction/well within a run. It references a sample and stores target-specific qPCR or digital-PCR results. Inherits from `rdmlBaseType`.
 }

@@ -9,6 +9,10 @@ idType(id = character(0))
 \arguments{
 \item{id}{Character identifier.}
 }
+\value{
+An S7 object of class `idType` representing an identifier used as
+  a key in the RDML object hierarchy.
+}
 \description{
 Stores one character identifier used as a schema key. `as.character()`
 extracts the identifier and `print()` displays it directly.

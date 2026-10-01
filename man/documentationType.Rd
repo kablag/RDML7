@@ -14,6 +14,11 @@ documentationType(id = NULL, text = NA_character_)
 
 \item{text}{`character(1)` or `NA`. Documentation text.}
 }
+\value{
+An S7 object of class `documentationType` representing the documented
+  RDML schema element. Constructor arguments and object properties describe
+  the element's structure and meaning.
+}
 \description{
 Reusable documentation text. Use this type when the same description or
  note is referenced by several samples, targets, runs, or experiments.

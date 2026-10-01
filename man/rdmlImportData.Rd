@@ -29,6 +29,11 @@ rdmlImportData(
 
 \item{losses}{List of `newRDMLLossRecord()` objects.}
 }
+\value{
+An S7 object of class `rdmlImportData` containing normalized
+  amplification and melting series together with source metadata and loss
+  records, ready for construction of an RDML document.
+}
 \description{
 Decouples vendor parsing from construction of the nested RDML hierarchy.
 `readRDML()` builds this representation centrally with `buildRDMLImport()`.

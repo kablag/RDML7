@@ -24,6 +24,9 @@ classImportFdataType <- S7::new_property(
 #' @param fdataType `"adp"` or `"mdp"`.
 #' @param fdata Wide fluorescence table accepted by `setFData()`.
 #' @param description CamelCase description table accepted by `setFData()`.
+#' @return An S7 object of class `rdmlImportSeries` containing one normalized
+#'   fluorescence series and its associated experiment, run, reaction, sample,
+#'   and target metadata.
 #' @seealso `rdmlImportData`, `buildRDMLImport`
 #' @export
 rdmlImportSeries <- S7::new_class(
@@ -124,6 +127,9 @@ S7::method(`$<-`, rdmlImportSeries) <- function(x, name, value) {
 #' @param preserveReactIds Preserve supplied well/reaction ids literally.
 #' @param metadata Additional importer metadata.
 #' @param losses List of `newRDMLLossRecord()` objects.
+#' @return An S7 object of class `rdmlImportData` containing normalized
+#'   amplification and melting series together with source metadata and loss
+#'   records, ready for construction of an RDML document.
 #' @seealso `rdmlImportSeries`, `buildRDMLImport`, `registerRDMLFormat`
 #' @export
 rdmlImportData <- S7::new_class(

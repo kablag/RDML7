@@ -20,6 +20,11 @@ oligoType(
 
 \item{sequence}{`character(1)`. Nucleotide sequence.}
 }
+\value{
+An S7 object of class `oligoType` representing the documented
+  RDML schema element. Constructor arguments and object properties describe
+  the element's structure and meaning.
+}
 \description{
 Oligonucleotide sequence used for a primer, probe, or amplicon definition. Inherits from `rdmlBaseType`.
 }

@@ -538,7 +538,6 @@ S7::method(asXML, rdmlType) <- function(
     zipfile = zipFile,
     files = "rdml_data.xml"
   )
-  setwd(oldWd)
 
   # utils::zip() commonly returns 0 on success; tolerate NULL for
   # implementations where no explicit status is returned.

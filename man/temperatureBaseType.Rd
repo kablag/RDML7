@@ -26,6 +26,11 @@ temperatureBaseType(
 
 \item{ramp}{`numeric(1)` or `NA`. Ramp rate.}
 }
+\value{
+An S7 object of class `temperatureBaseType` representing the documented
+  RDML schema element. Constructor arguments and object properties describe
+  the element's structure and meaning.
+}
 \description{
 Base class for thermal steps with duration, measurement, ramp, and per-cycle changes. Inherits from `rdmlBaseType`.
 }

@@ -1,14 +1,16 @@
 Package: RDML7
 Type: Package
-Title: Tools for Real-Time PCR (qPCR) Data and RDML Files
-Version: 1.0
-Date: 2026-09-22
+Title: Read, Write, Validate, and Analyze Real-Time PCR Data in the 'RDML' Format
+Version: 1.0.1
+Date: 2026-10-01
 Encoding: UTF-8
-Description: Reads, writes, validates, converts, and manipulates quantitative PCR
-    data using Real-time PCR Data Markup Language (RDML) S7 objects. Includes
-    an extensible file-format registry, vendor/table importers, RDES import and
-    export, fluorescence-table helpers, semantic validation, and compatibility
-    wrappers for the historical RDML API.
+Description: Reads, writes, validates, converts, and manipulates quantitative
+    polymerase chain reaction (qPCR) data through the Real-Time PCR Data
+    Markup Language ('RDML') application programming interface (API), using
+    'S7' objects. Includes an extensible file-format registry, vendor and
+    tabular-data importers, 'RDES' import and export, fluorescence-table
+    helpers, semantic validation, and compatibility wrappers for the
+    historical 'RDML' API.
 Authors@R: c(
     person("Konstantin A.", "Blagodatskikh",
       email = "k.blag@yandex.ru", role = c("cre", "aut")),

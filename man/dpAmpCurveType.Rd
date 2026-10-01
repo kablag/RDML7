@@ -12,6 +12,11 @@ dpAmpCurveType(fpoints = NULL)
 \arguments{
 \item{fpoints}{`data.table` containing `cyc` and `fluor`, with optional per-cycle `tmp`.}
 }
+\value{
+An S7 object of class `dpAmpCurveType` representing the documented
+  RDML schema element. Constructor arguments and object properties describe
+  the element's structure and meaning.
+}
 \description{
 Amplification fluorescence curve. Inherits from `rdmlBaseType`.
 }

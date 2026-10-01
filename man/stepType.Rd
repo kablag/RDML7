@@ -32,6 +32,11 @@ stepType(
 
 \item{lidOpen}{`lidOpenType` or `NA`. Lid-open action.}
 }
+\value{
+An S7 object of class `stepType` representing the documented
+  RDML schema element. Constructor arguments and object properties describe
+  the element's structure and meaning.
+}
 \description{
 One numbered step of a thermal-cycling program. Exactly one of the action properties normally describes the operation performed by the step. Inherits from `rdmlBaseType`.
 }
