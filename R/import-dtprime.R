@@ -151,6 +151,15 @@
 
     # ---- Optical measurements -----------------------------------------
     measurementLines <- lns[(iResults + 1L):length(lns)]
+
+    # Newer DTprime files may append service sections such as "$HASH: $ ..."
+    # after the optical table.  A section marker is not a measurement row and
+    # must terminate the table before field counts are validated.
+    nextSection <- which(grepl("^\\s*\\$", measurementLines))
+    if (length(nextSection)) {
+      measurementLines <- measurementLines[seq_len(nextSection[[1L]] - 1L)]
+    }
+
     measurementLines <- measurementLines[nzchar(trimws(measurementLines))]
 
     parts <- lapply(measurementLines, .splitWs)

@@ -173,6 +173,22 @@ test_that("Innova QSTD imports plate assignments, curves, and run metadata", {
 })
 
 
+test_that("DTprime ignores service sections after optical measurements", {
+  sourceFile <- system.file("extdata", "cd53_efficiency.r96", package = "RDML7")
+  testFile <- tempfile(fileext = ".r96")
+  on.exit(unlink(testFile), add = TRUE)
+
+  contents <- readBin(sourceFile, what = "raw", n = file.info(sourceFile)$size)
+  footer <- charToRaw("\r\n$HASH: $ DEADBEEF\r\n")
+  writeBin(c(contents, footer), testFile)
+
+  x <- readRDML(testFile, showProgress = FALSE)
+
+  expect_s7_class(x, rdmlType)
+  expect_gt(length(x$experiment), 0L)
+})
+
+
 test_that("files without an extension require explicit format", {
   expect_error(
     detectRDMLFormat("no-extension", "read"),
