@@ -173,6 +173,38 @@ test_that("Innova QSTD imports plate assignments, curves, and run metadata", {
 })
 
 
+test_that("Innova QSTD imports an unaligned amplification data block", {
+  sourceFile <- system.file("extdata", "innova.qstd", package = "RDML7")
+  bytes <- readBin(sourceFile, what = "raw", n = file.size(sourceFile))
+  strings <- .qstdStrings(bytes, to = 60000L)
+  wells <- strings[grepl("^[A-Z]+[1-9][0-9]*$", strings$value), , drop = FALSE]
+  wells <- wells[!duplicated(wells$value), , drop = FALSE]
+  curve <- .qstdFindCurveOffset(
+    bytes,
+    from = max(wells$offset),
+    wellCount = nrow(wells),
+    configuredDyes = 5L
+  )
+
+  expect_false(is.null(curve))
+  split <- curve$offset
+  shifted <- c(
+    bytes[seq_len(split)],
+    as.raw(c(0L, 0L)),
+    bytes[seq.int(split + 1L, length(bytes))]
+  )
+  testFile <- tempfile(fileext = ".qstd")
+  on.exit(unlink(testFile), add = TRUE)
+  writeBin(shifted, testFile)
+
+  x <- readRDML(testFile, showProgress = FALSE)
+
+  expect_s7_class(x, rdmlType)
+  expect_equal(nrow(asTable(x)), 160L)
+  expect_equal(nrow(getFData(x)), 40L)
+})
+
+
 test_that("DTprime ignores service sections after optical measurements", {
   sourceFile <- system.file("extdata", "cd53_efficiency.r96", package = "RDML7")
   testFile <- tempfile(fileext = ".r96")

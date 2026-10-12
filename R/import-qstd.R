@@ -108,7 +108,10 @@
     configuredDyes) {
 
   last <- length(bytes) - 32L
-  offsets <- seq.int(from + ((4L - from %% 4L) %% 4L), last, by = 4L)
+  # QSTD sections are not necessarily aligned to a four-byte boundary in the
+  # file. In particular, variable-length UTF-16 metadata can shift the curve
+  # block even though the values within that block are uint32 values.
+  offsets <- seq.int(from, last)
 
   for (offset in offsets) {
     header <- vapply(
