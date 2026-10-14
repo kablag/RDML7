@@ -249,7 +249,7 @@ asDendrogram <- S7::new_generic("asDendrogram", "x")
 #' xml <- asXML(rdml, loss = "allow")
 #' substr(xml, 1L, 80L)
 #'
-#' output <- tempfile(fileext = ".rdml")
+#' output <- tempfile(fileext = ".xml")
 #' invisible(asXML(rdml, fileName = output, loss = "allow"))
 #' file.exists(output)
 #' unlink(output)
