@@ -1,8 +1,8 @@
 Package: RDML7
 Type: Package
 Title: Read, Write, Validate, and Analyze Real-Time PCR Data in the 'RDML' Format
-Version: 1.0.1
-Date: 2026-10-01
+Version: 1.0.2
+Date: 2026-10-14
 Encoding: UTF-8
 Description: Reads, writes, validates, converts, and manipulates quantitative
     polymerase chain reaction (qPCR) data through the Real-Time PCR Data
