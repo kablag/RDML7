@@ -63,6 +63,7 @@ Collate:
     'import-csv.R'
     'import-fqd.R'
     'import-qstd.R'
+    'import-pcrd.R'
     'import-rdml.R'
     'import-rdes.R'
     'export-rdes.R'

@@ -784,6 +784,15 @@ detectRDMLFormat <- function(
   )
 
   .rdmlRegisterFormat(
+    name = "biorad-pcrd",
+    extensions = "pcrd",
+    reader = function(fileName, showProgress = TRUE, ...) {
+      .rdmlImportPcrd(fileName, showProgress)
+    },
+    builtin = TRUE
+  )
+
+  .rdmlRegisterFormat(
     name = "rdes",
     extensions = c(
       "tsv",

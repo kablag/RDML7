@@ -138,6 +138,36 @@ test_that("built-in overlapping extensions have stable defaults", {
     detectRDMLFormat("x.qstd", "read"),
     "innova-qstd"
   )
+
+  expect_identical(
+    detectRDMLFormat("x.pcrd", "read"),
+    "biorad-pcrd"
+  )
+})
+
+
+test_that("Bio-Rad PCRD imports encrypted amplification data", {
+  fileName <- system.file(
+    "extdata", "CFX96_5-Target Linearity.pcrd", package = "RDML7"
+  )
+  expect_true(nzchar(fileName))
+
+  x <- readRDML(fileName, showProgress = FALSE)
+  table <- asTable(x)
+  fluorescence <- getFData(x)
+
+  expect_s7_class(x, rdmlType)
+  expect_equal(nrow(table), 280L)
+  expect_equal(
+    sort(unique(table$targetDyeId)),
+    sort(c("FAM", "HEX", "Texas Red", "Cy5", "Quasar 705"))
+  )
+  expect_true(all(table$sampleType == "std"))
+  expect_true(all(table$adp))
+  expect_false(any(table$mdp))
+  expect_equal(dim(fluorescence), c(50L, 281L))
+  expect_equal(fluorescence$cyc, seq_len(50L))
+  expect_equal(nrow(validateRDML(x)), 0L)
 })
 
 
