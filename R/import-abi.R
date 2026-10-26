@@ -13,7 +13,20 @@
     dir.create(uniqFolder, recursive = TRUE)
     on.exit(unlink(uniqFolder, recursive = TRUE), add = TRUE)
 
-    utils::unzip(fileName, exdir = uniqFolder)
+    requiredFiles <- c(
+      "apldbio/sds/multicomponent_data.txt",
+      "apldbio/sds/plate_setup.xml"
+    )
+    archiveFiles <- utils::unzip(fileName, list = TRUE)$Name
+    normalized <- chartr("\\", "/", archiveFiles)
+    selected <- archiveFiles[match(tolower(requiredFiles), tolower(normalized))]
+    if (anyNA(selected)) {
+      stop(
+        "Not a supported ABI .eds archive: apldbio/sds data files are missing",
+        call. = FALSE
+      )
+    }
+    utils::unzip(fileName, files = selected, exdir = uniqFolder)
 
     dataFile <- file.path(
       uniqFolder, "apldbio", "sds", "multicomponent_data.txt"
@@ -50,6 +63,7 @@
       dye = m[, 4L],
       fluor = base::as.numeric(m[, 5L])
     )
+    data.table::setkey(multicomponentData, well, dye)
 
     plateSetup <- xml2::read_xml(plateFile)
     rdmlEnv$ns <- xml2::xml_ns(plateSetup)
@@ -136,17 +150,18 @@
     description <- description[IsOmit == FALSE]
 
     cycle0 <- sort(unique(multicomponentData$cyc))
-    fdata <- data.frame(cyc = cycle0 + 1, check.names = FALSE)
+    fdata <- list(cyc = cycle0 + 1)
 
     for (j in seq_len(nrow(description))) {
       r <- description[j]
-      sub <- multicomponentData[
-        well == base::as.integer(r$reactId) - 1L &
-          dye == as.character(r$targetDyeId)
-      ]
+      sub <- multicomponentData[list(
+        base::as.integer(r$reactId) - 1L,
+        as.character(r$targetDyeId)
+      )]
       vals <- sub$fluor[match(cycle0, sub$cyc)]
       fdata[[as.character(r$fdataName)]] <- vals
     }
+    fdata <- as.data.frame(fdata, check.names = FALSE, stringsAsFactors = FALSE)
 
     newRDMLImportData(
       series = list(

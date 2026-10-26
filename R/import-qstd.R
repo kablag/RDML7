@@ -60,24 +60,26 @@
 .qstdStrings <- function(bytes, from = 0L, to = length(bytes) - 4L) {
   to <- min(as.integer(to), length(bytes) - 4L)
   from <- max(0L, as.integer(from))
-  out <- vector("list", 0L)
-
-  for (offset in seq.int(from, to)) {
-    size <- .qstdUInt32(bytes, offset)
-    if (is.na(size) || size < 1 || size > 256) next
-
-    value <- .qstdQString(bytes, offset, maxChars = 256L)
-    if (is.null(value) || !nzchar(value)) next
-
-    out[[length(out) + 1L]] <- data.frame(
-      offset = offset,
-      size = as.integer(size),
-      value = value,
-      stringsAsFactors = FALSE
+  candidates <- if (is.loaded("C_qstd_string_candidates", PACKAGE = "RDML7")) {
+    .Call(
+      "C_qstd_string_candidates", bytes, as.numeric(from), as.numeric(to),
+      PACKAGE = "RDML7"
     )
+  } else {
+    offsets <- seq.int(from, to)
+    sizes <- vapply(offsets, function(x) .qstdUInt32(bytes, x), numeric(1))
+    keep <- !is.na(sizes) & sizes >= 1 & sizes <= 256 &
+      offsets + 4 + 2 * sizes <= length(bytes)
+    list(offsets[keep], as.integer(sizes[keep]))
   }
+  values <- lapply(
+    candidates[[1L]],
+    function(offset) .qstdQString(bytes, offset, maxChars = 256L)
+  )
+  values <- vapply(values, function(x) if (is.null(x)) NA_character_ else x, character(1))
+  keep <- !is.na(values) & nzchar(values)
 
-  if (!length(out)) {
+  if (!any(keep)) {
     return(data.frame(
       offset = integer(),
       size = integer(),
@@ -86,7 +88,12 @@
     ))
   }
 
-  do.call(rbind, out)
+  data.frame(
+    offset = candidates[[1L]][keep],
+    size = candidates[[2L]][keep],
+    value = values[keep],
+    stringsAsFactors = FALSE
+  )
 }
 
 
@@ -101,7 +108,7 @@
 }
 
 
-.qstdFindCurveOffset <- function(
+.qstdFindCurveOffsetR <- function(
     bytes,
     from,
     wellCount,
@@ -140,6 +147,18 @@
   }
 
   NULL
+}
+
+.qstdFindCurveOffset <- function(bytes, from, wellCount, configuredDyes) {
+  if (is.loaded("C_qstd_find_curve", PACKAGE = "RDML7")) {
+    result <- .Call(
+      "C_qstd_find_curve", bytes, as.numeric(from), as.integer(wellCount),
+      as.integer(configuredDyes), PACKAGE = "RDML7"
+    )
+    if (is.null(result)) return(NULL)
+    return(list(offset = as.integer(result[[1L]]), cycles = as.integer(result[[2L]])))
+  }
+  .qstdFindCurveOffsetR(bytes, from, wellCount, configuredDyes)
 }
 
 
@@ -399,7 +418,7 @@
   expId <- tools::file_path_sans_ext(basename(fileName))
   runId <- if (length(dateValues)) dateValues[[1L]] else "Innova run"
   descriptionRows <- vector("list", 0L)
-  fluorescence <- data.frame(cyc = seq_len(curveInfo[["cycles"]]), check.names = FALSE)
+  fluorescence <- list(cyc = seq_len(curveInfo[["cycles"]]))
 
   for (i in seq_along(records)) {
     record <- records[[i]]
@@ -414,7 +433,7 @@
 
       fdataName <- make.unique(
         c(names(fluorescence), paste(record$position, target, dye, sep = "_"))
-      )[[ncol(fluorescence) + 1L]]
+      )[[length(fluorescence) + 1L]]
       fluorescence[[fdataName]] <- curveData[[i]][[dyeIndex]]
       descriptionRows[[length(descriptionRows) + 1L]] <- data.frame(
         fdataName = fdataName,
@@ -436,6 +455,9 @@
     .qstdAbort("QSTD contains no importable reactions", fileName)
   }
 
+  fluorescence <- as.data.frame(
+    fluorescence, check.names = FALSE, stringsAsFactors = FALSE
+  )
   description <- do.call(rbind, descriptionRows)
   versionMatch <- regmatches(
     sourceDirectory[[1L]],

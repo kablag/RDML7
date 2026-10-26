@@ -730,29 +730,12 @@
     sep = "_"
   )
 
-  fdata <- data.table::data.table(
-    coordinate = coordinate
-  )
-
-  data.table::setnames(
-    fdata,
-    "coordinate",
-    if (
-      identical(fdataType, "adp")
-    ) {
-      "cyc"
-    } else {
-      "tmp"
-    }
-  )
-
-  for (i in seq_len(nrow(tab))) {
-    fdata[[
-      fdataName[[i]]
-    ]] <- as.numeric(
-      fluorescence[i, ]
-    )
-  }
+  fluorescence <- t(fluorescence)
+  colnames(fluorescence) <- fdataName
+  coordinateName <- if (identical(fdataType, "adp")) "cyc" else "tmp"
+  fdata <- data.table::as.data.table(fluorescence)
+  fdata[, (coordinateName) := coordinate]
+  data.table::setcolorder(fdata, coordinateName)
 
   description <- data.table::data.table(
     fdataName = fdataName,

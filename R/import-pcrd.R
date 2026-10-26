@@ -55,7 +55,7 @@
   ) |> .pcrdUnsigned()
 }
 
-.pcrdDecrypt <- function(data, password) {
+.pcrdDecryptR <- function(data, password) {
   keys <- c(0x12345678, 0x23456789, 0x34567890)
   updateKeys <- function(value) {
     keys[[1L]] <<- .pcrdCrcByte(keys[[1L]], value)
@@ -74,6 +74,13 @@
     updateKeys(value)
   }
   out
+}
+
+.pcrdDecrypt <- function(data, password) {
+  if (is.loaded("C_pcrd_decrypt", PACKAGE = "RDML7")) {
+    return(.Call("C_pcrd_decrypt", data, password, PACKAGE = "RDML7"))
+  }
+  .pcrdDecryptR(data, password)
 }
 
 .pcrdExtractXml <- function(fileName) {
@@ -101,6 +108,7 @@
     .pcrdAbort("Unsupported PCRD ZIP encoding", fileName)
   }
   encrypted <- bytes[start + seq_len(compressedSize)]
+  # password obtained here https://github.com/tomzzzhang/SHARP-processor/blob/master/PCRD_FORMAT.md
   decrypted <- .pcrdDecrypt(encrypted, "SecureCompressDecompressKeyiQ5V4Files!!##$$")
   checkByte <- if (bitwAnd(flags, 8L)) bitwShiftR(modificationTime, 8L) else bitwShiftR(.pcrdSigned(crc), 24L)
   if (length(decrypted) < 13L || as.integer(decrypted[[12L]]) != checkByte) {
@@ -149,6 +157,7 @@
   if (any(lengths(values) < 108L * 4L * 6L)) {
     .pcrdAbort("Unsupported PCRD fluorescence array", fileName)
   }
+  values <- do.call(rbind, values)
 
   expId <- tools::file_path_sans_ext(basename(fileName))
   kvNodes <- xml2::xml_find_all(xml, "//protocolRunInfo/RunInfo/KeyValuePairs")
@@ -157,7 +166,7 @@
     xml2::xml_text(xml2::xml_find_first(kvNodes, "./Key"))
   )
   runId <- if (!is.null(kv[["RunStartTime"]])) kv[["RunStartTime"]] else "Bio-Rad CFX run"
-  fluorescence <- data.frame(cyc = cycles, check.names = FALSE)
+  fluorescence <- list(cyc = cycles)
   descriptions <- list()
 
   for (layer in layers) {
@@ -172,9 +181,9 @@
       sample <- if (!is.na(condition) && nzchar(condition)) condition else if (!is.na(quantity) && quantity != "NaN") quantity else paste("Well", position)
       target <- xml2::xml_attr(well, "geneName")
       if (is.na(target) || !nzchar(target)) target <- dye
-      name <- make.unique(c(names(fluorescence), paste(position, target, dye, sep = "_")))[[ncol(fluorescence) + 1L]]
+      name <- make.unique(c(names(fluorescence), paste(position, target, dye, sep = "_")))[[length(fluorescence) + 1L]]
       arrayIndex <- channel * 108L * 4L + index * 4L + 1L
-      fluorescence[[name]] <- vapply(values, `[[`, numeric(1), arrayIndex)
+      fluorescence[[name]] <- values[, arrayIndex]
       descriptions[[length(descriptions) + 1L]] <- data.frame(
         fdataName = name, expId = expId, runId = runId,
         reactId = index + 1L, position = position, sample = sample,
@@ -185,6 +194,9 @@
     }
   }
   if (!length(descriptions)) .pcrdAbort("PCRD contains no assigned wells", fileName)
+  fluorescence <- as.data.frame(
+    fluorescence, check.names = FALSE, stringsAsFactors = FALSE
+  )
   metadata <- list(
     expId = expId, runId = runId,
     operator = if (!is.null(kv[["Username"]])) kv[["Username"]] else "",

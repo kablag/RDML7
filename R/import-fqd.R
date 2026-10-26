@@ -91,11 +91,11 @@
         )
       }
 
-      out <- data.frame(cyc = seq_len(nrow(mNum)), check.names = FALSE)
-      for (j in seq_len(ncol(mNum))) {
-        out[[description$fdataName[[j]]]] <- mNum[, j]
-      }
-      out
+      colnames(mNum) <- description$fdataName
+      data.frame(
+        cyc = seq_len(nrow(mNum)), mNum,
+        check.names = FALSE, stringsAsFactors = FALSE
+      )
     }
 
     rawfdata <- makeFData(inpstr[[2L]])

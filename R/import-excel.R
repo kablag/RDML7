@@ -78,7 +78,10 @@
       )
     }
 
+    sheets <- readxl::excel_sheets(fileName)
+
     readNumericSheet <- function(sheet) {
+      if (!(sheet %in% sheets)) return(NULL)
       tryCatch({
         z <- as.data.frame(
           readxl::read_excel(fileName, sheet = sheet),

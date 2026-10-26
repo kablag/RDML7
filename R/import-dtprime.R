@@ -227,7 +227,7 @@
     }
 
     nCycles <- nRaw %/% 10L
-    fdata <- data.table::data.table(cyc = seq_len(nCycles))
+    fdata <- list(cyc = seq_len(nCycles))
 
     descrRows <- list()
     nr <- 0L
@@ -397,7 +397,7 @@
       }
     }
 
-    if (!length(descrRows) || ncol(fdata) < 2L) {
+    if (!length(descrRows) || length(fdata) < 2L) {
       stop(
         "No usable fluorescence data found in DTprime .r96 file",
         call. = FALSE
@@ -412,6 +412,7 @@
 
     description[, reactId := base::as.integer(reactId)]
     description[, quantity := suppressWarnings(base::as.numeric(quantity))]
+    fdata <- data.table::as.data.table(fdata)
 
     if (showProgress) {
       cat(

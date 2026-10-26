@@ -88,10 +88,11 @@
       }
 
       mat <- do.call(cbind, curves)
-      fdata <- data.frame(cyc = seq_len(nrow(mat)), check.names = FALSE)
-      for (j in seq_len(ncol(mat))) {
-        fdata[[as.character(description$fdataName[[j]])]] <- mat[, j]
-      }
+      colnames(mat) <- as.character(description$fdataName)
+      fdata <- data.frame(
+        cyc = seq_len(nrow(mat)), mat,
+        check.names = FALSE, stringsAsFactors = FALSE
+      )
 
       series[[length(series) + 1L]] <- newRDMLImportSeries(
         fdataType = "adp",

@@ -2,10 +2,10 @@
 
 .rdmlImportCsv <- function(fileName, showProgress = TRUE) {
   fromCSV <- function() {
-    pcrdata <- utils::read.csv(
+    pcrdata <- data.table::fread(
       fileName,
       check.names = FALSE,
-      stringsAsFactors = FALSE
+      data.table = FALSE
     )
     if (ncol(pcrdata) < 2L) {
       stop("CSV must contain a coordinate column and fluorescence columns", call. = FALSE)

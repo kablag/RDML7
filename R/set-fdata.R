@@ -112,6 +112,15 @@ S7::method(setFData, rdmlType) <- function(
   targets <- .rdmlPropKeyed(x, "target")
   dyes <- .rdmlPropKeyed(x, "dye")
 
+  # Keep hierarchy updates in hashed caches while all fluorescence columns are
+  # processed. Rebuilding S7 experiment/run/react collections for every curve
+  # is quadratic for full plates and dominated importer run time.
+  experimentCache <- new.env(hash = TRUE, parent = emptyenv())
+  runCache <- new.env(hash = TRUE, parent = emptyenv())
+  reactCache <- new.env(hash = TRUE, parent = emptyenv())
+  runPaths <- list()
+  reactPaths <- list()
+
   for (fdataName in fdataNames) {
     idx <- which(describedNames == fdataName)
 
@@ -152,14 +161,19 @@ S7::method(setFData, rdmlType) <- function(
     }
 
     # experiment ----------------------------------------------------------
-    experiment <- experiments[[expId]]
+    experiment <- if (exists(expId, experimentCache, inherits = FALSE)) {
+      get(expId, experimentCache, inherits = FALSE)
+    } else experiments[[expId]]
     if (is.null(experiment)) {
       experiment <- experimentType(id = idType(expId), run = list())
     }
+    assign(expId, experiment, experimentCache)
 
     # run -----------------------------------------------------------------
-    runs <- .rdmlPropKeyed(experiment, "run")
-    run <- runs[[runId]]
+    runKey <- paste(expId, runId, sep = "\r")
+    run <- if (exists(runKey, runCache, inherits = FALSE)) {
+      get(runKey, runCache, inherits = FALSE)
+    } else .rdmlPropKeyed(experiment, "run")[[runId]]
     if (is.null(run)) {
       run <- runType(
         id = idType(runId),
@@ -167,10 +181,14 @@ S7::method(setFData, rdmlType) <- function(
         react = list()
       )
     }
+    assign(runKey, run, runCache)
+    if (is.null(runPaths[[runKey]])) runPaths[[runKey]] <- c(expId, runId)
 
     # react ---------------------------------------------------------------
-    reacts <- .rdmlPropKeyed(run, "react")
-    react <- reacts[[reactId]]
+    reactKey <- paste(expId, runId, reactId, sep = "\r")
+    react <- if (exists(reactKey, reactCache, inherits = FALSE)) {
+      get(reactKey, reactCache, inherits = FALSE)
+    } else .rdmlPropKeyed(run, "react")[[reactId]]
 
     if (is.null(react)) {
       if (!nonemptyString(sampleId)) {
@@ -274,50 +292,10 @@ S7::method(setFData, rdmlType) <- function(
     )
     
     
-    reactList <- .rdmlUpsertListByKey(
-      .rdmlPropList(
-        run,
-        "react"
-      ),
-      react,
-      key = "id"
-    )
-    
-    run <- .rdmlSetPropList(
-      run,
-      "react",
-      reactList
-    )
-    
-    
-    runList <- .rdmlUpsertListByKey(
-      .rdmlPropList(
-        experiment,
-        "run"
-      ),
-      run,
-      key = "id"
-    )
-    
-    experiment <- .rdmlSetPropList(
-      experiment,
-      "run",
-      runList
-    )
-    
-    
-    experimentList <- .rdmlUpsertListByKey(
-      .rdmlAsList(
-        experiments
-      ),
-      experiment,
-      key = "id"
-    )
-    
-    experiments <- rdmlKeyedList(
-      experimentList,
-      key = "id"
-    )
+    assign(reactKey, react, reactCache)
+    if (is.null(reactPaths[[reactKey]])) {
+      reactPaths[[reactKey]] <- c(expId, runId, reactId)
+    }
 
     # sample --------------------------------------------------------------
     if (nonemptyString(sampleId)) {
@@ -430,6 +408,29 @@ S7::method(setFData, rdmlType) <- function(
     if (nonemptyString(dyeId) && is.null(dyes[[dyeId]])) {
       dyes[[dyeId]] <- dyeType(id = idType(dyeId))
     }
+  }
+
+  for (reactKey in names(reactPaths)) {
+    path <- reactPaths[[reactKey]]
+    runKey <- paste(path[[1L]], path[[2L]], sep = "\r")
+    run <- get(runKey, runCache, inherits = FALSE)
+    reacts <- .rdmlPropKeyed(run, "react")
+    reacts[[path[[3L]]]] <- get(reactKey, reactCache, inherits = FALSE)
+    run <- .rdmlSetPropList(run, "react", reacts)
+    assign(runKey, run, runCache)
+  }
+
+  for (runKey in names(runPaths)) {
+    path <- runPaths[[runKey]]
+    experiment <- get(path[[1L]], experimentCache, inherits = FALSE)
+    runs <- .rdmlPropKeyed(experiment, "run")
+    runs[[path[[2L]]]] <- get(runKey, runCache, inherits = FALSE)
+    experiment <- .rdmlSetPropList(experiment, "run", runs)
+    assign(path[[1L]], experiment, experimentCache)
+  }
+
+  for (expId in ls(experimentCache, all.names = TRUE)) {
+    experiments[[expId]] <- get(expId, experimentCache, inherits = FALSE)
   }
 
   x <- .rdmlSetPropList(x, "experiment", experiments)
