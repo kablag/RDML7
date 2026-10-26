@@ -6,7 +6,7 @@
 \title{Summarize an RDML object}
 \usage{
 ## S7 method for class <RDML7::rdmlType>
-summary(object, ...)
+\special{summary(object, ...)}
 }
 \arguments{
 \item{object}{An [rdmlType] object.}

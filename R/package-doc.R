@@ -51,6 +51,7 @@
 #' @keywords internal
 #' @importFrom lubridate ymd ymd_hms
 #' @importFrom utils globalVariables
+#' @useDynLib RDML7, .registration = TRUE
 "_PACKAGE"
 
 globalVariables(c(

@@ -7,3 +7,9 @@ RDML.Rproj
 /doc/
 /Meta/
 RDML7_*.tar.gz
+/src/*.o
+/src/*.dll
+/src/*.so
+/src/*.dylib
+/src/symbols.rds
+/RDML7.Rcheck/
